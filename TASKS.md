@@ -13,9 +13,9 @@ Status: Approved task decomposition; implementation NOT STARTED.
 - 开始单项前读取相关源码，确认可复用组件、现有执行路径和最小插入点。下文明确区分“已有”与“建议新增”；新增路径不是已经存在的实现，也不要求创建空目录或为单用途逻辑拆出多余模块。
 - 一次一项，不顺手实现未来任务、不重构无关上游、不静默改变冻结设计。发现真正的设计矛盾则停止该项并记录矛盾；部署 endpoint/model 等配置问题不触发重新设计。
 - 测试属于任务完成条件，应随功能交付，不统一拖到 T44。普通自动化使用 fake embedding/reranker、mock provider 与临时 SQLite；live 检查须显式标识。缺失环境或真实服务时写 `NOT VERIFIED`，不得用 mock 成绩替代真实语义质量。
-- 每项 Completion evidence 都要求：运行该任务测试 → 相关回归 → 检查 `git diff` → 排除无关改动 → focused commit，保存命令、退出码、结果和必要脱敏证据。紧密相关任务可有意合并实施和提交，但仍须分别满足各自验收；不得因此自动扩大单次会话范围。
+- 除 T00 外，每项 Completion evidence 都要求：运行该任务测试 → 相关回归 → 检查 `git diff` → 排除无关改动 → focused commit，保存命令、退出码、结果和必要脱敏证据。T00 是基线检查：只有实际更新基线文档时才提交；没有文件变化则只报告验证结果和 HEAD，不创建空提交。紧密相关任务可有意合并实施和提交，但仍须分别满足各自验收；不得因此自动扩大单次会话范围。
 - 不提交凭据，不把 provider 配置、秘密、role/system prompt、YAML 或附件正文写入公开 metadata/trace。保留已有用户改动，提交仅包含本项授权文件。
-- `workflow_completed != task_success`。业务 success 需要正常 workflow 结束与目标 Agent 结构化成功 outcome；拒绝、失败和取消分别保存、统计。SQLite 重启后可查询不等于 Runtime 可续跑。
+- `workflow_completed != execution_success`。业务 execution success 需要正常 workflow 结束与目标 Agent 结构化成功 outcome；Task Quality Success 是另一项质量评估。拒绝、失败和取消分别保存、统计。SQLite 重启后可查询不等于 Runtime 可续跑。
 - 继承基线的 WebSocket fixture 阻塞、host Cairo 缺失、标准前端 Docker 镜像未验证必须分别报告。不能把排除文件的 66 项历史通过当完整 suite 全绿，也不能把 host node_modules 的临时 Compose 覆盖当镜像可复现。
 
 ## Block A — Registry & Persistence
@@ -34,7 +34,7 @@ Status: Approved task decomposition; implementation NOT STARTED.
 - **Do-not-touch boundaries**: 不实现 Registry/Router/outcome，不改生产源码、依赖锁或测试夹具；不覆盖既有文档改动，不借此升级上游。
 - **Acceptance criteria**: 报告准确 revision、环境、干净/已有改动边界及每项 passed/failed/blocked/NOT VERIFIED；历史证据与本次复核分开；完整 suite 的阻塞不能被子集通过掩盖。
 - **Required tests**: 受限时长的继承测试基线检查，分别记录完整集、WebSocket 文件和相关可通过子集；核对 Python 版本与依赖完整性，必要时复用已验证 Docker 环境。环境不可用时记录阻塞，不伪造通过或安装无关依赖。
-- **Completion evidence**: 固定 revision、准确命令/timeout/退出码、环境与阻塞分类；运行本项检查 → 相关基线回归 → 检查 `git diff` → 排除无关改动 → focused commit。不得将这些检查写成新功能完成证据。
+- **Completion evidence**: 固定 revision、准确命令/timeout/退出码、环境与阻塞分类；运行本项检查 → 相关基线回归 → 检查 `git diff` → 排除无关改动。有实际基线文档更新才提交；若没有文件变化，只报告验证结果和 HEAD，不创建空 commit。不得将这些检查写成新功能完成证据。
 
 ### T01 — AgentMetadata 合约与最小模块骨架
 
