@@ -654,13 +654,13 @@ Do not invent architecture based on naming assumptions.
 
 The project is currently in:
 
-> Architecture frozen — final pre-implementation planning/workflow adjustment
+> P0 Implementation — T00 Implementation Baseline Guard
 
-Architecture Recon is complete in `ARCHITECTURE_RECON.md`; `AGENTHUB_DESIGN.md` has status `Design Frozen for P0 Implementation` and is the authority for technical decisions. `TASKS.md` contains the approved 50 P0 tasks, T00–T49. Do not redesign AgentHub or reinterpret early conceptual examples as overriding frozen contracts.
+Architecture Recon is complete in `ARCHITECTURE_RECON.md`. The development baseline has been established in `DEVELOPMENT_BASELINE.md`, with inherited issues and unverified items recorded separately. `AGENTHUB_DESIGN.md` has status `Design Frozen for P0 Implementation` and is the authority for technical decisions. `TASKS.md` contains the approved 50 P0 tasks, T00–T49. The final planning/workflow adjustment is complete; production implementation has not started.
 
-The current documentation adjustment authorizes only AGENTS.md and TASKS.md changes. Do not execute T00, start functional tasks, or modify production source during this adjustment. Later implementation sessions select one task explicitly and stop after its completion report.
+The next authorized implementation task is T00 — Implementation baseline guard. Execute only one explicitly selected task at a time and stop after its completion report. After T00 completes, T01 may begin only when explicitly assigned. Recording this phase does not execute T00; the repository-documentation baseline session stops after its documentation commit/push.
 
-Keep frozen architecture choices in the design artifact rather than duplicating a competing specification here. T49 is the explicitly approved lightweight Registry Admin UI scope addition; a full management console remains deferred. Exact API/module placement remains an implementation detail to verify against source, and benchmark results require actual measurements.
+Do not reopen the frozen architecture during ordinary implementation or reinterpret early conceptual examples as overriding frozen contracts. Keep technical decisions in the design artifact rather than duplicating a competing specification here. T49 is the explicitly approved lightweight Registry Admin UI scope addition; a full management console remains deferred. Exact API/module placement remains an implementation detail to verify against source, and benchmark results require actual measurements.
 
 ---
 
