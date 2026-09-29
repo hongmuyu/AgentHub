@@ -2,20 +2,23 @@
 
 Status: Approved task decomposition; implementation NOT STARTED.
 
-本文展开已批准的 49-task P0 计划，只定义后续可逐项执行的任务，不表示任何任务已完成。创建本文的会话仅交付此文件，验证并作 focused documentation commit 后停止；不得执行 T00。
+本文展开已批准并经本次实施前调整的 50-task P0 计划（T00–T49），只定义后续可逐项执行的任务，不表示任何任务已完成。本次仅调整 AGENTS.md/TASKS.md，验证、focused documentation commit 并推送后停止；不得执行 T00，也不得因此合并 main。
+
+AgentHub 面向企业内部 AI Agent 注册、能力发现、动态路由、执行与可观测性。平台管理员登记/管理 Agent，检查能力、版本与状态，启用/禁用并观察平台行为；业务用户提交自然语言任务，由平台发现候选、选择适用 Agent，经 ChatDev Runtime 执行，再查看结果、业务状态与路由 trace。两者是可信本地/内部使用的概念视角，不引入租户、复杂 RBAC、审批或 Marketplace。
 
 ## 依据与执行规则
 
-- 任务分解以已批准的 Plan Mode 文档 `codex-plan-01a0e75c-7134-7473-aa89-dd197a7b40ea-01a0e75c-71.md` 为权威；保留其分组、编号、依赖、验收、风险和里程碑。
+- 任务分解基于已批准的 Plan Mode 文档 `codex-plan-01a0e75c-7134-7473-aa89-dd197a7b40ea-01a0e75c-71.md`；本次按明确授权完善业务验收与 Git 工作流、追加 T49，保留 T00–T48 编号和冻结架构。
 - 架构依据：[AGENTHUB_DESIGN.md](AGENTHUB_DESIGN.md)（Status: Design Frozen for P0 Implementation）。下文“设计 §N”均指该文件章节。实施规则见 [AGENTS.md](AGENTS.md)，源码事实见 [ARCHITECTURE_RECON.md](ARCHITECTURE_RECON.md)，环境与继承阻塞见 [DEVELOPMENT_BASELINE.md](DEVELOPMENT_BASELINE.md)。早期概念示例不覆盖冻结设计：UUID/整数版本、六种业务状态、36/12/12 benchmark 分布以冻结设计为准。
 - Recon 的源码事实固定于 ChatDev `4fb2db0ea90375ce1059f44fe03ffbd191a7a169`；文档生成时 checkout 为 `agenthub-dev`，HEAD 为 `ce79d43e254bf158bd1437ed5ac15a217e16477a`。这些是参考基线，不替代未来 T00 的现场核验。
 - 每个实施会话只处理一个明确选定任务。编号用于稳定引用，不表示可以忽略 Dependencies 按数字顺序实施。Dependencies 均为真实前置条件；分组顺序、时间盒与 Critical Path 是调度说明，不添加隐含依赖。
 - 开始单项前读取相关源码，确认可复用组件、现有执行路径和最小插入点。下文明确区分“已有”与“建议新增”；新增路径不是已经存在的实现，也不要求创建空目录或为单用途逻辑拆出多余模块。
 - 一次一项，不顺手实现未来任务、不重构无关上游、不静默改变冻结设计。发现真正的设计矛盾则停止该项并记录矛盾；部署 endpoint/model 等配置问题不触发重新设计。
 - 测试属于任务完成条件，应随功能交付，不统一拖到 T44。普通自动化使用 fake embedding/reranker、mock provider 与临时 SQLite；live 检查须显式标识。缺失环境或真实服务时写 `NOT VERIFIED`，不得用 mock 成绩替代真实语义质量。
-- 除 T00 外，每项 Completion evidence 都要求：运行该任务测试 → 相关回归 → 检查 `git diff` → 排除无关改动 → focused commit，保存命令、退出码、结果和必要脱敏证据。T00 是基线检查：只有实际更新基线文档时才提交；没有文件变化则只报告验证结果和 HEAD，不创建空提交。紧密相关任务可有意合并实施和提交，但仍须分别满足各自验收；不得因此自动扩大单次会话范围。
+- 每项 Completion evidence 同时适用本节通用规则：任务专项测试 → 相关回归 → 完整检查 `git diff` → 排除无关改动 → focused commit → push `origin/agenthub-dev` → 停止。各任务末尾的 focused commit 均包含此推送要求；不自动开始下一项。保存命令、退出码、结果和脱敏证据。T00 是验证例外：验证证据始终必需，只有实际修改获授权的 tracked 文档才需 commit/push；没有仓库变化则 verify → report → no commit required，报告 HEAD，不创建空/no-op commit。
+- 实施任务完成报告必须包括：①任务实现内容；②修改文件；③任务测试；④回归测试；⑤PASS / FAIL / BLOCKED / NOT VERIFIED 项；⑥commit SHA（T00 无改动时为当前 HEAD，并注明无新提交）；⑦push 结果（T00 无改动时不适用）；⑧远端分支；⑨最终 `git status`；⑩COMPLETE 或 BLOCKED。代码变更正常完成要求 focused commit 和成功推送 `origin/agenthub-dev`；未完成必需验收不得标 COMPLETE。可选 live 证据允许 NOT VERIFIED，不能据此声称 live 已通过。
 - 不提交凭据，不把 provider 配置、秘密、role/system prompt、YAML 或附件正文写入公开 metadata/trace。保留已有用户改动，提交仅包含本项授权文件。
-- `workflow_completed != execution_success`。业务 execution success 需要正常 workflow 结束与目标 Agent 结构化成功 outcome；Task Quality Success 是另一项质量评估。拒绝、失败和取消分别保存、统计。SQLite 重启后可查询不等于 Runtime 可续跑。
+- `workflow_completed != execution_success`；`Execution Success Rate != Task Quality Success Rate`。执行成功指所选 Agent 按结构化 outcome 合约实际成功执行，需正常 workflow 结束与目标 Agent 结构化成功 outcome；任务质量成功另需断言、rubric 或人工评价，无评价则未测量。拒绝、失败和取消分别保存、统计。SQLite 重启后可查询不等于 Runtime 可续跑。
 - 继承基线的 WebSocket fixture 阻塞、host Cairo 缺失、标准前端 Docker 镜像未验证必须分别报告。不能把排除文件的 66 项历史通过当完整 suite 全绿，也不能把 host node_modules 的临时 Compose 覆盖当镜像可复现。
 
 ## Block A — Registry & Persistence
@@ -34,7 +37,7 @@ Status: Approved task decomposition; implementation NOT STARTED.
 - **Do-not-touch boundaries**: 不实现 Registry/Router/outcome，不改生产源码、依赖锁或测试夹具；不覆盖既有文档改动，不借此升级上游。
 - **Acceptance criteria**: 报告准确 revision、环境、干净/已有改动边界及每项 passed/failed/blocked/NOT VERIFIED；历史证据与本次复核分开；完整 suite 的阻塞不能被子集通过掩盖。
 - **Required tests**: 受限时长的继承测试基线检查，分别记录完整集、WebSocket 文件和相关可通过子集；核对 Python 版本与依赖完整性，必要时复用已验证 Docker 环境。环境不可用时记录阻塞，不伪造通过或安装无关依赖。
-- **Completion evidence**: 固定 revision、准确命令/timeout/退出码、环境与阻塞分类；运行本项检查 → 相关基线回归 → 检查 `git diff` → 排除无关改动。有实际基线文档更新才提交；若没有文件变化，只报告验证结果和 HEAD，不创建空 commit。不得将这些检查写成新功能完成证据。
+- **Completion evidence**: 必须有固定 revision、准确命令/timeout/退出码、环境与阻塞分类；运行本项检查 → 相关基线回归 → 检查 `git diff` → 排除无关改动。只有实际修改获授权的 tracked 基线文档才要求 focused commit 并 push `origin/agenthub-dev`；若没有仓库变化，verify → report → no commit required，只报告验证结果、HEAD 和 git status，不创建空/no-op commit。不得将这些检查写成新功能完成证据。
 
 ### T01 — AgentMetadata 合约与最小模块骨架
 
@@ -170,14 +173,14 @@ Status: Approved task decomposition; implementation NOT STARTED.
 
 - **Task ID**: T32
 - **Priority**: P0
-- **Goal**: 补齐 Code/Data/Document/Planning/Review，形成可重复登记的六类示例目录。
-- **Why this task exists**: 后续 Demo/benchmark 需要明确能力边界和真实 UUID/version 映射，而非 Router 内置名单。
+- **Goal**: 补齐 Code/Data/Document/Planning/Review，与 Research 构成连贯的企业研发 / 知识工作 Agent 目录（enterprise R&D / knowledge-work Agent catalog），可重复登记。
+- **Why this task exists**: 用企业调研、研发、分析与质量检查的连贯工作场景表达平台价值，并为 Demo/benchmark 提供能力边界和真实 UUID/version 映射；六项都是普通 fixtures，不是平台支持类型。
 - **Dependencies**: T31。
 - **Likely files/modules involved**: 已有 `yaml_instance/ChatDev_v1.yaml`、`data_visualization_basic.yaml`、`deep_research_v1.yaml`、`general_problem_solving_team.yaml`（素材参考）；建议新增其余薄 workflows/metadata/allowlist 与可重复注册入口及测试。
-- **Implementation requirements**: 设计 §20、§21；每类普通 metadata 配完整单 Agent 静态图，明确职责并移除原团队依赖；逐个校验、mock 执行。登记流程可重复运行且输出实际 UUID/version 映射，供数据集显式绑定；用临时第七个兼容 Agent 证明目录可扩展。
+- **Implementation requirements**: 设计 §20、§21；每项 fixture（含 T31 ResearchAgent）须提供业务名称、清晰业务描述、capabilities、能力边界、tags、适用时的 tools、runtime_ref 和完整单 Agent thin workflow；能力边界在 description/fixture 说明中表达，不新增 metadata schema 字段。ResearchAgent 对应技术调研/比较/外部信息收集，CodeAgent 对应源码分析/调试/实现解释，DataAgent 对应结构化业务或工程数据分析，DocumentAgent 对应技术文档摘要/抽取/比较，PlanningAgent 对应项目拆解/里程碑规划/优先级排序，ReviewAgent 对应设计/输出/代码审查式质量检查。能力有意保留合理重叠，为 ambiguous routing 提供真实意义；不以标签迎合路由成绩。移除原团队依赖，逐个校验、mock 执行；登记流程可重复且输出 UUID/version 映射供数据集绑定；用临时第七个兼容 Agent 验证扩展。
 - **Do-not-touch boundaries**: 不把 Data Analyst 名称直接视为通用 DataAgent，不建名称分支或 executor subclass，不改已有团队 YAML；不把 fixture UUID 当固定平台类型。
-- **Acceptance criteria**: 六项均可校验、登记、mock 执行；重复登记流程不意外制造重复身份；新增第七项只需 metadata/allowlist，不改 Router 源码。
-- **Required tests**: 各 fixture 的结构/执行、完整目录登记及重复运行、UUID/version 映射有效性；目录扩展测试可用独立 fixture，Router 尚未完成时不提前实现它。
+- **Acceptance criteria**: 六项上述内容齐全、业务职责连贯且有可解释的重叠/边界，均可校验、登记、mock 执行；重复登记不意外制造重复身份；添加第七个兼容 Agent 仅需普通 metadata、合格薄 workflow 与 allowlist 登记，不改 Router 源码，不硬编码六个名称。
+- **Required tests**: 各 fixture 的内容完整性/结构/执行、完整目录登记及重复运行、UUID/version 映射有效性；人工核对业务工作负载和重叠边界。第七项扩展测试可用独立 fixture；Router 已就绪时复用验证其可被召回，尚未就绪时不提前实现它，路由行为证据在 T48 复核。
 - **Completion evidence**: 六类登记映射、每个 mock 运行结果与第七项扩展证据；运行任务测试 → fixture/Registry 回归 → 检查 `git diff` → 排除无关改动 → focused commit。
 
 ## Block C — Discovery & Routing
@@ -510,7 +513,7 @@ Status: Approved task decomposition; implementation NOT STARTED.
 
 ## Block E — UI & Observability
 
-时间盒：约 1.5 天。复用 Launch/session/upload/WS/结果组件，只增轻量业务入口与指标。
+时间盒：约 2 天，其中 T49 约半天至一天。复用 Vue 样式、API helpers 和 Launch/session/upload/WS/结果组件，提供最小业务入口、Registry 管理与指标；压缩视觉打磨和可选展示，不扩建控制台。
 
 ### T33 — Metrics aggregation 与最小 API
 
@@ -588,9 +591,23 @@ Status: Approved task decomposition; implementation NOT STARTED.
 - **Required tests**: 空数据、混合终态、缺失 usage、零值 usage、分母显示、时间单位、未测量质量及 API 错误显示；相关组件/build 检查。
 - **Completion evidence**: 固定数据的界面断言与脱敏截图/交互证据；运行任务测试 → task/run 视图回归 → 检查 `git diff` → 排除无关改动 → focused commit。
 
+### T49 — Minimal Agent Registry Admin UI
+
+- **Task ID**: T49
+- **Priority**: P0
+- **Goal**: 用约半天至一天交付最小管理员 Registry 界面，使平台具备可见的 Agent 登记与启停体验。
+- **Why this task exists**: 管理员应能管理企业能力目录、查看能力/版本/状态，与业务用户的任务路由体验形成完整平台闭环。
+- **Dependencies**: T22。
+- **Likely files/modules involved**: 已有 Vue 应用、`frontend/src/utils/apiFunctions.js`、`frontend/src/router/index.js` 与页面/组件样式；建议增加一个薄 Registry 视图/表单及窄前端/API 测试，具体落点实施前核实。
+- **Implementation requirements**: 复用 T22 Registry API 与现有 Vue 风格/API helpers；列表显示 Agent name、description、capabilities、version、status、runtime_ref 逻辑身份及 API 已提供的有效性/错误状态，不暴露路径、YAML 或 provider 配置。支持 Register、API 已支持的 metadata Update、Enable、Disable；服务端仍负责 runtime_ref/index 校验，UI 不复制校验引擎或制造未经验证的 ready 状态。操作成功刷新列表，安全显示字段校验/注册/更新/启停/API 错误和空目录。搜索/过滤仅在复用现有 API 几乎无额外成本时加入。现有 Vue/helper 已提供基础，不依赖 T34 的执行模式；若 T34 窄测试支持已存在则复用，不为此增加依赖。
+- **Do-not-touch boundaries**: 不做复杂 Agent editor、visual workflow editor、RBAC、审批、Marketplace、部署管理、版本 diff viewer 或完整 Agent operations console；不接收任意 YAML/物理路径、不扩展 Registry API 职责、不重写旧页面或全局状态。不因本任务阻塞 M1 路由或 M2 Runtime 验收。
+- **Acceptance criteria**: 管理员能注册合法 Agent 并在列表看到它，能力/version/status 清楚可见；能更新 API 支持的 metadata；禁用后 UI 显示 disabled；当前 runtime_ref/index 仍有效时可重新启用；注册/启停失败有安全错误提示且不显示伪成功；空目录可理解；现有 ChatDev Launch/Workflow 页面仍工作。
+- **Required tests**: mock/narrow frontend/API tests 覆盖 list、register、validation failure、metadata update、enable、disable、API failure、empty catalog；包括无效 runtime_ref/index 导致启用失败与状态保持。运行相关前端 build、API helper/旧 Launch/Workflow 页面回归，保留交互验收证据。
+- **Completion evidence**: 注册→列表→禁用→重新启用的脱敏 UI/测试证据、错误/空目录断言、构建及旧页面回归结果；任务测试 → 相关回归 → 完整 diff review → focused commit → push `origin/agenthub-dev` → 停止。
+
 ## Block F — Evaluation & Delivery
 
-时间盒：约 2.5 天。路由评测独立于真实 workflow 执行，结果必须来自实际运行。
+时间盒：约 2 天。复用各任务已有测试/构建证据及 runner，规模测量仅扩展配置与必要计时；路由评测独立于真实 workflow 执行，结果必须来自实际运行，不为赶工删减必需验证。
 
 ### T38 — Benchmark dataset schema 与 split 校验
 
@@ -666,15 +683,15 @@ Status: Approved task decomposition; implementation NOT STARTED.
 
 - **Task ID**: T43
 - **Priority**: P0
-- **Goal**: 使用真实配置服务在独立 split 上校准并比较 semantic 与 semantic_llm。
+- **Goal**: 使用真实配置服务在独立 split 上校准并比较 semantic 与 semantic_llm，补充小目录 exact cosine scan 的规模性能证据。
 - **Why this task exists**: 阈值不能凭空冻结，两策略优劣必须来自同一可追溯配置下的实测。
 - **Dependencies**: T16、T17、T40、T41、T42。
 - **Likely files/modules involved**: dataset splits、runner/metrics、受控 benchmark 配置与结果文档/产物；真实凭据仅在忽略的环境配置中。
-- **Implementation requirements**: 设计 §9–§11、§21、§27；先验证真实 embedding 配置，仅在 calibration split 选 K/threshold 等有效配置，冻结后在独立 test split 测量两策略。保留模型/目录版本、配置来源、环境、逐 case 结果/延迟与错误样本；样本不足说明证据不足。服务不可用的策略明确未运行/NOT VERIFIED，fake 仅工程验证。
-- **Do-not-touch boundaries**: 不用 test split 反复调优后报告泛化成绩，不估算缺失结果、不把 fake 分数称真实语义质量、不启动 Agent workflow；不提交凭据。
-- **Acceptance criteria**: 可重现校准→固定配置→独立测试过程；两策略共享可比较召回/gate 条件；报告实际有效样本与基础设施错误。真实服务缺失时留存具体未验证范围，不能声称实测比较已完成。
-- **Required tests**: 先跑 runner/metrics/split 检查，再显式 live 校准和两策略 benchmark；记录实际命令、数据/配置版本及脱敏结果，缺失服务作为未运行项列出。
-- **Completion evidence**: 校准依据、逐 case 实测报告、两策略对照或明确 NOT VERIFIED；运行任务测试 → evaluation/索引相关回归 → 检查 `git diff` → 排除无关改动 → focused commit，不编造数字。
+- **Implementation requirements**: 设计 §8–§11、§21、§27；保留 36 clear / 12 ambiguous / 12 no-match、Top-1、Top-K、Reject Accuracy、False Accept Rate。先验证真实 embedding 配置，仅在 calibration split 选 K/threshold，冻结后在独立 test split 比较 semantic 与 semantic_llm；保留模型/目录版本、配置来源、环境、逐 case 结果/延迟与错误样本，样本不足须说明。另以约 10/50/100 Agents 做轻量 catalog-size benchmark，必要时生成固定种子、受控且符合 metadata/runtime_ref/index contract 的 synthetic catalog；与 60-case 质量集分开。记录硬件、目录构造、向量维度/model key、K、策略、样本/重复次数及预热/缓存条件。分别报告 routing latency p50/p95，并在技术可行时分离 semantic retrieval latency（明确是否含过滤/加载）、query embedding latency、LLM rerank latency；目录建索引时间与每请求路由分开，无法分离的项注明未测及原因。区分 local deterministic engineering benchmark 与 live provider latency benchmark；前者用受控向量/fake 验证本地扫描成本，不能代表 live semantic-provider 延迟或质量。以实测讨论“小目录 exact cosine scan 足够、当前不需要专用向量数据库”的 P0 决策适用范围；不预设结论或目标，反向证据也如实记录，架构调整另行评审。
+- **Do-not-touch boundaries**: 不用 test split 调优后报告泛化成绩，不虚构性能目标/缺失结果，不把 fake latency 冒充 live latency，不启动 Agent workflow；不为 benchmark 添加 Qdrant/FAISS 或其他基础设施，不提交凭据。
+- **Acceptance criteria**: 校准→固定配置→独立测试可追溯，两策略共享召回/gate；报告有效样本/错误和上述质量指标。10/50/100 三档均有实测 p50/p95 与可得的分段耗时，能解释扫描成本和外部服务成本；合成目录不充当语义质量证明。真实服务缺失时相关比较及 live latency 明确 NOT VERIFIED，不填零或声称完成 live 比较。
+- **Required tests**: 先跑 runner/metrics/split 检查；用可控计时样例验证分段边界、分位数/样本统计，再运行三档 deterministic 规模测试；显式 opt-in live 校准、两策略 benchmark 和可用的 live 规模测量。记录命令、数据/配置版本、实际样本数与脱敏结果；缺失服务列为未运行。
+- **Completion evidence**: 校准与逐 case 报告、两策略对照、三档规模的 p50/p95/分段耗时、复现配置、exact scan 决策分析；live 缺失项明确 NOT VERIFIED。任务测试 → evaluation/索引回归 → diff review → focused commit → push `origin/agenthub-dev`，不编造数字。
 
 ### T44 — AgentHub 综合回归
 
@@ -696,9 +713,9 @@ Status: Approved task decomposition; implementation NOT STARTED.
 - **Priority**: P0
 - **Goal**: 证明不使用 AgentHub 的原 ChatDev Web/Launch 路径保持兼容。
 - **Why this task exists**: 新增可选 hook 和前端模式不得改变原执行协议、消息与附件行为。
-- **Dependencies**: T30、T36、T44。
+- **Dependencies**: T30、T36、T44、T49。
 - **Likely files/modules involved**: 已有 `tests/`、`server/routes/execute.py`、WorkflowRunService、WS/session/upload/artifact/download 和 Launch；新增/扩展窄兼容测试与验证记录。
-- **Implementation requirements**: 设计 §22、§24；验证原 `/api/workflow/execute`、默认 WorkflowRunService、无 recorder Message、WS/human input/upload/artifact/download、手选 YAML Launch；记录实际测量范围。继承 WebSocket fixture blocker 单列，不因排除文件就称完整 suite 全绿。
+- **Implementation requirements**: 设计 §22、§24；验证原 `/api/workflow/execute`、默认 WorkflowRunService、无 recorder Message、WS/human input/upload/artifact/download、手选 YAML Launch；包含 T49 管理入口加入后的原 Launch/Workflow 页面回归，记录实际测量范围。继承 WebSocket fixture blocker 单列，不因排除文件就称完整 suite 全绿。
 - **Do-not-touch boundaries**: 不为测试替身问题顺手修改生产 WebSocket 代码，不擅自修复继承 fixture 或升级依赖，不改变旧 endpoint/YAML 请求语义。
 - **Acceptance criteria**: 受影响旧接口和交互有通过证据；继承阻塞与新回归分开；未测项目明确 NOT VERIFIED，默认调用无需 AgentHub recorder 或额外配置。
 - **Required tests**: 有界 legacy API/service/WS 协议测试，human input、上传/产物/下载、手动 Launch 交互/构建；相关继承子集与完整集状态分别报告，不用一次 smoke 冒充全覆盖。
@@ -735,19 +752,19 @@ Status: Approved task decomposition; implementation NOT STARTED.
 - **Required tests**: 文档链接/命令核对和必要复现 smoke；核对结果来源、配置示例与实际接口，复用已有效验证证据并标日期/环境，必要更新才重跑相关检查。
 - **Completion evidence**: 命令/链接核对结果、实际报告来源及限制清单；运行任务检查 → 相关文档示例回归 → 检查 `git diff` → 排除无关改动 → focused commit。
 
-### T48 — Demo preparation 与 3–5 分钟视频
+### T48 — Business Demo & Resume Acceptance
 
 - **Task ID**: T48
 - **Priority**: P0
-- **Goal**: 交付可复现 Demo 脚本和实际 3–5 分钟演示视频。
-- **Why this task exists**: 最终展示需同时说明平台价值、拒绝行为及可观察执行，不能仅展示一段未验收 happy path。
+- **Goal**: 交付连贯的企业内部 Agent 平台业务 Demo、可复现脚本和实际 3–5 分钟视频，形成可核验的简历验收证据。
+- **Why this task exists**: 同时呈现业务用户提交任务与管理员管理能力目录，证明通用注册、动态选择和可观察执行的价值，而非六个硬编码技术演示。
 - **Dependencies**: T47。
 - **Likely files/modules involved**: 建议 Demo 操作脚本/说明和视频产物或可访问引用；复用现有 fixtures、UI、README 与 benchmark 结果。
-- **Implementation requirements**: 设计 §19–§21、§25 及交付要求；演示自然语言提交→候选→选择→执行→独立业务状态→trace/metrics，并包含无适配 Agent 拒绝。评测单独展示真实报告和配置；明确 mock/真实 provider 边界，控制在 3–5 分钟。
+- **Implementation requirements**: 设计 §19–§21、§25 及本次业务验收要求；以企业研发/知识工作目录串联四个场景：①清晰任务，如比较 LangGraph/AutoGen 的企业 Agent 项目适用性（措辞可替换），展示 ResearchAgent 候选排名→选择→执行→业务状态→trace/metrics；②跨两个 Agent 能力的模糊任务，展示 semantic Top-K→可选 LLM rerank→选中项，解释 LLM 仅重排召回候选，未运行 rerank 则明确标注；③无能力匹配/低置信→NO_SUITABLE_AGENT→TaskRun.rejected，与 execution failed 明显区分；④通过 T49 注册新的兼容 Agent 或禁用现有 Agent，对同一受控任务前后比较候选/选择/拒绝变化，证明变化来自 Registry metadata/status，未增加 Router branch。注册使用已有或预审核的受控 runtime_ref，不演示任意 workflow 上传。尽可能展示 selected Agent、candidate scores/ranks、业务 Run status、routing trace、latency/token metrics 和 Registry state，unknown tokens 如实显示。单独展示真实 benchmark 与配置/限制，执行、mock 和 live 证据清楚区分，视频控制在 3–5 分钟。
 - **Do-not-touch boundaries**: 不要求公有云、不为演示新增 P1 功能、不伪造视频产物/指标、不把 mock 演示称真实 provider 成功、不暴露凭据或私人任务。
-- **Acceptance criteria**: 依脚本能复现展示；实际视频存在、可播放且时长合适，包含关键闭环/拒绝和独立评测说明；服务未验证项清楚显示。
-- **Required tests**: 预演并核对每个场景/状态，检查视频时长/可播放性/内容和链接，确认脱敏及模型环境说明；复用相关 smoke，出现新变化才补回归。
-- **Completion evidence**: 可复现脚本、实际视频路径/链接、时长与检查结果；运行任务检查 → Demo 相关回归 → 检查 `git diff` → 排除无关改动 → focused commit。未录制视频时不能标完成。
+- **Acceptance criteria**: 四个场景均能按脚本复现且视频可播放、时长 3–5 分钟；拒绝与执行失败有明确视觉/状态区别，管理员操作后路由行为改变且 Router 源码未改；体现企业目录与端到端平台故事。所有简历中的功能/性能声明可追溯到验收/benchmark，未验证 live 项明确 NOT VERIFIED，不把 mock 执行称真实 provider 成功。
+- **Required tests**: 预演四场景并核对输入、候选、状态和 trace；用可控 backend 的集成检查验证注册/禁用前后路由变化与 Router 无源码差异；真实预演按实际服务可用性单独记录。检查视频时长/可播放性/链接/脱敏，复用 T49 管理交互及相关 smoke 证据，出现新变化才补回归。
+- **Completion evidence**: 脚本、四场景检查、Registry 变更前后路由证据、Router 无改动证明、视频路径/链接与时长、简历声明对应的实测报告；任务检查 → Demo 回归 → diff review → focused commit → push `origin/agenthub-dev`。未录制视频或未完成必需场景不能标 COMPLETE。
 
 ## 依赖、风险及执行约束
 
@@ -760,7 +777,7 @@ HIGH RISK 任务固定为 T26、T27、T28、T29、T34、T36、T46。各项正文
 - T34/T36：回退新增模式和业务投影，回归手动 Launch/附件/结果。
 - T46：回退必要部署改动且保留数据库，回归标准双服务构建和持久化。
 
-相较早期建议的 57 项，批准计划压缩为 49 项，本文不再次调整任务分解：
+原批准计划由早期 57 项压缩为 49 项；本次只追加轻量 T49，形成 50 项，原 T00–T48 不重编号：
 
 - 合并骨架与 metadata、manifest 与路径解析、embedding 接口与 fake、文本与版本索引、Top-K 与过滤、semantic contract 与 gate。
 - 合并 WorkflowRunService adapter 与 correlation、metrics backend 与 API、ambiguous/no-match 数据任务以及相关 benchmark 指标。
@@ -768,7 +785,7 @@ HIGH RISK 任务固定为 T26、T27、T28、T29、T34、T36、T46。各项正文
 - 明确补入 M1 验收、真实 embedding adapter、受控 re-embed 任务。
 - Runtime outcome、provider failure、业务终态、取消和前端关键风险仍分别验收。
 
-约 15 天是工作块时间盒，不是保证；M1 后复核剩余工作。不得通过删除失败语义、拒绝、测试或旧 Launch 兼容压缩范围。
+约 15 天是工作块时间盒，不是保证：A/B/C/D/E/F 分别约 2/2/3/4/2/2 天；T49 的半天至一天包含在 E 中，F 复用前置验证证据和 benchmark runner。M1 后复核剩余工作；时间紧先削减 dashboard 丰富度、视觉打磨和可选 UI 细节，不删路由拒绝、结构化执行 outcome、测试、向后兼容、Registry 泛化或 benchmark 证据。不得增加 PostgreSQL、Redis、Qdrant、Kafka、Kubernetes、微服务拆分、复杂 RBAC、多租户、Marketplace、动态团队、分布式 scheduler 或复杂 fallback 链来回应本次增强。
 
 ## P0 Critical Path
 
@@ -784,7 +801,9 @@ HIGH RISK 任务固定为 T26、T27、T28、T29、T34、T36、T46。各项正文
 
 完整 MVP 汇合：
 
-`M2 + T14–T17/T22/T24/T32 → T33–T37 → T44/T45/T46`
+`M2 + T14–T17/T22/T24/T32 → T33–T37 + T49 → M3；T44 + T49 → T45 → T46`
+
+管理员支线：`T22 → T49`，最晚 M3 完成；不阻塞 M1 路由正确性或 M2 Runtime 正确性。T45 依赖 T49 是为了验证新增管理入口后的旧页面兼容；前述箭头仍不替代各任务的完整 Dependencies。
 
 评测支线：
 
@@ -798,25 +817,27 @@ HIGH RISK 任务固定为 T26、T27、T28、T29、T34、T36、T46。各项正文
 
 - **M1 — Registry + Semantic Routing**：T00–T13。SQLite 注册、发现、选中/拒绝可确定性复现，无 LLM 和 Runtime 执行依赖。
 - **M2 — End-to-End Agent Execution**：M1 加 T14/T15、T18–T31。通过真实 WorkflowRunService 执行链和 mock provider 验证正常完成、provider 失败仍 completed、workflow 异常及协作取消。
-- **M3 — Observable Demo**：M2 加 T16/T17、T32–T37。自然语言入口、候选、执行、业务状态、trace 和 metrics 连通；真实服务未验证项明确标注。
-- **M4 — Evaluation + Delivery**：增加 T38–T48，完成全部 49 项。60-case 数据、可复现 benchmark、兼容回归、标准 Docker、本地交付文档和视频；真实比较不可用时保留明确未运行状态，不能宣称已取得 live 比较结果。
+- **M3 — Observable Business Demo**：M2 加 T16/T17、T32–T37、T49。业务用户自然语言入口、候选、执行、业务状态、trace/metrics 连通；管理员可登记、查看能力/version/status、启停 Registry 条目，展示目录状态如何影响路由。运行相应 UI/API 集成及旧页面回归；真实服务未验证项明确标注。
+- **M4 — Evaluation + Delivery**：M3 加 T38–T48，完成全部 50 项 T00–T49。60-case 数据、两策略/阈值证据、10/50/100 目录规模实测、兼容回归、标准 Docker、本地文档及四场景业务视频；真实比较不可用时明确未运行，不能声称取得 live 结果。
+
+里程碑成员按上述集合及其前置任务核对。每个 milestone 必须有任务专项测试、跨层集成和相关 legacy 回归证据；只有全部必需验收通过才可应用 [AGENTS.md](AGENTS.md) 的自动合并门禁。M1 用 T13 切片；M2 用 T28–T30 的真实执行链/mock provider 集成；M3 用 T34–T37/T49 的用户与管理员交互集成；M4 用 T43–T48 的评测/回归/部署/交付验收。单任务完成不得直接合并 main；本次文档调整不表示任何里程碑完成。
 
 ## Deferred P1/P2 Work
 
-- **P1 — 明确延后**：richer Dashboard、完整 Run history UI、独立 Agent 管理页、ANN、实证驱动的本地 embedding 优化、有限 fallback、动态团队、公有云部署。公共或不可信多用户开放前须另行 authentication/authorization review。
+- **P1 — 明确延后**：richer Dashboard、完整 Run history UI、超出 T49 的完整 Agent 管理控制台/高级编辑与运营界面、ANN、实证驱动的本地 embedding 优化、有限 fallback、动态团队、公有云部署。T49 是本次明确授权的最小 UI 范围补充，不改变冻结技术架构；设计中原延后的完整管理体验仍留在 P1。公共或不可信多用户开放前须另行 authentication/authorization review。
 - **P2 — 明确延后且不属于当前 MVP**：复杂 RBAC、多租户、Marketplace、分布式 Runtime/Scheduler、Kubernetes、自动扩缩、复杂 fallback、自主动态 DAG。
 - 新 Multi-Agent Framework、复杂 A2A、复杂对话记忆、MCP Tool Router 和替换 ChatDev Runtime 继续属于非目标，不因列出后续阶段而获得实施授权。
 
-这些工作不计入 49 项，也不作为任何 P0 任务或里程碑的验收依赖。
+这些工作不计入 50 项，也不作为任何 P0 任务或里程碑的验收依赖。
 
 ## Recommended First Implementation Task
 
 **Recommended First Implementation Task = T00 — Implementation baseline guard**。
 
-在 TASKS.md 评审后，单独授权的实施会话先确认准确基线、可用验证环境和继承阻塞项。创建本文件的文档任务到此停止，不执行 T00 或任何后续任务。本文所有任务状态均为 NOT STARTED；要求的 tests/evidence 是未来任务完成条件，不是本次已执行声明。
+在 TASKS.md 评审后，单独授权的实施会话先确认准确基线、可用验证环境和继承阻塞项。本次文档调整在验证、commit/push 后停止，不执行 T00 或任何后续任务。本文所有任务状态均为 NOT STARTED；要求的 tests/evidence 是未来任务完成条件，不是本次已执行声明。
 
 ## 文档交付自检要求
 
-创建或调整此清单时须完整检查：49 个任务定义 T00–T48 各一次、每项 11 个必填字段、有效且无环依赖、功能验收与测试、七项 HIGH RISK 的回退/回归/最小改动 guidance、M1–M4、P0 Critical Path、Deferred P1/P2、首项 T00 和未开始实施的边界。任务引用可重复，唯一性检查针对任务定义而非全文提及次数。
+创建或调整此清单时须完整检查：50 个 P0 任务定义 T00–T49 各一次（原 T00–T48 不重编号）、每项 11 个必填字段、有效且无环依赖、功能验收与测试、七项 HIGH RISK 的回退/回归/最小改动 guidance、M1–M4、P0 Critical Path、Deferred P1/P2、首项 T00 与未开始实施的边界。另核对 T32 企业研发/知识工作目录、T43 规模性能证据、T48 四场景业务视频、T49 完整验收/测试、M3 管理员体验、约 15 天时间盒、逐任务 push 与 milestone merge 门禁。任务引用可重复，唯一性检查针对任务定义而非全文提及次数；冻结架构与生产源码不得因此变更。
 
-运行 `git status` 和 `git diff -- TASKS.md`；若文件未跟踪，则直接完整读取或使用 `git diff --no-index -- /dev/null TASKS.md`。只 add/commit TASKS.md，不带入既有项目文档改动；不合并分支。本次创建按用户明确要求使用 focused documentation commit，建议消息 `docs: add AgentHub P0 implementation tasks`；不执行任何功能测试或实施任务。
+本次运行 `git status` 和 `git diff -- AGENTS.md TASKS.md` 并完整审阅；验证 `git branch --show-current` 为 agenthub-dev、`git remote -v` 中 origin 为 `git@github.com:hongmuyu/AgentHub.git`。origin 缺失才添加；指向其他地址时不得静默覆盖。仅 stage 授权的 AGENTS.md/TASKS.md，focused commit 建议 `docs: refine AgentHub P0 tasks and git workflow`，然后 `git push -u origin agenthub-dev`。保留无关工作区内容，不 force push，不合并 main；不执行 T00 或功能任务。
