@@ -74,6 +74,12 @@ def _validate_vectors(
     return tuple(validated)
 
 
+def validate_vector(vector: Sequence[float], *, model_key: str, dimensions: int) -> Vector:
+    """Validate a persisted vector with the same rules as backend output."""
+    _validate_identity(model_key, dimensions)
+    return _validate_vectors((vector,), count=1, dimensions=dimensions)[0]
+
+
 def checked_embed(backend: EmbeddingBackend, texts: Iterable[str]) -> EmbeddingBatch:
     """Call a backend once and validate its ordered batch for cosine use."""
     model_key, dimensions = backend.model_key, backend.dimensions
