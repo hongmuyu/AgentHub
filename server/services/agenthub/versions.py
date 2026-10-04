@@ -110,6 +110,49 @@ class AgentVersionRepository:
         snapshot: AgentMetadataVersion,
         updated_at: datetime,
     ) -> None:
+        self.insert_next_snapshot(connection, snapshot, updated_at)
+        self.switch_current(connection, snapshot, updated_at)
+
+    def insert_next_snapshot(
+        self,
+        connection: sqlite3.Connection,
+        snapshot: AgentMetadataVersion,
+        updated_at: datetime,
+    ) -> None:
+        """Stage the next immutable version without exposing it as current."""
+        self._require_transaction(connection)
+        row = connection.execute(
+            "SELECT current_version, updated_at FROM agenthub_agents WHERE agent_id = ?",
+            (str(snapshot.id),),
+        ).fetchone()
+        if row is None:
+            raise LookupError("Agent identity does not exist")
+        if snapshot.version != row[0] + 1:
+            raise ValueError("snapshot must be the next version")
+        if updated_at.tzinfo is None or updated_at.utcoffset() is None:
+            raise ValueError("updated_at must include a UTC offset")
+        if updated_at.astimezone(timezone.utc) < datetime.fromisoformat(row[1]):
+            raise ValueError("updated_at must not precede the current timestamp")
+
+        connection.execute(
+            """
+            INSERT INTO agenthub_agent_versions (agent_id, version, content_json)
+            VALUES (?, ?, ?)
+            """,
+            (
+                str(snapshot.id),
+                snapshot.version,
+                snapshot.model_dump_json(exclude={"id", "version"}),
+            ),
+        )
+
+    def switch_current(
+        self,
+        connection: sqlite3.Connection,
+        snapshot: AgentMetadataVersion,
+        updated_at: datetime,
+    ) -> None:
+        """Switch the identity pointer after its new version is ready."""
         self._require_transaction(connection)
         row = connection.execute(
             "SELECT current_version, updated_at FROM agenthub_agents WHERE agent_id = ?",
@@ -124,18 +167,6 @@ class AgentVersionRepository:
         timestamp = updated_at.astimezone(timezone.utc)
         if timestamp < datetime.fromisoformat(row[1]):
             raise ValueError("updated_at must not precede the current timestamp")
-
-        connection.execute(
-            """
-            INSERT INTO agenthub_agent_versions (agent_id, version, content_json)
-            VALUES (?, ?, ?)
-            """,
-            (
-                str(snapshot.id),
-                snapshot.version,
-                snapshot.model_dump_json(exclude={"id", "version"}),
-            ),
-        )
         cursor = connection.execute(
             """
             UPDATE agenthub_agents SET current_version = ?, updated_at = ?

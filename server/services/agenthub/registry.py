@@ -40,6 +40,24 @@ class AgentRegistry:
             self.index.insert_many(connection, (embedding,))
         return agent
 
+    def update(
+        self, agent_id: UUID, content: AgentMetadataInput | Mapping[str, object]
+    ) -> AgentMetadata:
+        current = self.get(agent_id)
+        if current is None:
+            raise LookupError("Agent identity does not exist")
+        metadata = AgentMetadataInput.model_validate(content)
+        self.validator.validate(metadata.runtime_ref)
+        updated = current.update_content(metadata)
+        embedding = prepare_embeddings((updated.snapshot,), self.backend)[0]
+        with self.database.transaction() as connection:
+            self.versions.insert_next_snapshot(
+                connection, updated.snapshot, updated.updated_at
+            )
+            self.index.insert_many(connection, (embedding,))
+            self.versions.switch_current(connection, updated.snapshot, updated.updated_at)
+        return updated
+
     def get(self, agent_id: UUID) -> AgentMetadata | None:
         return self.versions.get_current(agent_id)
 

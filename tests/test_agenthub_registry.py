@@ -203,3 +203,149 @@ def test_list_rejects_invalid_pagination(tmp_path, limit, offset):
     registry, _ = _registry(tmp_path)
     with pytest.raises(ValueError):
         registry.list(limit=limit, offset=offset)
+
+
+def test_update_advances_versions_after_indexing_and_preserves_history(tmp_path):
+    initial_content = _content()
+    reference_only = _content(runtime_ref="workflow://research-agent/2")
+    changed_content = _content(
+        "Research Plus", capabilities=("Compare technical docs",),
+        runtime_ref="workflow://research-agent/2",
+    )
+    registry, database = _registry(tmp_path, initial_content, changed_content)
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(
+        json.dumps({REFERENCE: "research.yaml", reference_only.runtime_ref: "research.yaml"}),
+        encoding="utf-8",
+    )
+    initial = registry.register(initial_content)
+    agent_id = initial.snapshot.id
+    first_index = registry.index.get(agent_id, 1, "fake-v1")
+    assert first_index is not None
+    with database.transaction() as connection:
+        connection.execute(
+            """CREATE TRIGGER index_before_current_switch
+               BEFORE INSERT ON agenthub_agent_embeddings
+               WHEN NEW.version = 2 AND
+                    (SELECT current_version FROM agenthub_agents
+                     WHERE agent_id = NEW.agent_id) != 1
+               BEGIN SELECT RAISE(ABORT, 'current switched before indexing'); END"""
+        )
+
+    second = registry.update(agent_id, reference_only.model_dump())
+    third = registry.update(agent_id, changed_content)
+
+    assert [agent.snapshot.version for agent in (initial, second, third)] == [1, 2, 3]
+    assert all(agent.snapshot.id == agent_id for agent in (initial, second, third))
+    assert registry.get(agent_id) == third
+    assert registry.versions.get_version(agent_id, 1) == initial.snapshot
+    assert registry.versions.get_version(agent_id, 2) == second.snapshot
+    assert registry.versions.get_version(agent_id, 3) == third.snapshot
+    assert first_index == registry.index.get(agent_id, 1, "fake-v1")
+    second_index = registry.index.get(agent_id, 2, "fake-v1")
+    third_index = registry.index.get(agent_id, 3, "fake-v1")
+    assert second_index is not None and third_index is not None
+    assert second.snapshot.runtime_ref == reference_only.runtime_ref
+    assert second_index.metadata_hash == first_index.metadata_hash
+    assert second_index.vector == first_index.vector
+    assert third_index.metadata_hash != second_index.metadata_hash
+    assert third_index.vector != second_index.vector
+    reopened = AgentRegistry(AgentHubDatabase(database.path), registry.validator, registry.backend)
+    assert reopened.get(agent_id) == third
+    assert reopened.versions.get_version(agent_id, 1) == initial.snapshot
+    assert reopened.index.get(agent_id, 2, "fake-v1") == second_index
+
+
+def test_update_keeps_disabled_identity_disabled(tmp_path):
+    original = _content()
+    changed = _content("Updated Research Agent")
+    registry, database = _registry(tmp_path, original, changed)
+    disabled = AgentMetadata.register(original).set_status("disabled")
+    with database.transaction() as connection:
+        registry.versions.insert_initial(connection, disabled)
+        registry.index.insert_many(
+            connection, prepare_embeddings((disabled.snapshot,), registry.backend)
+        )
+
+    updated = registry.update(disabled.snapshot.id, changed)
+
+    assert updated.status == "disabled"
+    assert updated.snapshot.version == 2
+    assert registry.get(disabled.snapshot.id) == updated
+    assert registry.list() == ()
+    assert registry.list(status="disabled") == (updated,)
+    assert registry.versions.get_version(disabled.snapshot.id, 1) == disabled.snapshot
+    assert registry.index.get(disabled.snapshot.id, 2, "fake-v1") is not None
+
+
+def test_update_validation_or_embedding_failure_keeps_old_version(tmp_path):
+    original = _content()
+    registry, _ = _registry(tmp_path, original)
+    initial = registry.register(original)
+    agent_id = initial.snapshot.id
+    first_index = registry.index.get(agent_id, 1, "fake-v1")
+
+    with pytest.raises(ValidationError):
+        registry.update(agent_id, {**original.model_dump(), "capabilities": ()})
+    with pytest.raises(RuntimeReferenceError):
+        registry.update(agent_id, _content(runtime_ref="workflow://unknown/1"))
+    with pytest.raises(KeyError):
+        registry.update(agent_id, _content("Unconfigured Agent"))
+
+    assert registry.get(agent_id) == initial
+    assert registry.versions.get_version(agent_id, 2) is None
+    assert registry.index.get(agent_id, 1, "fake-v1") == first_index
+    assert registry.index.get(agent_id, 2, "fake-v1") is None
+
+
+def test_update_index_write_failure_rolls_back_version_and_current(tmp_path):
+    original = _content()
+    changed = _content("Updated Research Agent")
+    registry, database = _registry(tmp_path, original, changed)
+    initial = registry.register(original)
+    agent_id = initial.snapshot.id
+    first_index = registry.index.get(agent_id, 1, "fake-v1")
+    with database.transaction() as connection:
+        connection.execute(
+            """CREATE TRIGGER reject_next_index BEFORE INSERT ON agenthub_agent_embeddings
+               WHEN NEW.version = 2 BEGIN SELECT RAISE(ABORT, 'index failure'); END"""
+        )
+
+    with pytest.raises(sqlite3.IntegrityError, match="index failure"):
+        registry.update(agent_id, changed)
+
+    assert registry.get(agent_id) == initial
+    assert registry.versions.get_version(agent_id, 2) is None
+    assert registry.index.get(agent_id, 1, "fake-v1") == first_index
+    assert registry.index.get(agent_id, 2, "fake-v1") is None
+
+
+def test_update_current_switch_failure_rolls_back_new_index(tmp_path):
+    original = _content()
+    changed = _content("Updated Research Agent")
+    registry, database = _registry(tmp_path, original, changed)
+    initial = registry.register(original)
+    agent_id = initial.snapshot.id
+    with database.transaction() as connection:
+        connection.execute(
+            """CREATE TRIGGER reject_current_switch BEFORE UPDATE ON agenthub_agents
+               WHEN NEW.current_version = 2
+               BEGIN SELECT RAISE(ABORT, 'switch failure'); END"""
+        )
+
+    with pytest.raises(sqlite3.IntegrityError, match="switch failure"):
+        registry.update(agent_id, changed)
+
+    assert registry.get(agent_id) == initial
+    assert registry.versions.get_version(agent_id, 2) is None
+    assert registry.index.get(agent_id, 2, "fake-v1") is None
+
+
+def test_update_unknown_agent_does_not_create_identity(tmp_path):
+    content = _content()
+    registry, _ = _registry(tmp_path, content)
+    unknown_id = uuid4()
+    with pytest.raises(LookupError, match="does not exist"):
+        registry.update(unknown_id, content)
+    assert registry.get(unknown_id) is None
+    assert registry.list(include_disabled=True) == ()

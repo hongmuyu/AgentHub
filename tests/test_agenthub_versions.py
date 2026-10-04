@@ -2,6 +2,7 @@
 
 import json
 import sqlite3
+from datetime import timedelta
 from uuid import uuid4
 
 import pytest
@@ -88,6 +89,20 @@ def test_later_failure_rolls_back_version_insert_and_current_switch(tmp_path):
         with database.transaction() as connection:
             repository.insert_next(connection, updated.snapshot, updated.updated_at)
             raise RuntimeError("later index failure")
+
+    assert repository.get_current(initial.snapshot.id) == initial
+    assert repository.get_version(initial.snapshot.id, 2) is None
+
+
+def test_caught_invalid_timestamp_does_not_stage_new_version(tmp_path):
+    database, repository, initial = _stored(tmp_path)
+    updated = _updated(initial)
+
+    with database.transaction() as connection:
+        with pytest.raises(ValueError, match="updated_at"):
+            repository.insert_next(
+                connection, updated.snapshot, initial.updated_at - timedelta(seconds=1)
+            )
 
     assert repository.get_current(initial.snapshot.id) == initial
     assert repository.get_version(initial.snapshot.id, 2) is None
