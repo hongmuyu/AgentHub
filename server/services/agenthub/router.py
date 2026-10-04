@@ -1,11 +1,12 @@
 """Semantic Agent selection and confidence gating before runtime execution."""
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Literal, Protocol
 
 from .discovery import DiscoveryCandidate
 from .embeddings import EmbeddingValidationError
+from .reranker import RerankAdapter, RerankError, RerankResult
 from .runtime_resolver import RuntimeReferenceError
 
 
@@ -37,7 +38,8 @@ class RoutingResult:
     selected_agent: DiscoveryCandidate | None = None
     reason_code: str | None = None
     error_code: str | None = None
-    strategy: Literal["semantic"] = "semantic"
+    strategy: Literal["semantic", "semantic_llm"] = "semantic"
+    rerank_result: RerankResult | None = None
 
 
 class SemanticRouter:
@@ -71,4 +73,42 @@ class SemanticRouter:
         return RoutingResult(
             status="selected", candidates=candidates, threshold=self.threshold,
             selected_agent=candidates[0],
+        )
+
+
+class SemanticLLMRouter:
+    """Apply candidate-only reranking after the shared semantic gate."""
+
+    def __init__(self, semantic_router: SemanticRouter, reranker: RerankAdapter) -> None:
+        self.semantic_router = semantic_router
+        self.reranker = reranker
+
+    def route(self, task: str) -> RoutingResult:
+        semantic = self.semantic_router.route(task)
+        if semantic.status != "selected":
+            return replace(semantic, strategy="semantic_llm")
+
+        try:
+            reranked = self.reranker.rerank(task, semantic.candidates)
+        except RerankError as error:
+            error_code = error.code
+        except Exception:
+            error_code = "RERANK_SERVICE_ERROR"
+        else:
+            by_id = {candidate.agent_id: candidate for candidate in semantic.candidates}
+            ordered_ids = reranked.ordered_candidate_ids
+            if (
+                ordered_ids
+                and len(set(ordered_ids)) == len(ordered_ids)
+                and all(agent_id in by_id for agent_id in ordered_ids)
+            ):
+                return replace(
+                    semantic, strategy="semantic_llm",
+                    selected_agent=by_id[ordered_ids[0]], rerank_result=reranked,
+                )
+            error_code = "RERANK_INVALID_RESPONSE"
+
+        return replace(
+            semantic, status="failed", strategy="semantic_llm",
+            selected_agent=None, error_code=error_code,
         )
