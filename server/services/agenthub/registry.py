@@ -4,7 +4,7 @@ from typing import Literal, Mapping
 from uuid import UUID
 
 from .database import AgentHubDatabase
-from .discovery import prepare_embeddings
+from .discovery import metadata_hash, prepare_embeddings
 from .embedding_index import AgentEmbeddingRepository
 from .embeddings import EmbeddingBackend
 from .metadata import AgentMetadata, AgentMetadataInput
@@ -13,6 +13,12 @@ from .versions import AgentVersionRepository
 
 
 Status = Literal["active", "disabled"]
+
+
+class AgentIndexNotReadyError(ValueError):
+    def __init__(self) -> None:
+        self.code = "INDEX_NOT_READY"
+        super().__init__(self.code)
 
 
 class AgentRegistry:
@@ -60,6 +66,41 @@ class AgentRegistry:
 
     def get(self, agent_id: UUID) -> AgentMetadata | None:
         return self.versions.get_current(agent_id)
+
+    def disable(self, agent_id: UUID) -> AgentMetadata:
+        current = self.get(agent_id)
+        if current is None:
+            raise LookupError("Agent identity does not exist")
+        if current.status == "disabled":
+            return current
+        return self._change_status(current, "disabled")
+
+    def enable(self, agent_id: UUID) -> AgentMetadata:
+        current = self.get(agent_id)
+        if current is None:
+            raise LookupError("Agent identity does not exist")
+        if current.status == "active":
+            return current
+        self.validator.validate(current.snapshot.runtime_ref)
+        try:
+            embedding = self.index.get(
+                agent_id, current.snapshot.version, self.backend.model_key
+            )
+        except (TypeError, ValueError):
+            raise AgentIndexNotReadyError() from None
+        if (
+            embedding is None
+            or embedding.dimensions != self.backend.dimensions
+            or embedding.metadata_hash != metadata_hash(current.snapshot)
+        ):
+            raise AgentIndexNotReadyError()
+        return self._change_status(current, "active")
+
+    def _change_status(self, current: AgentMetadata, status: Status) -> AgentMetadata:
+        changed = current.set_status(status)
+        with self.database.transaction() as connection:
+            self.versions.update_status(connection, current, changed)
+        return changed
 
     def list(
         self,

@@ -13,7 +13,7 @@ from server.services.agenthub.discovery import discovery_text, metadata_hash, pr
 from server.services.agenthub.embedding_index import AgentEmbeddingRepository
 from server.services.agenthub.embeddings import FakeEmbeddingBackend
 from server.services.agenthub.metadata import AgentMetadata, AgentMetadataInput
-from server.services.agenthub.registry import AgentRegistry
+from server.services.agenthub.registry import AgentIndexNotReadyError, AgentRegistry
 from server.services.agenthub.runtime_resolver import RuntimeRefResolver, RuntimeReferenceError
 from server.services.agenthub.thin_workflow import ThinWorkflowValidator, WorkflowValidationError
 from server.services.agenthub.versions import AgentVersionRepository
@@ -348,4 +348,132 @@ def test_update_unknown_agent_does_not_create_identity(tmp_path):
     with pytest.raises(LookupError, match="does not exist"):
         registry.update(unknown_id, content)
     assert registry.get(unknown_id) is None
+    assert registry.list(include_disabled=True) == ()
+
+
+def test_disable_enable_are_idempotent_and_preserve_selected_snapshot(tmp_path):
+    content = _content()
+    registry, database = _registry(tmp_path, content)
+    initial = registry.register(content)
+    agent_id = initial.snapshot.id
+    selected_snapshot = initial.snapshot
+    first_index = registry.index.get(agent_id, 1, "fake-v1")
+    assert first_index is not None
+
+    disabled = registry.disable(agent_id)
+    assert disabled.status == "disabled"
+    assert disabled.updated_at > initial.updated_at
+    assert disabled.snapshot == selected_snapshot
+    assert registry.get(agent_id) == disabled
+    assert registry.list() == ()
+    assert registry.list(status="disabled") == (disabled,)
+    assert registry.disable(agent_id) == disabled
+    assert registry.get(agent_id).updated_at == disabled.updated_at
+
+    enabled = registry.enable(agent_id)
+    assert enabled.status == "active"
+    assert enabled.updated_at > disabled.updated_at
+    assert enabled.snapshot == selected_snapshot
+    assert registry.enable(agent_id) == enabled
+    assert registry.list() == (enabled,)
+    assert registry.versions.get_version(agent_id, 1) == selected_snapshot
+    assert registry.versions.get_version(agent_id, 2) is None
+    assert registry.index.get(agent_id, 1, "fake-v1") == first_index
+    assert initial.status == "active"
+    reopened = AgentRegistry(AgentHubDatabase(database.path), registry.validator, registry.backend)
+    assert reopened.get(agent_id) == enabled
+
+
+def test_enable_rechecks_manifest_and_preserves_disabled_on_failure(tmp_path):
+    content = _content()
+    registry, _ = _registry(tmp_path, content)
+    agent = registry.register(content)
+    disabled = registry.disable(agent.snapshot.id)
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text("{}", encoding="utf-8")
+
+    with pytest.raises(RuntimeReferenceError) as error:
+        registry.enable(agent.snapshot.id)
+    assert error.value.code == "UNKNOWN_RUNTIME_REF"
+    assert registry.get(agent.snapshot.id) == disabled
+    assert registry.versions.get_version(agent.snapshot.id, 2) is None
+
+    manifest.write_text(json.dumps({REFERENCE: "research.yaml"}), encoding="utf-8")
+    assert registry.enable(agent.snapshot.id).status == "active"
+
+
+def test_enable_rechecks_workflow_validation(tmp_path):
+    content = _content()
+    registry, _ = _registry(tmp_path, content)
+    agent = registry.register(content)
+    disabled = registry.disable(agent.snapshot.id)
+    (tmp_path / "workflows" / "research.yaml").write_text("graph: [", encoding="utf-8")
+
+    with pytest.raises(WorkflowValidationError):
+        registry.enable(agent.snapshot.id)
+    assert registry.get(agent.snapshot.id) == disabled
+
+
+@pytest.mark.parametrize("damage", ["missing", "wrong_hash", "bad_vector"])
+def test_enable_rejects_missing_or_invalid_current_index(tmp_path, damage):
+    content = _content()
+    registry, database = _registry(tmp_path, content)
+    agent = registry.register(content)
+    disabled = registry.disable(agent.snapshot.id)
+    with database.transaction() as connection:
+        if damage == "missing":
+            connection.execute("DELETE FROM agenthub_agent_embeddings")
+        elif damage == "wrong_hash":
+            connection.execute(
+                "UPDATE agenthub_agent_embeddings SET metadata_hash = ?", ("0" * 64,)
+            )
+        else:
+            connection.execute(
+                "UPDATE agenthub_agent_embeddings SET vector_json = ?", ('[0.0, 0.0]',)
+            )
+
+    with pytest.raises(AgentIndexNotReadyError) as error:
+        registry.enable(agent.snapshot.id)
+    assert error.value.code == "INDEX_NOT_READY"
+    assert registry.get(agent.snapshot.id) == disabled
+    assert registry.versions.get_version(agent.snapshot.id, 2) is None
+
+
+@pytest.mark.parametrize("model_key,dimensions", [("fake-v2", 2), ("fake-v1", 3)])
+def test_enable_requires_current_backend_model_and_dimensions(tmp_path, model_key, dimensions):
+    content = _content()
+    registry, _ = _registry(tmp_path, content)
+    agent = registry.register(content)
+    disabled = registry.disable(agent.snapshot.id)
+    registry.backend = FakeEmbeddingBackend({}, model_key=model_key, dimensions=dimensions)
+
+    with pytest.raises(AgentIndexNotReadyError):
+        registry.enable(agent.snapshot.id)
+    assert registry.get(agent.snapshot.id) == disabled
+
+
+def test_failed_status_write_leaves_identity_and_version_unchanged(tmp_path):
+    content = _content()
+    registry, database = _registry(tmp_path, content)
+    agent = registry.register(content)
+    with database.transaction() as connection:
+        connection.execute(
+            """CREATE TRIGGER reject_disable BEFORE UPDATE ON agenthub_agents
+               WHEN NEW.status = 'disabled'
+               BEGIN SELECT RAISE(ABORT, 'status write failure'); END"""
+        )
+
+    with pytest.raises(sqlite3.IntegrityError, match="status write failure"):
+        registry.disable(agent.snapshot.id)
+    assert registry.get(agent.snapshot.id) == agent
+    assert registry.versions.get_version(agent.snapshot.id, 2) is None
+
+
+def test_enable_disable_unknown_agent_do_not_create_identity(tmp_path):
+    registry, _ = _registry(tmp_path)
+    agent_id = uuid4()
+    with pytest.raises(LookupError, match="does not exist"):
+        registry.disable(agent_id)
+    with pytest.raises(LookupError, match="does not exist"):
+        registry.enable(agent_id)
     assert registry.list(include_disabled=True) == ()

@@ -1,7 +1,7 @@
 """Business Agent metadata, separate from runtime AgentConfig."""
 
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Literal
 from uuid import UUID, uuid4
 
@@ -137,5 +137,5 @@ class AgentMetadata(BaseModel):
             snapshot=self.snapshot,
             status=status,
             created_at=self.created_at,
-            updated_at=max(datetime.now(timezone.utc), self.updated_at),
+            updated_at=max(datetime.now(timezone.utc), self.updated_at + timedelta(microseconds=1)),
         )

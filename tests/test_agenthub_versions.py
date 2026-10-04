@@ -108,6 +108,20 @@ def test_caught_invalid_timestamp_does_not_stage_new_version(tmp_path):
     assert repository.get_version(initial.snapshot.id, 2) is None
 
 
+def test_status_write_rejects_stale_current_version(tmp_path):
+    database, repository, initial = _stored(tmp_path)
+    updated = _updated(initial)
+    with database.transaction() as connection:
+        repository.insert_next(connection, updated.snapshot, updated.updated_at)
+
+    with pytest.raises(RuntimeError, match="changed during status update"):
+        with database.transaction() as connection:
+            repository.update_status(connection, initial, initial.set_status("disabled"))
+
+    assert repository.get_current(initial.snapshot.id) == updated
+    assert repository.get_version(initial.snapshot.id, 1) == initial.snapshot
+
+
 def test_duplicate_version_and_skipped_version_are_rejected(tmp_path):
     database, repository, initial = _stored(tmp_path)
     with database.connection() as connection:

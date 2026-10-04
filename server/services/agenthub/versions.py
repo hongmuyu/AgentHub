@@ -236,6 +236,35 @@ class AgentVersionRepository:
             for row in rows
         )
 
+    def update_status(
+        self, connection: sqlite3.Connection, before: AgentMetadata, after: AgentMetadata
+    ) -> None:
+        """Change only identity status if its validated version is still current."""
+        self._require_transaction(connection)
+        if (
+            before.snapshot != after.snapshot
+            or before.created_at != after.created_at
+            or before.status == after.status
+            or after.updated_at <= before.updated_at
+        ):
+            raise ValueError("status update must preserve the version and advance time")
+        cursor = connection.execute(
+            """
+            UPDATE agenthub_agents SET status = ?, updated_at = ?
+            WHERE agent_id = ? AND current_version = ? AND status = ? AND updated_at = ?
+            """,
+            (
+                after.status,
+                after.updated_at.isoformat(),
+                str(before.snapshot.id),
+                before.snapshot.version,
+                before.status,
+                before.updated_at.isoformat(),
+            ),
+        )
+        if cursor.rowcount != 1:
+            raise RuntimeError("Agent changed during status update")
+
     @staticmethod
     def _snapshot(agent_id: UUID, version: int, content_json: str) -> AgentMetadataVersion:
         content = AgentMetadataInput.model_validate_json(content_json)
