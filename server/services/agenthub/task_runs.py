@@ -3,6 +3,7 @@
 import json
 import re
 import sqlite3
+from contextlib import nullcontext
 from datetime import datetime, timezone
 from typing import Literal
 from uuid import UUID, uuid4
@@ -166,11 +167,11 @@ class TaskRunRepository:
             ),
         )
 
-    def get(self, run_id: UUID) -> TaskRun | None:
+    def get(self, run_id: UUID, *, connection: sqlite3.Connection | None = None) -> TaskRun | None:
         if not isinstance(run_id, UUID) or run_id.int == 0:
             raise ValueError("run_id must be a non-nil UUID")
-        with self.database.connection() as connection:
-            row = connection.execute(
+        with nullcontext(connection) if connection is not None else self.database.connection() as db:
+            row = db.execute(
                 """
                 SELECT run_id, task, attachment_ids_json, strategy, status, created_at,
                        session_id, started_at, finished_at, routing_trace_id, agent_run_id,

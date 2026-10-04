@@ -3,6 +3,7 @@
 import json
 import re
 import sqlite3
+from contextlib import nullcontext
 from datetime import datetime, timezone
 from typing import Literal
 from uuid import UUID
@@ -219,11 +220,13 @@ class AgentRunRepository:
         if linked.rowcount != 1:
             raise ValueError("TaskRun already has an AgentRun reference")
 
-    def get_by_run_id(self, run_id: UUID) -> AgentRun | None:
+    def get_by_run_id(
+        self, run_id: UUID, *, connection: sqlite3.Connection | None = None
+    ) -> AgentRun | None:
         if not isinstance(run_id, UUID) or run_id.int == 0:
             raise ValueError("run_id must be a non-nil UUID")
-        with self.database.connection() as connection:
-            row = connection.execute(
+        with nullcontext(connection) if connection is not None else self.database.connection() as db:
+            row = db.execute(
                 """
                 SELECT agent_run_id, run_id, agent_id, agent_version, runtime_ref,
                        session_id, workflow_id, workflow_revision, node_id, status,
