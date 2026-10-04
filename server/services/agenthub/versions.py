@@ -180,6 +180,31 @@ class AgentVersionRepository:
             return None
         return self._snapshot(agent_id, version, row[0])
 
+    def list_current(self, status: str | None = None) -> tuple[AgentMetadata, ...]:
+        """Read current directory entries in stable identity order."""
+        with self.database.connection() as connection:
+            rows = connection.execute(
+                """
+                SELECT a.agent_id, a.status, a.created_at, a.updated_at,
+                       v.version, v.content_json
+                FROM agenthub_agents AS a
+                JOIN agenthub_agent_versions AS v
+                  ON v.agent_id = a.agent_id AND v.version = a.current_version
+                WHERE (? IS NULL OR a.status = ?)
+                ORDER BY a.agent_id
+                """,
+                (status, status),
+            ).fetchall()
+        return tuple(
+            AgentMetadata(
+                snapshot=self._snapshot(UUID(row[0]), row[4], row[5]),
+                status=row[1],
+                created_at=row[2],
+                updated_at=row[3],
+            )
+            for row in rows
+        )
+
     @staticmethod
     def _snapshot(agent_id: UUID, version: int, content_json: str) -> AgentMetadataVersion:
         content = AgentMetadataInput.model_validate_json(content_json)
