@@ -1,7 +1,11 @@
 """Task submission preserves routing decisions before any workflow dispatch."""
 
+import asyncio
 import json
+import time
 from pathlib import Path
+from threading import Event
+from unittest.mock import AsyncMock
 from uuid import UUID, uuid4
 
 import pytest
@@ -9,6 +13,8 @@ import yaml
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from entity.messages import Message, MessageRole
+from runtime.node.agent import ModelResponse
 from server.services.agenthub.agent_runs import AgentRunRepository
 from server.services.agenthub.database import AgentHubDatabase
 from server.services.agenthub.discovery import DiscoveryCandidate, PublicAgentMetadata
@@ -22,8 +28,9 @@ from server.services.agenthub.task_service import TaskSubmissionService
 from server.services.agenthub.thin_workflow import ThinWorkflowValidator
 from server.services.agenthub.versions import AgentVersionRepository
 from server.services.attachment_service import AttachmentService
-from server.services.session_store import WorkflowSessionStore
+from server.services.session_store import SessionStatus, WorkflowSessionStore
 from server.services.websocket_manager import WebSocketManager
+from server.services.websocket_executor import WebSocketGraphExecutor
 from server.routes import ALL_ROUTERS, agenthub_tasks
 
 
@@ -354,3 +361,284 @@ def test_unconfigured_service_returns_safe_unavailable():
         })
     assert response.status_code == 503
     assert response.json()["detail"]["code"] == "TASK_SERVICE_NOT_CONFIGURED"
+
+
+def _install_web_dispatcher(api, monkeypatch):
+    from server.services.agenthub.workflow_dispatcher import AgentHubWorkflowDispatcher
+
+    workflow_root = api["manifest"].parent / "workflows"
+    service = api["manager"].workflow_run_service
+    monkeypatch.setattr(service, "_resolve_yaml_path", lambda name: workflow_root / name)
+    monkeypatch.setattr(
+        "server.services.workflow_run_service.WARE_HOUSE_DIR",
+        api["manifest"].parent / "results",
+    )
+    api["service"].dispatcher = AgentHubWorkflowDispatcher(
+        api["database"], api["manager"], api["service"].validator,
+    )
+    return service
+
+
+def _wait_for_run_status(api, run_id, status):
+    deadline = time.monotonic() + 5
+    while time.monotonic() < deadline:
+        run = api["runs"].get(run_id)
+        if run.status == status:
+            return run
+        time.sleep(0.01)
+    return api["runs"].get(run_id)
+
+
+def test_selected_task_uses_real_web_chain_and_preserves_correlation_and_attachment_ids(
+    api, monkeypatch,
+):
+    service = _install_web_dispatcher(api, monkeypatch)
+    completed = Event()
+    observed = {}
+    model_calls = []
+
+    class FixtureProvider:
+        def __init__(self, config):
+            self.config = config
+
+        def create_client(self):
+            return object()
+
+        def call_model(self, client, **kwargs):
+            model_calls.append(kwargs["conversation"])
+            return ModelResponse(message=Message(role=MessageRole.ASSISTANT, content="answer"))
+
+    monkeypatch.setattr(
+        "runtime.node.executor.agent_executor.ProviderRegistry.get_provider",
+        lambda name: FixtureProvider,
+    )
+    monkeypatch.setattr(api["manager"], "send_message_sync", lambda *args: None)
+    original_start = service.start_workflow
+    original_execute = WebSocketGraphExecutor.execute_graph_async
+
+    async def capture_start(*args, **kwargs):
+        observed["start"] = (args, kwargs)
+        try:
+            await original_start(*args, **kwargs)
+        finally:
+            completed.set()
+
+    async def capture_execute(self, task_input):
+        observed["executor"] = self
+        observed["task_input"] = task_input
+        await original_execute(self, task_input)
+
+    monkeypatch.setattr(service, "start_workflow", capture_start)
+    monkeypatch.setattr(WebSocketGraphExecutor, "execute_graph_async", capture_execute)
+    attachment = api["manager"].attachment_service.get_attachment_store(
+        api["session_id"]
+    ).register_bytes(b"report", display_name="report.txt")
+
+    response = _submit(api, attachments=[attachment.ref.attachment_id])
+
+    assert response.status_code == 202
+    assert response.json()["status"] == "running"
+    assert completed.wait(5)
+    run_id = UUID(response.json()["run_id"])
+    run = api["runs"].get(run_id)
+    execution = api["executions"].get_by_run_id(run_id)
+    session = api["manager"].session_store.get_session(api["session_id"])
+    args, kwargs = observed["start"]
+    recorder = kwargs["outcome_recorder"]
+    assert run.status == "running"  # T29 owns successful terminal projection.
+    assert run.agent_run_id == execution.agent_run_id
+    assert execution.runtime_ref == REFERENCE
+    assert execution.workflow_id == "thin_research"
+    assert execution.node_id == "agent"
+    assert execution.session_id == api["session_id"] != str(run_id)
+    assert args == (api["session_id"], "research.yaml", TASK, api["manager"])
+    assert kwargs["attachments"] == [attachment.ref.attachment_id]
+    assert recorder.run_id == run_id
+    assert recorder.node_id == execution.node_id
+    assert recorder.read().outcome.state == "succeeded"
+    assert observed["executor"].session_id == api["session_id"]
+    assert observed["executor"]._get_execution_context().outcome_recorder is recorder
+    assert session.status == SessionStatus.COMPLETED
+    assert session.task_attachments == [attachment.ref.attachment_id]
+    assert model_calls
+    assert any(
+        block.attachment and block.attachment.attachment_id == attachment.ref.attachment_id
+        for message in observed["task_input"] for block in message.blocks()
+    )
+    assert {event["type"] for event in session.message_buffer} >= {
+        "workflow_started", "workflow_completed",
+    }
+
+
+@pytest.mark.parametrize("change,expected_code", [
+    ("manifest", "RUNTIME_REF_INVALID"),
+    ("remapped", "RUNTIME_REF_INVALID"),
+    ("web_target", "RUNTIME_REF_INVALID"),
+    ("removed", "RUNTIME_REF_INVALID"),
+    ("invalid_yaml", "RUNTIME_REF_INVALID"),
+    ("disabled", "SELECTED_AGENT_UNAVAILABLE"),
+    ("version", "SELECTED_AGENT_UNAVAILABLE"),
+])
+def test_prelaunch_revalidation_blocks_changed_target_and_persists_failed_selection(
+    api, monkeypatch, change, expected_code,
+):
+    service = _install_web_dispatcher(api, monkeypatch)
+    start_workflow = AsyncMock()
+    monkeypatch.setattr(service, "start_workflow", start_workflow)
+    original_start = api["service"].transitions.start
+
+    def change_after_selection(run_id, execution):
+        started = original_start(run_id, execution)
+        if change == "manifest":
+            api["manifest"].write_text("{}", encoding="utf-8")
+        elif change == "remapped":
+            root = api["manifest"].parent / "workflows"
+            (root / "other.yaml").write_bytes((root / "research.yaml").read_bytes())
+            api["manifest"].write_text(
+                json.dumps({REFERENCE: "other.yaml"}), encoding="utf-8",
+            )
+        elif change == "web_target":
+            root = api["manifest"].parent / "other_workflows"
+            root.mkdir()
+            source = api["manifest"].parent / "workflows" / "research.yaml"
+            (root / "research.yaml").write_bytes(source.read_bytes())
+            monkeypatch.setattr(service, "_resolve_yaml_path", lambda name: root / name)
+        elif change == "removed":
+            (api["manifest"].parent / "workflows" / "research.yaml").unlink()
+        elif change == "invalid_yaml":
+            (api["manifest"].parent / "workflows" / "research.yaml").write_text(
+                "graph: [", encoding="utf-8",
+            )
+        elif change == "disabled":
+            current = api["versions"].get_current(api["agent"].snapshot.id)
+            with api["database"].transaction() as connection:
+                api["versions"].update_status(
+                    connection, current, current.set_status("disabled"),
+                )
+        else:
+            current = api["versions"].get_current(api["agent"].snapshot.id)
+            content = AgentMetadataInput.model_validate(
+                current.snapshot.model_dump(exclude={"id", "version"})
+            )
+            updated = current.update_content(content)
+            with api["database"].transaction() as connection:
+                api["versions"].insert_next(connection, updated.snapshot, updated.updated_at)
+        return started
+
+    monkeypatch.setattr(api["service"].transitions, "start", change_after_selection)
+
+    response = _submit(api)
+
+    assert response.status_code == 202
+    body = response.json()
+    assert body["status"] == "failed"
+    assert body["error_code"] == expected_code
+    run_id = UUID(body["run_id"])
+    assert api["runs"].get(run_id).status == "failed"
+    assert api["traces"].get_by_run_id(run_id).status == "selected"
+    assert api["executions"].get_by_run_id(run_id).status == "failed"
+    assert api["manager"].session_store.get_session(api["session_id"]).status == SessionStatus.IDLE
+    start_workflow.assert_not_awaited()
+
+
+@pytest.mark.parametrize("failure", ("swallowed", "raised"))
+def test_web_start_failure_is_persisted_without_private_error(api, monkeypatch, failure):
+    service = _install_web_dispatcher(api, monkeypatch)
+    completed = Event()
+    original_start = service.start_workflow
+
+    if failure == "swallowed":
+        original_resolve = service._resolve_yaml_path
+        calls = 0
+
+        def fail_during_start(name):
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                return original_resolve(name)
+            raise RuntimeError("synthetic-private-start-detail")
+
+        monkeypatch.setattr(service, "_resolve_yaml_path", fail_during_start)
+
+    async def start(*args, **kwargs):
+        try:
+            if failure == "raised":
+                raise RuntimeError("synthetic-private-start-detail")
+            await original_start(*args, **kwargs)
+        finally:
+            completed.set()
+
+    monkeypatch.setattr(service, "start_workflow", start)
+
+    response = _submit(api)
+
+    assert response.status_code == 202
+    assert response.json()["status"] == "running"
+    assert completed.wait(5)
+    run_id = UUID(response.json()["run_id"])
+    run = _wait_for_run_status(api, run_id, "failed")
+    execution = api["executions"].get_by_run_id(run_id)
+    assert run.status == execution.status == "failed"
+    assert run.error_code == execution.error_code == "WORKFLOW_EXECUTION_ERROR"
+    assert execution.native_status == ("error" if failure == "swallowed" else None)
+    assert api["traces"].get_by_run_id(run_id).status == "selected"
+    assert "synthetic-private-start-detail" not in run.model_dump_json()
+    assert "synthetic-private-start-detail" not in execution.model_dump_json()
+
+
+def test_legacy_workflow_execute_keeps_required_yaml_and_default_call(api, monkeypatch):
+    from server.routes import execute
+
+    completed = Event()
+    observed = {}
+    manager = api["manager"]
+
+    def known_session(session_id, *, require_connection=False):
+        assert session_id == api["session_id"]
+        assert require_connection is True
+        return manager
+
+    async def start(*args, **kwargs):
+        observed["call"] = (args, kwargs)
+        completed.set()
+
+    monkeypatch.setattr(execute, "ensure_known_session", known_session)
+    monkeypatch.setattr(manager.workflow_run_service, "start_workflow", start)
+    app = FastAPI()
+    app.include_router(execute.router)
+    with TestClient(app) as client:
+        missing_yaml = client.post("/api/workflow/execute", json={
+            "task_prompt": TASK, "session_id": api["session_id"],
+        })
+        response = client.post("/api/workflow/execute", json={
+            "yaml_file": "manual.yaml", "task_prompt": TASK,
+            "session_id": api["session_id"], "attachments": ["upload-id"],
+        })
+        assert completed.wait(5)
+
+    assert missing_yaml.status_code == 422
+    assert response.status_code == 200
+    assert response.json()["status"] == "started"
+    assert observed["call"] == (
+        (api["session_id"], "manual.yaml", TASK, manager),
+        {"attachments": ["upload-id"], "log_level": None},
+    )
+
+
+def test_shared_web_manager_retains_human_input_and_cancel_handlers(api):
+    manager = api["manager"]
+    session = manager.session_store.get_session(api["session_id"])
+    assert manager.message_handler.workflow_run_service is manager.workflow_run_service
+    assert manager.message_handler.session_controller is manager.session_controller
+
+    manager.session_controller.set_waiting_for_input(api["session_id"], "human", {})
+    asyncio.run(manager.message_handler.handle_message(
+        api["session_id"], {"type": "human_input", "data": {"input": "approved"}}, manager,
+    ))
+    assert session.human_input_future.result() == {"text": "approved", "attachments": []}
+
+    asyncio.run(manager.message_handler.handle_message(
+        api["session_id"], {"type": "cancel"}, manager,
+    ))
+    assert session.cancel_event.is_set()
+    assert session.status == SessionStatus.CANCELLED

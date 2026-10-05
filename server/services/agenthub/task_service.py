@@ -92,6 +92,16 @@ class TaskSubmissionError(ValueError):
         super().__init__(code)
 
 
+class TaskDispatchError(RuntimeError):
+    """Safe failure from the AgentHub workflow adapter before Web execution."""
+
+    def __init__(self, code: str) -> None:
+        if code not in {"SELECTED_AGENT_UNAVAILABLE", "RUNTIME_REF_INVALID"}:
+            raise ValueError("unsupported dispatch error code")
+        self.code = code
+        super().__init__(code)
+
+
 class TaskRouter(Protocol):
     def route(self, task: str) -> RoutingResult: ...
 
@@ -205,12 +215,15 @@ class TaskSubmissionService:
         )
         try:
             await self.dispatcher.dispatch(context)
-        except Exception:
+        except Exception as exc:
             finished = datetime.now(timezone.utc)
             failed = self.transitions.finish(
                 run.run_id, "failed", at=finished,
                 latency_ms=(finished - execution.started_at).total_seconds() * 1000,
-                error_code="EXECUTION_DISPATCH_FAILED",
+                error_code=(
+                    exc.code if isinstance(exc, TaskDispatchError)
+                    else "EXECUTION_DISPATCH_FAILED"
+                ),
             )
             return self._response(failed, trace, decision)
         return self._response(running, trace, decision)
