@@ -3,6 +3,7 @@
 import re
 import sqlite3
 import time
+from contextlib import nullcontext
 from datetime import datetime, timezone
 from typing import Literal
 from uuid import UUID
@@ -234,11 +235,13 @@ class RoutingTraceRepository:
         if linked.rowcount != 1:
             raise ValueError("TaskRun already has a final trace reference")
 
-    def get_by_run_id(self, run_id: UUID) -> RoutingTrace | None:
+    def get_by_run_id(
+        self, run_id: UUID, *, connection: sqlite3.Connection | None = None
+    ) -> RoutingTrace | None:
         if not isinstance(run_id, UUID) or run_id.int == 0:
             raise ValueError("run_id must be a non-nil UUID")
-        with self.database.connection() as connection:
-            row = connection.execute(
+        with nullcontext(connection) if connection is not None else self.database.connection() as db:
+            row = db.execute(
                 "SELECT payload_json FROM agenthub_routing_traces WHERE run_id = ?",
                 (str(run_id),),
             ).fetchone()
