@@ -9,6 +9,7 @@ from entity.configs import Node, EdgeLink, AgentConfig, ConfigError
 from entity.configs.edge import EdgeConditionConfig
 from entity.configs.node.memory import SimpleMemoryConfig
 from entity.messages import Message, MessageRole
+from runtime.node.agent_outcome import AgentOutcomeRecorder
 from runtime.node.executor.base import ExecutionContext
 from runtime.node.executor.factory import NodeExecutorFactory
 from utils.logger import WorkflowLogger
@@ -60,6 +61,7 @@ class GraphExecutor:
         session_id: Optional[str] = None,
         workspace_hook_factory: Optional[Callable[[RuntimeContext], Any]] = None,
         cancel_event: Optional[threading.Event] = None,
+        outcome_recorder: Optional[AgentOutcomeRecorder] = None,
     ) -> None:
         """Initialize executor with graph context instance."""
         self.majority_result = None
@@ -67,6 +69,7 @@ class GraphExecutor:
         self.outputs = {}
         self.logger = self._create_logger()
         self._cancel_event = cancel_event or threading.Event()
+        self._outcome_recorder = outcome_recorder
         self._cancel_reason: Optional[str] = None
         runtime = RuntimeBuilder(graph).build(logger=self.logger, session_id=session_id)
         if workspace_hook_factory:
@@ -214,6 +217,10 @@ class GraphExecutor:
             global_state.setdefault("attachment_store", self.attachment_store)
             prompt_service = self._ensure_human_prompt_service()
             global_state.setdefault("human_prompt", prompt_service)
+            outcome_kwargs = (
+                {"outcome_recorder": self._outcome_recorder}
+                if self._outcome_recorder is not None else {}
+            )
             self.__execution_context = ExecutionContext(
                 tool_manager=self.tool_manager,
                 function_manager=self.function_manager,
@@ -225,6 +232,7 @@ class GraphExecutor:
                 workspace_hook=self.runtime_context.workspace_hook,
                 human_prompt_service=prompt_service,
                 cancel_event=self._cancel_event,
+                **outcome_kwargs,
             )
         return self.__execution_context
     

@@ -4,6 +4,7 @@ import asyncio
 from typing import List
 
 from utils.logger import WorkflowLogger
+from runtime.node.agent_outcome import AgentOutcomeRecorder
 from workflow.graph import GraphExecutor
 from workflow.graph_context import GraphContext
 
@@ -27,6 +28,7 @@ class WebSocketGraphExecutor(GraphExecutor):
         websocket_manager,
         session_store: WorkflowSessionStore,
         cancel_event=None,
+        outcome_recorder: AgentOutcomeRecorder | None = None,
     ):
         self.session_id = session_id
         self.session_controller = session_controller
@@ -50,11 +52,15 @@ class WebSocketGraphExecutor(GraphExecutor):
                 prompt_channel=prompt_channel,
             )
 
+        outcome_kwargs = (
+            {"outcome_recorder": outcome_recorder} if outcome_recorder is not None else {}
+        )
         super().__init__(
             graph,
             session_id=session_id,
             workspace_hook_factory=hook_factory,
             cancel_event=cancel_event,
+            **outcome_kwargs,
         )
 
     def _create_logger(self) -> WorkflowLogger:
