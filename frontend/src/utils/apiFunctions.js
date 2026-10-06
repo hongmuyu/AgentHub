@@ -545,3 +545,7 @@ export async function submitLaunchRequest({
     })
   })
 }
+
+export async function fetchAgentHubRun(runId) {
+  return fetch(apiUrl(`/api/agenthub/tasks/${encodeURIComponent(runId)}`))
+}

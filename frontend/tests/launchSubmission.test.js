@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs'
 
 import * as apiFunctions from '../src/utils/apiFunctions.js'
 
-const { postFile, submitLaunchRequest } = apiFunctions
+const { postFile, submitLaunchRequest, fetchAgentHubRun } = apiFunctions
 
 
 const ready = {
@@ -113,4 +113,12 @@ test('API rejection and transport failure remain failures', async (t) => {
   assert.equal(fetchMock.mock.callCount(), 1)
   fetchMock.mock.mockImplementation(async () => { throw new Error('offline') })
   await assert.rejects(submitLaunchRequest({ ...ready, mode: 'agenthub' }), /offline/)
+})
+
+test('AgentHub run query encodes run_id and preserves HTTP failure', async (t) => {
+  const response = { ok: false, status: 503 }
+  const fetchMock = t.mock.method(globalThis, 'fetch', async () => response)
+  assert.equal(await fetchAgentHubRun('run/one'), response)
+  assert.equal(fetchMock.mock.calls[0].arguments[0], '/api/agenthub/tasks/run%2Fone')
+  assert.equal(fetchMock.mock.calls[0].arguments[1], undefined)
 })

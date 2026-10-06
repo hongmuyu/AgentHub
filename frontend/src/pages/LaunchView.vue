@@ -435,13 +435,20 @@
             <option value="semantic_llm">{{ $t('launch.semantic_llm_strategy') }}</option>
           </select>
 
-          <label class="section-label">{{ $t('launch.status') }}</label>
+          <label class="section-label">{{ launchMode === 'agenthub' ? $t('launch.workflow_status') : $t('launch.status') }}</label>
           <div class="status-display" :class="{ 'status-active': status === 'Running...' }">
             {{ getTranslatedStatus(status) }}
           </div>
           <div v-if="launchMode === 'agenthub' && agentHubRunId" class="status-display">
             {{ $t('launch.agenthub_run_id') }}: {{ agentHubRunId }}
           </div>
+          <AgentHubRunStatus
+            v-if="launchMode === 'agenthub' && agentHubRunId"
+            :run="agentHubBusinessRun"
+            :query-error="agentHubQueryError"
+            :cancel-requested="agentHubCancelRequested"
+            :recovered="agentHubRecovered"
+          />
           <AgentHubRoutingSummary
             v-if="launchMode === 'agenthub' && agentHubRouting"
             :summary="agentHubRouting"
@@ -523,13 +530,15 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { fetchWorkflowsWithDesc, fetchLogsZip, fetchWorkflowYAML, postFile, getAttachment, fetchVueGraph, submitLaunchRequest } from '../utils/apiFunctions.js'
+import { fetchWorkflowsWithDesc, fetchLogsZip, fetchWorkflowYAML, postFile, getAttachment, fetchVueGraph, submitLaunchRequest, fetchAgentHubRun } from '../utils/apiFunctions.js'
+import { isTerminalAgentHubRun, projectAgentHubRun } from '../utils/agentHubRunState.js'
 import { configStore } from '../utils/configStore.js'
 import { spriteFetcher } from '../utils/spriteFetcher.js'
 import yaml from 'js-yaml'
 import MarkdownIt from 'markdown-it'
 import SettingsModal from '../components/SettingsModal.vue'
 import AgentHubRoutingSummary from '../components/AgentHubRoutingSummary.vue'
+import AgentHubRunStatus from '../components/AgentHubRunStatus.vue'
 const md = new MarkdownIt({
   html: false,
   linkify: true,
@@ -597,6 +606,14 @@ const agentHubRunId = ref(
     ? route.query.run : null
 )
 const agentHubRouting = ref(null)
+const agentHubBusinessRun = ref(null)
+const agentHubQueryError = ref(null)
+const agentHubCancelRequested = ref(false)
+const agentHubRecovered = ref(false)
+let agentHubExpectedSessionId = null
+let agentHubQueryTimer = null
+let agentHubQueryInFlight = false
+let agentHubQueryGeneration = 0
 
 // File selector state
 const workflowFiles = ref([])
@@ -849,6 +866,80 @@ const resetConnectionState = ({ closeSocket = true, keepSession = false } = {}) 
     clearTimeout(attachmentHoverTimeout)
     attachmentHoverTimeout = null
   }
+}
+
+const stopAgentHubRunQuery = () => {
+  clearTimeout(agentHubQueryTimer)
+  agentHubQueryTimer = null
+  agentHubQueryGeneration += 1
+  agentHubQueryInFlight = false
+}
+
+const refreshAgentHubRun = async () => {
+  if (launchMode.value !== 'agenthub' || !agentHubRunId.value ||
+      agentHubQueryInFlight || isTerminalAgentHubRun(agentHubBusinessRun.value)) return
+
+  clearTimeout(agentHubQueryTimer)
+  agentHubQueryTimer = null
+  const runId = agentHubRunId.value
+  const generation = agentHubQueryGeneration
+  agentHubQueryInFlight = true
+  let retry = true
+  try {
+    const response = await fetchAgentHubRun(runId)
+    if (generation !== agentHubQueryGeneration || runId !== agentHubRunId.value) return
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}))
+      if (generation !== agentHubQueryGeneration || runId !== agentHubRunId.value) return
+      const code = body?.detail?.code
+      agentHubQueryError.value = typeof code === 'string' && /^[A-Z][A-Z0-9_]{0,63}$/.test(code)
+        ? code : 'RUN_QUERY_FAILED'
+      retry = response.status >= 500
+      return
+    }
+    const incoming = await response.json()
+    if (generation !== agentHubQueryGeneration || runId !== agentHubRunId.value) return
+    const projected = projectAgentHubRun(agentHubBusinessRun.value, incoming, runId, agentHubExpectedSessionId)
+    if (projected === agentHubBusinessRun.value) {
+      agentHubQueryError.value = 'RUN_DATA_INVALID'
+      retry = false
+    } else {
+      agentHubBusinessRun.value = projected
+      agentHubQueryError.value = null
+    }
+  } catch (_error) {
+    if (generation === agentHubQueryGeneration && runId === agentHubRunId.value) {
+      agentHubQueryError.value = 'RUN_QUERY_FAILED'
+    }
+  } finally {
+    if (generation === agentHubQueryGeneration && runId === agentHubRunId.value) {
+      agentHubQueryInFlight = false
+      if (retry && !isTerminalAgentHubRun(agentHubBusinessRun.value)) {
+        agentHubQueryTimer = setTimeout(() => { void refreshAgentHubRun() }, 1000)
+      }
+    }
+  }
+}
+
+const beginAgentHubRun = (runId, expectedSessionId, initialRun = null, recovered = false) => {
+  stopAgentHubRunQuery()
+  agentHubRunId.value = runId
+  agentHubExpectedSessionId = expectedSessionId
+  agentHubBusinessRun.value = projectAgentHubRun(null, initialRun, runId, expectedSessionId)
+  agentHubQueryError.value = null
+  agentHubCancelRequested.value = false
+  agentHubRecovered.value = recovered
+  void refreshAgentHubRun()
+}
+
+const clearAgentHubRun = () => {
+  stopAgentHubRunQuery()
+  agentHubRunId.value = null
+  agentHubExpectedSessionId = null
+  agentHubBusinessRun.value = null
+  agentHubQueryError.value = null
+  agentHubCancelRequested.value = false
+  agentHubRecovered.value = false
 }
 
 // Button state management
@@ -1446,7 +1537,7 @@ const handleButtonClick = () => {
     shouldGlow.value = false
   } else if (status.value === 'Completed' || status.value === 'Cancelled') {
     if (launchMode.value === 'agenthub') {
-      agentHubRunId.value = null
+      clearAgentHubRun()
       agentHubRouting.value = null
       router.replace({ query: { ...route.query, session: undefined, run: undefined } })
       resetConnectionState()
@@ -1648,7 +1739,7 @@ watch(selectedFile, (newFile) => {
 })
 
 watch(launchMode, (mode) => {
-  agentHubRunId.value = null
+  clearAgentHubRun()
   agentHubRouting.value = null
   viewMode.value = 'chat'
   router.replace({
@@ -1685,9 +1776,29 @@ watch(
   }
 )
 
+watch(
+  () => route.query?.run,
+  (run) => {
+    if (launchMode.value !== 'agenthub' || run === agentHubRunId.value) return
+    agentHubRouting.value = null
+    if (typeof run === 'string' && run) {
+      const expectedSessionId = typeof route.query?.session === 'string' ? route.query.session : null
+      beginAgentHubRun(run, expectedSessionId, null, true)
+      status.value = 'Connecting...'
+      establishWebSocketConnection(expectedSessionId ? { sessionId: expectedSessionId } : { fresh: true })
+    } else {
+      clearAgentHubRun()
+    }
+  }
+)
+
 onMounted(async () => {
   document.addEventListener('click', handleClickOutside)
   document.addEventListener('keydown', handleKeydown)
+  if (launchMode.value === 'agenthub' && agentHubRunId.value) {
+    const expectedSessionId = typeof route.query?.session === 'string' ? route.query.session : null
+    beginAgentHubRun(agentHubRunId.value, expectedSessionId, null, true)
+  }
   await loadWorkflows()
   // If URL contains a session id, the watch on selectedFile (triggered by
   // applyWorkflowFromRoute inside loadWorkflows) will call establishWebSocketConnection,
@@ -1702,6 +1813,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  stopAgentHubRunQuery()
   document.removeEventListener('click', handleClickOutside)
   document.removeEventListener('keydown', handleKeydown)
   unlockBodyScroll()
@@ -2042,7 +2154,7 @@ const launchAgentHubTask = async () => {
     ) {
       throw new Error(t('launch.agenthub_invalid_response'))
     }
-    agentHubRunId.value = result.run_id
+    beginAgentHubRun(result.run_id, result.session_id, result)
     agentHubRouting.value = result
     clearUploadedAttachments()
     addDialogue('User', trimmedPrompt)
@@ -2059,7 +2171,7 @@ const launchAgentHubTask = async () => {
         isWorkflowRunning.value = true
       }
     } else {
-      status.value = result.status === 'rejected' ? 'Rejected' : 'Failed'
+      status.value = 'Connected'
       isWorkflowRunning.value = false
       shouldGlow.value = true
     }
@@ -2298,6 +2410,7 @@ const processMessage = async (msg) => {
 
     isConnectionReady.value = true
     addChatNotification(t('launch.reconnected'))
+    if (launchMode.value === 'agenthub') void refreshAgentHubRun()
     return
   }
 
@@ -2476,6 +2589,9 @@ const processMessage = async (msg) => {
     isWorkflowRunning.value = false
     sessionIdToDownload = sessionId
   }
+  if (launchMode.value === 'agenthub' && ['workflow_completed', 'workflow_cancelled', 'error'].includes(msg.type)) {
+    void refreshAgentHubRun()
+  }
 }
 
 // Cancel the currently running workflow
@@ -2493,6 +2609,7 @@ const cancelWorkflow = () => {
   }
 
   if (launchMode.value === 'agenthub') {
+    agentHubCancelRequested.value = true
     addChatNotification(t('launch.agenthub_cancel_requested'))
     status.value = 'Cancellation requested'
     return
