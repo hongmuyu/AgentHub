@@ -55,6 +55,18 @@ class AgentHubWorkflowDispatcher:
     async def _execute(
         self, context: DispatchContext, yaml_file: str, recorder: AgentOutcomeRecorder,
     ) -> None:
+        session = self.manager.session_store.get_session(context.session_id)
+        if (
+            session is not None and session.status == SessionStatus.CANCELLED
+            and session.cancel_event.is_set()
+        ):
+            run = self.transitions.tasks.get(context.run_id)
+            if run is None:
+                raise RuntimeError("selected TaskRun is missing")
+            # A reused session may still carry an earlier workflow's cancellation.
+            if session.updated_at >= run.created_at.timestamp():
+                self._record_cancelled(context)
+                return
         try:
             await self.manager.workflow_run_service.start_workflow(
                 context.session_id, yaml_file, context.task, self.manager,
@@ -67,8 +79,27 @@ class AgentHubWorkflowDispatcher:
         session = self.manager.session_store.get_session(context.session_id)
         if session is None or session.status == SessionStatus.ERROR:
             self._record_web_error(context)
+        elif session.status == SessionStatus.CANCELLED:
+            self._record_cancelled(context)
         elif session.status == SessionStatus.COMPLETED:
             self._record_completion(context, recorder)
+
+    def _record_cancelled(self, context: DispatchContext) -> None:
+        session = self.manager.session_store.get_session(context.session_id)
+        if session is None or session.status != SessionStatus.CANCELLED:
+            return
+        execution = self.executions.get_by_run_id(context.run_id)
+        if execution is None:
+            raise RuntimeError("selected AgentRun is missing")
+        finished = datetime.now(timezone.utc)
+        try:
+            self.transitions.finish(
+                context.run_id, "cancelled", at=finished,
+                latency_ms=max(0.0, (finished - execution.started_at).total_seconds() * 1000),
+                native_status=session.status.value,
+            )
+        except InvalidRunTransition:
+            pass
 
     def _record_completion(
         self, context: DispatchContext, recorder: AgentOutcomeRecorder,
@@ -120,8 +151,11 @@ class AgentHubWorkflowDispatcher:
         session = self.manager.session_store.get_session(context.session_id)
         native_status = "error" if session is not None and session.status == SessionStatus.ERROR else None
         finished = datetime.now(timezone.utc)
-        self.transitions.finish(
-            context.run_id, "failed", at=finished,
-            latency_ms=max(0.0, (finished - execution.started_at).total_seconds() * 1000),
-            native_status=native_status, error_code="WORKFLOW_EXECUTION_ERROR",
-        )
+        try:
+            self.transitions.finish(
+                context.run_id, "failed", at=finished,
+                latency_ms=max(0.0, (finished - execution.started_at).total_seconds() * 1000),
+                native_status=native_status, error_code="WORKFLOW_EXECUTION_ERROR",
+            )
+        except InvalidRunTransition:
+            pass

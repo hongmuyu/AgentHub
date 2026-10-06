@@ -650,6 +650,205 @@ def test_cancellation_signal_before_projection_cannot_become_success(api, monkey
     assert api["executions"].get_by_run_id(run_id).status == "running"
 
 
+def test_graph_exception_persists_failed_run_without_private_detail(api, monkeypatch):
+    _install_web_dispatcher(api, monkeypatch)
+
+    async def fail_graph(self, task_input):
+        raise RuntimeError("synthetic-private-graph-detail")
+
+    monkeypatch.setattr(WebSocketGraphExecutor, "execute_graph_async", fail_graph)
+    response = _submit(api)
+    run_id = UUID(response.json()["run_id"])
+    run = _wait_for_run_status(api, run_id, "failed")
+    execution = api["executions"].get_by_run_id(run_id)
+    session = api["manager"].session_store.get_session(api["session_id"])
+    reopened = TaskRunRepository(AgentHubDatabase(api["database"].path)).get(run_id)
+
+    assert run.status == execution.status == reopened.status == "failed"
+    assert run.error_code == execution.error_code == "WORKFLOW_EXECUTION_ERROR"
+    assert execution.native_status == session.status.value == "error"
+    assert "error" in {event["type"] for event in session.message_buffer}
+    assert "workflow_completed" not in {event["type"] for event in session.message_buffer}
+    assert "synthetic-private-graph-detail" not in run.model_dump_json()
+    assert "synthetic-private-graph-detail" not in execution.model_dump_json()
+
+
+def test_cancel_requested_during_pending_route_stops_before_web_launch(api, monkeypatch):
+    service = _install_web_dispatcher(api, monkeypatch)
+    start_workflow = AsyncMock()
+    monkeypatch.setattr(service, "start_workflow", start_workflow)
+
+    def cancel_during_route():
+        with api["database"].connection() as connection:
+            assert connection.execute(
+                "SELECT status FROM agenthub_task_runs"
+            ).fetchone()[0] == "pending"
+        assert service.request_cancel(api["session_id"])
+
+    api["discovery"].before_return = cancel_during_route
+    response = _submit(api)
+    run_id = UUID(response.json()["run_id"])
+    run = _wait_for_run_status(api, run_id, "cancelled")
+    execution = api["executions"].get_by_run_id(run_id)
+
+    assert run.status == execution.status == "cancelled"
+    assert execution.native_status == "cancelled"
+    assert api["manager"].session_store.get_session(api["session_id"]).status == SessionStatus.CANCELLED
+    start_workflow.assert_not_awaited()
+
+
+def test_prior_session_cancellation_does_not_cancel_new_task_run(api, monkeypatch):
+    service = api["manager"].workflow_run_service
+    assert service.request_cancel(api["session_id"])
+
+    run_id, _ = _submit_completion_case(api, monkeypatch)
+
+    assert _wait_for_run_status(api, run_id, "success").status == "success"
+    assert api["executions"].get_by_run_id(run_id).native_status == "completed"
+    assert api["manager"].session_store.get_session(api["session_id"]).status == SessionStatus.COMPLETED
+
+
+def test_blocked_provider_cancel_waits_for_execution_boundary(api, monkeypatch):
+    _install_web_dispatcher(api, monkeypatch)
+    entered, release = Event(), Event()
+    observed = {}
+    monkeypatch.setattr(api["manager"], "send_message_sync", lambda *args: None)
+    dispatcher = api["service"].dispatcher
+    original_dispatch = dispatcher.dispatch
+
+    async def capture_dispatch(context):
+        observed["context"] = context
+        await original_dispatch(context)
+
+    monkeypatch.setattr(dispatcher, "dispatch", capture_dispatch)
+
+    class BlockingProvider:
+        def __init__(self, config):
+            self.config = config
+
+        def create_client(self):
+            return object()
+
+        def call_model(self, client, **kwargs):
+            entered.set()
+            assert release.wait(5)
+            return ModelResponse(message=Message(role=MessageRole.ASSISTANT, content="answer"))
+
+    monkeypatch.setattr(
+        "runtime.node.executor.agent_executor.ProviderRegistry.get_provider",
+        lambda name: BlockingProvider,
+    )
+    try:
+        response = _submit(api)
+        run_id = UUID(response.json()["run_id"])
+        assert entered.wait(5)
+        before = (api["runs"].get(run_id).status,
+                  api["executions"].get_by_run_id(run_id).status)
+        asyncio.run(api["manager"].message_handler.handle_message(
+            api["session_id"], {"type": "cancel"}, api["manager"],
+        ))
+        requested = (api["runs"].get(run_id).status,
+                     api["executions"].get_by_run_id(run_id).status)
+        session = api["manager"].session_store.get_session(api["session_id"])
+        assert session.status == SessionStatus.CANCELLED
+        assert before == requested == ("running", "running")
+    finally:
+        release.set()
+
+    run = _wait_for_run_status(api, run_id, "cancelled")
+    execution = api["executions"].get_by_run_id(run_id)
+    session = api["manager"].session_store.get_session(api["session_id"])
+    assert run.status == execution.status == "cancelled"
+    assert execution.native_status == session.status.value == "cancelled"
+    assert "workflow_cancelled" in {event["type"] for event in session.message_buffer}
+    assert "workflow_completed" not in {event["type"] for event in session.message_buffer}
+    first_execution = execution
+    dispatcher._record_cancelled(observed["context"])
+    late_recorder = AgentOutcomeRecorder(run_id=run_id, node_id=execution.node_id)
+    late_recorder.record(AgentExecutionOutcome(
+        run_id=run_id, node_id=execution.node_id, state="succeeded",
+    ))
+    session.cancel_event.clear()
+    api["manager"].session_store.complete_session(api["session_id"], {})
+    dispatcher._record_completion(observed["context"], late_recorder)
+    reopened = AgentHubDatabase(api["database"].path)
+    assert TaskRunRepository(reopened).get(run_id) == run
+    assert AgentRunRepository(reopened).get_by_run_id(run_id) == first_execution
+
+
+def test_disconnect_reconnect_during_blocked_provider_does_not_cancel(api, monkeypatch):
+    _install_web_dispatcher(api, monkeypatch)
+    entered, release = Event(), Event()
+    monkeypatch.setattr(api["manager"], "send_message_sync", lambda *args: None)
+
+    class Socket:
+        def __init__(self):
+            self.messages = []
+
+        async def accept(self):
+            pass
+
+        async def send_text(self, payload):
+            self.messages.append(json.loads(payload))
+
+    class BlockingProvider:
+        def __init__(self, config):
+            self.config = config
+
+        def create_client(self):
+            return object()
+
+        def call_model(self, client, **kwargs):
+            entered.set()
+            assert release.wait(5)
+            return ModelResponse(message=Message(role=MessageRole.ASSISTANT, content="answer"))
+
+    monkeypatch.setattr(
+        "runtime.node.executor.agent_executor.ProviderRegistry.get_provider",
+        lambda name: BlockingProvider,
+    )
+    manager = api["manager"]
+    try:
+        response = _submit(api)
+        run_id = UUID(response.json()["run_id"])
+        assert entered.wait(5)
+        connected = Socket()
+        asyncio.run(manager.connect(connected, session_id=api["session_id"]))
+        manager.disconnect(api["session_id"])
+        disconnected = api["runs"].get(run_id).status
+        resumed = Socket()
+        asyncio.run(manager.connect(resumed, session_id=api["session_id"]))
+        reconnected = api["runs"].get(run_id).status
+        session = manager.session_store.get_session(api["session_id"])
+        assert (disconnected, reconnected) == ("running", "running")
+        assert session.status == SessionStatus.RUNNING
+        assert not session.cancel_event.is_set()
+        assert any(
+            event["type"] == "session_resumed" and event["data"]["status"] == "running"
+            for event in resumed.messages
+        )
+    finally:
+        release.set()
+
+    assert _wait_for_run_status(api, run_id, "success").status == "success"
+    assert api["executions"].get_by_run_id(run_id).native_status == "completed"
+
+
+def test_late_cancel_and_error_do_not_overwrite_completed_business_run(api, monkeypatch):
+    run_id, observed = _submit_completion_case(api, monkeypatch)
+    first = _wait_for_run_status(api, run_id, "success")
+    first_execution = api["executions"].get_by_run_id(run_id)
+    manager = api["manager"]
+    assert manager.workflow_run_service.request_cancel(api["session_id"])
+    dispatcher = api["service"].dispatcher
+    dispatcher._record_cancelled(observed["context"])
+    manager.session_store.set_session_error(api["session_id"], "late error")
+    dispatcher._record_web_error(observed["context"])
+
+    assert api["runs"].get(run_id) == first
+    assert api["executions"].get_by_run_id(run_id) == first_execution
+
+
 @pytest.mark.parametrize("change,expected_code", [
     ("manifest", "RUNTIME_REF_INVALID"),
     ("remapped", "RUNTIME_REF_INVALID"),
