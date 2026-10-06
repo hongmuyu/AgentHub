@@ -1,0 +1,12 @@
+{
+  "name": "Review Agent",
+  "description": "Reviews supplied designs, code or generated output for inconsistencies and quality risks, then gives actionable feedback. It does not run tests, certify correctness, or replace specialist security review.",
+  "capabilities": [
+    "Review supplied designs and output for errors",
+    "Identify code quality and correctness risks",
+    "Suggest concrete improvements with rationale"
+  ],
+  "tools": [],
+  "tags": ["review", "quality", "knowledge-work"],
+  "runtime_ref": "workflow://review-agent/1"
+}

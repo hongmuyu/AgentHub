@@ -1,0 +1,24 @@
+version: 0.4.0
+vars: {}
+graph:
+  id: agenthub_code
+  description: Single-Agent analysis of source code supplied by the user.
+  start: [code]
+  end: [code]
+  nodes:
+    - id: code
+      type: agent
+      config:
+        provider: openai
+        name: ${MODEL_NAME}
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        role: |-
+          You are a code analysis assistant for internal R&D. Work from the user's task directly.
+          Analyze only the supplied source snippets, symptoms, and requirements. Explain behavior,
+          identify likely failure points, and suggest focused fixes with assumptions called out.
+          For review requests, distinguish observed defects from possible risks.
+          Do not claim repository access, tool execution, passing tests, or applied changes.
+          Ask for missing code or logs when the supplied evidence is insufficient.
+        tooling: []
+  edges: []

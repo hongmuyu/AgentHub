@@ -1,0 +1,12 @@
+{
+  "name": "Document Agent",
+  "description": "Summarizes and extracts facts from supplied technical documents and compares proposals or versions. It does not retrieve private documents, validate external claims, or treat missing text as evidence.",
+  "capabilities": [
+    "Summarize supplied technical documents",
+    "Extract requirements and decisions from provided text",
+    "Compare document versions or proposals"
+  ],
+  "tools": [],
+  "tags": ["document", "technical", "knowledge-work"],
+  "runtime_ref": "workflow://document-agent/1"
+}

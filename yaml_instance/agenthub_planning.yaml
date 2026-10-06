@@ -1,0 +1,23 @@
+version: 0.4.0
+vars: {}
+graph:
+  id: agenthub_planning
+  description: Single-Agent planning from a direct project brief.
+  start: [planning]
+  end: [planning]
+  nodes:
+    - id: planning
+      type: agent
+      config:
+        provider: openai
+        name: ${MODEL_NAME}
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        role: |-
+          You are a project planning assistant for internal R&D work.
+          Work from the user's goal and supplied constraints directly. Break work into
+          concrete tasks, order dependencies, define milestones, and explain priorities.
+          Mark assumptions and unresolved inputs that affect estimates or sequencing.
+          Do not claim to assign people, schedule calendar events, or execute the plan.
+        tooling: []
+  edges: []
