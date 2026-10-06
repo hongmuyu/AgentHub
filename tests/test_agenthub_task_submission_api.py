@@ -3,6 +3,7 @@
 import asyncio
 import json
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 from threading import Event
 from unittest.mock import AsyncMock
@@ -15,6 +16,7 @@ from fastapi.testclient import TestClient
 
 from entity.messages import Message, MessageRole
 from runtime.node.agent import ModelResponse
+from runtime.node.agent_outcome import AgentExecutionOutcome, AgentOutcomeRecorder, OutcomeRead
 from server.services.agenthub.agent_runs import AgentRunRepository
 from server.services.agenthub.database import AgentHubDatabase
 from server.services.agenthub.discovery import DiscoveryCandidate, PublicAgentMetadata
@@ -440,12 +442,16 @@ def test_selected_task_uses_real_web_chain_and_preserves_correlation_and_attachm
     assert response.json()["status"] == "running"
     assert completed.wait(5)
     run_id = UUID(response.json()["run_id"])
-    run = api["runs"].get(run_id)
+    run = _wait_for_run_status(api, run_id, "success")
     execution = api["executions"].get_by_run_id(run_id)
     session = api["manager"].session_store.get_session(api["session_id"])
     args, kwargs = observed["start"]
     recorder = kwargs["outcome_recorder"]
-    assert run.status == "running"  # T29 owns successful terminal projection.
+    assert run.status == execution.status == "success"
+    assert execution.native_status == "completed"
+    assert run.error_code is None
+    assert execution.token_usage is None
+    assert execution.result_ref is None
     assert run.agent_run_id == execution.agent_run_id
     assert execution.runtime_ref == REFERENCE
     assert execution.workflow_id == "thin_research"
@@ -468,6 +474,180 @@ def test_selected_task_uses_real_web_chain_and_preserves_correlation_and_attachm
     assert {event["type"] for event in session.message_buffer} >= {
         "workflow_started", "workflow_completed",
     }
+
+
+def _submit_completion_case(
+    api, monkeypatch, *, provider_failure=None, outcome_mode=None, before_return=None,
+):
+    service = _install_web_dispatcher(api, monkeypatch)
+    completed = Event()
+    observed = {}
+    monkeypatch.setattr(api["manager"], "send_message_sync", lambda *args: None)
+
+    class FixtureProvider:
+        def __init__(self, config):
+            self.config = config
+
+        def create_client(self):
+            if provider_failure == "create":
+                raise RuntimeError("synthetic-private-provider-detail")
+            return object()
+
+        def call_model(self, client, **kwargs):
+            if provider_failure == "call":
+                raise RuntimeError("synthetic-private-provider-detail")
+            return ModelResponse(message=Message(role=MessageRole.ASSISTANT, content="answer"))
+
+    monkeypatch.setattr(
+        "runtime.node.executor.agent_executor.ProviderRegistry.get_provider",
+        lambda name: FixtureProvider,
+    )
+    if outcome_mode == "missing":
+        monkeypatch.setattr(AgentOutcomeRecorder, "record", lambda self, outcome: None)
+    elif outcome_mode == "invalid":
+        original_record = AgentOutcomeRecorder.record
+
+        def record_conflict(self, outcome):
+            original_record(self, outcome)
+            original_record(self, AgentExecutionOutcome(
+                run_id=self.run_id, node_id=self.node_id, state="failed",
+                error_code="AGENT_EXECUTION_FAILED", error_category="agent_execution",
+            ))
+
+        monkeypatch.setattr(AgentOutcomeRecorder, "record", record_conflict)
+    elif outcome_mode == "wrong_node":
+        original_read = AgentOutcomeRecorder.read
+
+        def read_foreign(self):
+            result = original_read(self)
+            if result.status == "recorded":
+                return OutcomeRead("recorded", AgentExecutionOutcome(
+                    run_id=self.run_id, node_id="other_agent", state="succeeded",
+                ), None)
+            return result
+
+        monkeypatch.setattr(AgentOutcomeRecorder, "read", read_foreign)
+
+    dispatcher = api["service"].dispatcher
+    original_dispatch = dispatcher.dispatch
+
+    async def capture_dispatch(context):
+        observed["context"] = context
+        await original_dispatch(context)
+
+    monkeypatch.setattr(dispatcher, "dispatch", capture_dispatch)
+    original_start = service.start_workflow
+
+    async def capture_start(*args, **kwargs):
+        observed["recorder"] = kwargs["outcome_recorder"]
+        try:
+            await original_start(*args, **kwargs)
+            if before_return is not None:
+                before_return(kwargs["outcome_recorder"])
+        finally:
+            completed.set()
+
+    monkeypatch.setattr(service, "start_workflow", capture_start)
+    response = _submit(api)
+    assert response.status_code == 202
+    assert response.json()["status"] == "running"
+    assert completed.wait(5)
+    return UUID(response.json()["run_id"]), observed
+
+
+@pytest.mark.parametrize("failure", ("create", "call"))
+def test_provider_failure_can_complete_web_workflow_but_fails_business_run(
+    api, monkeypatch, failure,
+):
+    run_id, observed = _submit_completion_case(api, monkeypatch, provider_failure=failure)
+
+    run = _wait_for_run_status(api, run_id, "failed")
+    execution = api["executions"].get_by_run_id(run_id)
+    session = api["manager"].session_store.get_session(api["session_id"])
+    assert run.status == execution.status == "failed"
+    assert run.error_code == execution.error_code == "AGENT_EXECUTION_FAILED"
+    assert execution.native_status == "completed"
+    assert session.status == SessionStatus.COMPLETED
+    assert "workflow_completed" in {event["type"] for event in session.message_buffer}
+    assert observed["recorder"].read().outcome.state == "failed"
+    assert "synthetic-private-provider-detail" not in run.model_dump_json()
+    assert "synthetic-private-provider-detail" not in execution.model_dump_json()
+
+
+@pytest.mark.parametrize("mode,expected_code", [
+    ("missing", "EXECUTION_OUTCOME_MISSING"),
+    ("invalid", "EXECUTION_OUTCOME_INVALID"),
+    ("wrong_node", "EXECUTION_OUTCOME_INVALID"),
+])
+def test_completed_workflow_with_untrusted_outcome_never_succeeds(
+    api, monkeypatch, mode, expected_code,
+):
+    run_id, _ = _submit_completion_case(api, monkeypatch, outcome_mode=mode)
+
+    run = _wait_for_run_status(api, run_id, "failed")
+    execution = api["executions"].get_by_run_id(run_id)
+    session = api["manager"].session_store.get_session(api["session_id"])
+    assert run.status == execution.status == "failed"
+    assert run.error_code == execution.error_code == expected_code
+    assert execution.native_status == "completed"
+    assert session.status == SessionStatus.COMPLETED
+
+
+def test_repeated_completion_keeps_first_terminal_snapshot(api, monkeypatch):
+    run_id, observed = _submit_completion_case(api, monkeypatch)
+    first = _wait_for_run_status(api, run_id, "success")
+    first_execution = api["executions"].get_by_run_id(run_id)
+    dispatcher = api["service"].dispatcher
+
+    dispatcher._record_completion(observed["context"], observed["recorder"])
+
+    assert api["runs"].get(run_id) == first
+    assert api["executions"].get_by_run_id(run_id) == first_execution
+
+
+@pytest.mark.parametrize("prior", ("failed", "cancelled"))
+def test_prior_terminal_cannot_be_overwritten_by_late_success(api, monkeypatch, prior):
+    def finish_before_adapter(recorder):
+        execution = api["executions"].get_by_run_id(recorder.run_id)
+        finished = datetime.now(timezone.utc)
+        api["service"].transitions.finish(
+            recorder.run_id, prior, at=finished,
+            latency_ms=(finished - execution.started_at).total_seconds() * 1000,
+            native_status="completed",
+            error_code="EARLIER_FAILURE" if prior == "failed" else None,
+        )
+
+    run_id, _ = _submit_completion_case(
+        api, monkeypatch, before_return=finish_before_adapter,
+    )
+    dispatcher = api["service"].dispatcher
+    deadline = time.monotonic() + 5
+    while dispatcher._in_flight and time.monotonic() < deadline:
+        time.sleep(0.01)
+
+    assert not dispatcher._in_flight
+    run = api["runs"].get(run_id)
+    execution = api["executions"].get_by_run_id(run_id)
+    assert run.status == execution.status == prior
+    assert run.error_code == ("EARLIER_FAILURE" if prior == "failed" else None)
+    assert api["manager"].session_store.get_session(api["session_id"]).status == SessionStatus.COMPLETED
+
+
+def test_cancellation_signal_before_projection_cannot_become_success(api, monkeypatch):
+    def mark_cancelled_before_adapter(recorder):
+        api["manager"].session_store.get_session(api["session_id"]).cancel_event.set()
+
+    run_id, _ = _submit_completion_case(
+        api, monkeypatch, before_return=mark_cancelled_before_adapter,
+    )
+    dispatcher = api["service"].dispatcher
+    deadline = time.monotonic() + 5
+    while dispatcher._in_flight and time.monotonic() < deadline:
+        time.sleep(0.01)
+
+    assert not dispatcher._in_flight
+    assert api["runs"].get(run_id).status == "running"
+    assert api["executions"].get_by_run_id(run_id).status == "running"
 
 
 @pytest.mark.parametrize("change,expected_code", [

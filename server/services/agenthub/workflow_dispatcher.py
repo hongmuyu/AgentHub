@@ -9,7 +9,7 @@ from server.services.websocket_manager import WebSocketManager
 
 from .agent_runs import AgentRunRepository
 from .database import AgentHubDatabase
-from .run_transitions import RunTransitionService
+from .run_transitions import InvalidRunTransition, RunTransitionService
 from .task_service import DispatchContext, TaskDispatchError
 from .thin_workflow import ThinWorkflowValidator
 from .versions import AgentVersionRepository
@@ -67,6 +67,51 @@ class AgentHubWorkflowDispatcher:
         session = self.manager.session_store.get_session(context.session_id)
         if session is None or session.status == SessionStatus.ERROR:
             self._record_web_error(context)
+        elif session.status == SessionStatus.COMPLETED:
+            self._record_completion(context, recorder)
+
+    def _record_completion(
+        self, context: DispatchContext, recorder: AgentOutcomeRecorder,
+    ) -> None:
+        session = self.manager.session_store.get_session(context.session_id)
+        if (
+            session is None or session.status != SessionStatus.COMPLETED
+            or session.cancel_event.is_set()
+        ):
+            return
+
+        recorded = recorder.read()
+        outcome = recorded.outcome
+        if recorded.status == "missing" and outcome is None:
+            status, error_code = "failed", "EXECUTION_OUTCOME_MISSING"
+        elif (
+            recorded.status != "recorded" or outcome is None
+            or outcome.run_id != context.run_id
+            or outcome.node_id != context.workflow.agent_node_id
+        ):
+            status, error_code = "failed", "EXECUTION_OUTCOME_INVALID"
+        elif outcome.state == "failed":
+            status, error_code = "failed", outcome.error_code
+        else:
+            status, error_code = "success", None
+
+        execution = self.executions.get_by_run_id(context.run_id)
+        if execution is None:
+            raise RuntimeError("selected AgentRun is missing")
+        if status == "success" and execution.native_status in ("error", "cancelled"):
+            return
+        finished = datetime.now(timezone.utc)
+        try:
+            self.transitions.finish(
+                context.run_id, status, at=finished,
+                latency_ms=max(0.0, (finished - execution.started_at).total_seconds() * 1000),
+                native_status=session.status.value, error_code=error_code,
+                workflow_completed=status == "success",
+                agent_outcome="succeeded" if status == "success" else None,
+            )
+        except InvalidRunTransition:
+            # A previously committed failure or cancellation wins the race.
+            pass
 
     def _record_web_error(self, context: DispatchContext) -> None:
         execution = self.executions.get_by_run_id(context.run_id)
