@@ -453,6 +453,13 @@
             v-if="launchMode === 'agenthub' && agentHubRouting"
             :summary="agentHubRouting"
           />
+          <AgentHubMetrics
+            v-if="launchMode === 'agenthub'"
+            :metrics="agentHubMetrics"
+            :error="agentHubMetricsError"
+            :loading="agentHubMetricsLoading"
+            @refresh="loadAgentHubMetrics"
+          />
 
           <label class="section-label">{{ $t('launch.view') }}</label>
           <div class="view-toggle">
@@ -530,7 +537,7 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { fetchWorkflowsWithDesc, fetchLogsZip, fetchWorkflowYAML, postFile, getAttachment, fetchVueGraph, submitLaunchRequest, fetchAgentHubRun } from '../utils/apiFunctions.js'
+import { fetchWorkflowsWithDesc, fetchLogsZip, fetchWorkflowYAML, postFile, getAttachment, fetchVueGraph, submitLaunchRequest, fetchAgentHubRun, fetchAgentHubMetrics } from '../utils/apiFunctions.js'
 import { isTerminalAgentHubRun, projectAgentHubRun } from '../utils/agentHubRunState.js'
 import { configStore } from '../utils/configStore.js'
 import { spriteFetcher } from '../utils/spriteFetcher.js'
@@ -539,6 +546,7 @@ import MarkdownIt from 'markdown-it'
 import SettingsModal from '../components/SettingsModal.vue'
 import AgentHubRoutingSummary from '../components/AgentHubRoutingSummary.vue'
 import AgentHubRunStatus from '../components/AgentHubRunStatus.vue'
+import AgentHubMetrics from '../components/AgentHubMetrics.vue'
 const md = new MarkdownIt({
   html: false,
   linkify: true,
@@ -610,6 +618,10 @@ const agentHubBusinessRun = ref(null)
 const agentHubQueryError = ref(null)
 const agentHubCancelRequested = ref(false)
 const agentHubRecovered = ref(false)
+const agentHubMetrics = ref(null)
+const agentHubMetricsError = ref(null)
+const agentHubMetricsLoading = ref(false)
+let agentHubMetricsRequestId = 0
 let agentHubExpectedSessionId = null
 let agentHubQueryTimer = null
 let agentHubQueryInFlight = false
@@ -940,6 +952,39 @@ const clearAgentHubRun = () => {
   agentHubQueryError.value = null
   agentHubCancelRequested.value = false
   agentHubRecovered.value = false
+}
+
+const loadAgentHubMetrics = async () => {
+  if (launchMode.value !== 'agenthub') return
+  const requestId = ++agentHubMetricsRequestId
+  agentHubMetricsLoading.value = true
+  agentHubMetricsError.value = null
+  try {
+    const response = await fetchAgentHubMetrics()
+    const data = await response.json()
+    if (requestId !== agentHubMetricsRequestId || launchMode.value !== 'agenthub') return
+    if (!response.ok) {
+      const code = data?.detail?.code
+      agentHubMetrics.value = null
+      agentHubMetricsError.value = typeof code === 'string' && /^[A-Z][A-Z0-9_]{0,63}$/.test(code)
+        ? code : 'METRICS_READ_FAILED'
+    } else if (data && Number.isInteger(data.total_runs) && data.run_status_counts &&
+        data.execution_success_rate && data.execution_failure_rate && data.rejected_rate &&
+        data.average_routing_latency_ms && data.average_execution_latency_ms &&
+        data.token_usage && Array.isArray(data.agent_usage) && data.routing_distribution) {
+      agentHubMetrics.value = data
+    } else {
+      agentHubMetrics.value = null
+      agentHubMetricsError.value = 'METRICS_DATA_INVALID'
+    }
+  } catch (_error) {
+    if (requestId === agentHubMetricsRequestId && launchMode.value === 'agenthub') {
+      agentHubMetrics.value = null
+      agentHubMetricsError.value = 'METRICS_READ_FAILED'
+    }
+  } finally {
+    if (requestId === agentHubMetricsRequestId) agentHubMetricsLoading.value = false
+  }
 }
 
 // Button state management
@@ -1741,6 +1786,11 @@ watch(selectedFile, (newFile) => {
 watch(launchMode, (mode) => {
   clearAgentHubRun()
   agentHubRouting.value = null
+  agentHubMetricsRequestId += 1
+  agentHubMetrics.value = null
+  agentHubMetricsError.value = null
+  agentHubMetricsLoading.value = false
+  if (mode === 'agenthub') void loadAgentHubMetrics()
   viewMode.value = 'chat'
   router.replace({
     query: {
@@ -1792,9 +1842,14 @@ watch(
   }
 )
 
+watch(agentHubBusinessRun, (run) => {
+  if (launchMode.value === 'agenthub' && isTerminalAgentHubRun(run)) void loadAgentHubMetrics()
+})
+
 onMounted(async () => {
   document.addEventListener('click', handleClickOutside)
   document.addEventListener('keydown', handleKeydown)
+  if (launchMode.value === 'agenthub') void loadAgentHubMetrics()
   if (launchMode.value === 'agenthub' && agentHubRunId.value) {
     const expectedSessionId = typeof route.query?.session === 'string' ? route.query.session : null
     beginAgentHubRun(agentHubRunId.value, expectedSessionId, null, true)
@@ -1814,6 +1869,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   stopAgentHubRunQuery()
+  agentHubMetricsRequestId += 1
   document.removeEventListener('click', handleClickOutside)
   document.removeEventListener('keydown', handleKeydown)
   unlockBodyScroll()

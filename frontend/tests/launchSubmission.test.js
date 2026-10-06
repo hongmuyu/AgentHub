@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs'
 
 import * as apiFunctions from '../src/utils/apiFunctions.js'
 
-const { postFile, submitLaunchRequest, fetchAgentHubRun } = apiFunctions
+const { postFile, submitLaunchRequest, fetchAgentHubRun, fetchAgentHubMetrics } = apiFunctions
 
 
 const ready = {
@@ -120,5 +120,13 @@ test('AgentHub run query encodes run_id and preserves HTTP failure', async (t) =
   const fetchMock = t.mock.method(globalThis, 'fetch', async () => response)
   assert.equal(await fetchAgentHubRun('run/one'), response)
   assert.equal(fetchMock.mock.calls[0].arguments[0], '/api/agenthub/tasks/run%2Fone')
+  assert.equal(fetchMock.mock.calls[0].arguments[1], undefined)
+})
+
+test('AgentHub metrics read uses the existing API origin and preserves failure', async (t) => {
+  const response = { ok: false, status: 503 }
+  const fetchMock = t.mock.method(globalThis, 'fetch', async () => response)
+  assert.equal(await fetchAgentHubMetrics(), response)
+  assert.equal(fetchMock.mock.calls[0].arguments[0], '/api/agenthub/metrics')
   assert.equal(fetchMock.mock.calls[0].arguments[1], undefined)
 })
