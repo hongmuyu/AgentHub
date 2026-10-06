@@ -519,3 +519,29 @@ export async function postFile(sessionId, file) {
     }
   }
 }
+
+export async function submitLaunchRequest({
+  mode, socket, isConnectionReady, sessionId, yamlFile, taskPrompt,
+  attachmentIds, routingStrategy = 'semantic'
+}) {
+  if (!socket || !isConnectionReady || !sessionId) {
+    return null
+  }
+
+  const agentHub = mode === 'agenthub'
+  return fetch(apiUrl(agentHub ? '/api/agenthub/tasks' : '/api/workflow/execute'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(agentHub ? {
+      task: taskPrompt,
+      session_id: sessionId,
+      attachments: attachmentIds,
+      routing_strategy: routingStrategy
+    } : {
+      yaml_file: yamlFile,
+      task_prompt: taskPrompt,
+      session_id: sessionId,
+      attachments: attachmentIds
+    })
+  })
+}
