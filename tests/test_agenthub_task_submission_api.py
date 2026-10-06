@@ -174,6 +174,7 @@ def test_selected_route_persists_trace_and_running_execution_before_one_dispatch
     assert body["selected_agent"] == {
         "id": str(api["agent"].snapshot.id), "version": 1, "name": "Research Agent"
     }
+    assert body["candidates"][0]["score_kind"] == "cosine"
     assert "success" not in response.text
     assert "research.yaml" not in response.text
     run_id = UUID(body["run_id"])
@@ -246,10 +247,28 @@ def test_routing_infrastructure_failure_is_durable_and_safe(api):
 
 
 def test_semantic_llm_strategy_persists_rerank_and_dispatches_selected_agent(api):
+    second = AgentMetadata.register(AgentMetadataInput(
+        name="Document Agent", description="Reviews documents",
+        capabilities=("review documents",), runtime_ref=REFERENCE,
+    ))
+    with api["database"].transaction() as connection:
+        api["versions"].insert_initial(connection, second)
+    api["discovery"].candidates = (
+        api["candidate"],
+        DiscoveryCandidate(
+            agent_id=second.snapshot.id, version=1,
+            public_metadata=PublicAgentMetadata(
+                name="Document Agent", description="Reviews documents",
+                capabilities=("review documents",), tags=(), tools=(),
+            ),
+            raw_similarity=0.8,
+        ),
+    )
+
     class Reranker:
         def rerank(self, task, candidates):
             return RerankResult(
-                ordered_candidate_ids=(candidates[0].agent_id,),
+                ordered_candidate_ids=(candidates[1].agent_id, candidates[0].agent_id),
                 reason_code="CAPABILITY_MATCH",
             )
 
@@ -259,11 +278,18 @@ def test_semantic_llm_strategy_persists_rerank_and_dispatches_selected_agent(api
     assert response.status_code == 202
     body = response.json()
     assert body["status"] == "running"
+    assert [candidate["id"] for candidate in body["candidates"]] == [
+        str(api["candidate"].agent_id), str(second.snapshot.id),
+    ]
+    assert body["rerank_order"] == [
+        {"agent_id": str(second.snapshot.id), "version": 1},
+        {"agent_id": str(api["candidate"].agent_id), "version": 1},
+    ]
     trace = api["traces"].get_by_run_id(UUID(body["run_id"]))
     assert trace.strategy == "semantic_llm"
     assert trace.rerank.model_key == "rerank-v1"
     assert trace.rerank.reason_code == "CAPABILITY_MATCH"
-    assert trace.rerank.ordered_candidates == (trace.selected_agent,)
+    assert trace.rerank.ordered_candidates[0] == trace.selected_agent
     assert len(api["dispatcher"].calls) == 1
 
 

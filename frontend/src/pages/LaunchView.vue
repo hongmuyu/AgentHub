@@ -361,7 +361,8 @@
         class="right-panel"
         :class="{
           'right-panel-overlay': viewMode === 'graph',
-          'right-panel-collapsed': viewMode === 'graph' && !isRightPanelOpen
+          'right-panel-collapsed': viewMode === 'graph' && !isRightPanelOpen,
+          'agenthub-right-panel': launchMode === 'agenthub'
         }"
       >
 
@@ -441,6 +442,10 @@
           <div v-if="launchMode === 'agenthub' && agentHubRunId" class="status-display">
             {{ $t('launch.agenthub_run_id') }}: {{ agentHubRunId }}
           </div>
+          <AgentHubRoutingSummary
+            v-if="launchMode === 'agenthub' && agentHubRouting"
+            :summary="agentHubRouting"
+          />
 
           <label class="section-label">{{ $t('launch.view') }}</label>
           <div class="view-toggle">
@@ -524,6 +529,7 @@ import { spriteFetcher } from '../utils/spriteFetcher.js'
 import yaml from 'js-yaml'
 import MarkdownIt from 'markdown-it'
 import SettingsModal from '../components/SettingsModal.vue'
+import AgentHubRoutingSummary from '../components/AgentHubRoutingSummary.vue'
 const md = new MarkdownIt({
   html: false,
   linkify: true,
@@ -590,6 +596,7 @@ const agentHubRunId = ref(
   launchMode.value === 'agenthub' && typeof route.query?.run === 'string'
     ? route.query.run : null
 )
+const agentHubRouting = ref(null)
 
 // File selector state
 const workflowFiles = ref([])
@@ -1440,6 +1447,7 @@ const handleButtonClick = () => {
   } else if (status.value === 'Completed' || status.value === 'Cancelled') {
     if (launchMode.value === 'agenthub') {
       agentHubRunId.value = null
+      agentHubRouting.value = null
       router.replace({ query: { ...route.query, session: undefined, run: undefined } })
       resetConnectionState()
       status.value = 'Connecting...'
@@ -1641,6 +1649,7 @@ watch(selectedFile, (newFile) => {
 
 watch(launchMode, (mode) => {
   agentHubRunId.value = null
+  agentHubRouting.value = null
   viewMode.value = 'chat'
   router.replace({
     query: {
@@ -2009,6 +2018,7 @@ const launchAgentHubTask = async () => {
   }
 
   shouldGlow.value = false
+  agentHubRouting.value = null
   status.value = 'Launching...'
   try {
     const response = await submitLaunchRequest({
@@ -2033,6 +2043,7 @@ const launchAgentHubTask = async () => {
       throw new Error(t('launch.agenthub_invalid_response'))
     }
     agentHubRunId.value = result.run_id
+    agentHubRouting.value = result
     clearUploadedAttachments()
     addDialogue('User', trimmedPrompt)
     taskPrompt.value = ''
@@ -3383,6 +3394,15 @@ watch(
   flex-direction: column;
   gap: 20px;
   min-width: 250px;
+}
+
+.agenthub-right-panel {
+  min-height: 0;
+}
+
+.agenthub-right-panel .control-section {
+  min-height: 0;
+  overflow-y: auto;
 }
 
 /* Right Panel — overlay mode (graph view) */

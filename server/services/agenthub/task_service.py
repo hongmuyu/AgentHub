@@ -68,6 +68,7 @@ class CandidateSummary(BaseModel):
     version: int
     name: str
     raw_similarity: float
+    score_kind: Literal["cosine"]
 
 
 class SelectedAgentSummary(BaseModel):
@@ -83,6 +84,7 @@ class TaskSubmissionResponse(BaseModel):
     routing_status: Literal["selected", "rejected", "failed"]
     selected_agent: SelectedAgentSummary | None = None
     candidates: tuple[CandidateSummary, ...] = ()
+    rerank_order: tuple[TraceAgent, ...] | None = None
     error_code: str | None = None
 
 
@@ -329,8 +331,9 @@ class TaskSubmissionService:
                 CandidateSummary(
                     id=item.agent.agent_id, version=item.agent.version,
                     name=names.get(item.agent.agent_id, "Candidate Agent"),
-                    raw_similarity=item.raw_similarity,
+                    raw_similarity=item.raw_similarity, score_kind=item.score_kind,
                 ) for item in trace.candidates
             ),
+            rerank_order=trace.rerank.ordered_candidates if trace.rerank is not None else None,
             error_code=run.error_code,
         )
