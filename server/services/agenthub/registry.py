@@ -5,7 +5,7 @@ from uuid import UUID
 
 from .database import AgentHubDatabase
 from .discovery import metadata_hash, prepare_embeddings
-from .embedding_index import AgentEmbeddingRepository
+from .embedding_index import ActiveIndexMismatchError, AgentEmbeddingRepository
 from .embeddings import EmbeddingBackend
 from .metadata import AgentMetadata, AgentMetadataInput
 from .thin_workflow import ThinWorkflowValidator
@@ -41,7 +41,11 @@ class AgentRegistry:
         self.validator.validate(metadata.runtime_ref)
         agent = AgentMetadata.register(metadata)
         embedding = prepare_embeddings((agent.snapshot,), self.backend)[0]
+        self._require_embedding_identity(embedding.embedding_model_key, embedding.dimensions)
         with self.database.transaction() as connection:
+            self.index.ensure_active(
+                connection, embedding.embedding_model_key, embedding.dimensions
+            )
             self.versions.insert_initial(connection, agent)
             self.index.insert_many(connection, (embedding,))
         return agent
@@ -56,7 +60,11 @@ class AgentRegistry:
         self.validator.validate(metadata.runtime_ref)
         updated = current.update_content(metadata)
         embedding = prepare_embeddings((updated.snapshot,), self.backend)[0]
+        self._require_embedding_identity(embedding.embedding_model_key, embedding.dimensions)
         with self.database.transaction() as connection:
+            self.index.ensure_active(
+                connection, embedding.embedding_model_key, embedding.dimensions
+            )
             self.versions.insert_next_snapshot(
                 connection, updated.snapshot, updated.updated_at
             )
@@ -83,6 +91,7 @@ class AgentRegistry:
             return current
         self.validator.validate(current.snapshot.runtime_ref)
         try:
+            self.index.require_backend(self.backend.model_key, self.backend.dimensions)
             embedding = self.index.get(
                 agent_id, current.snapshot.version, self.backend.model_key
             )
@@ -101,6 +110,10 @@ class AgentRegistry:
         with self.database.transaction() as connection:
             self.versions.update_status(connection, current, changed)
         return changed
+
+    def _require_embedding_identity(self, model_key: str, dimensions: int) -> None:
+        if (model_key, dimensions) != (self.backend.model_key, self.backend.dimensions):
+            raise ActiveIndexMismatchError()
 
     def list(
         self,

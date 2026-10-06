@@ -95,6 +95,7 @@ class AgentDiscovery:
     def discover(self, task: str, *, k: int) -> tuple[DiscoveryCandidate, ...]:
         if type(k) is not int or k <= 0:
             raise ValueError("k must be positive")
+        self.index.require_backend(self.backend.model_key, self.backend.dimensions)
 
         eligible: list[tuple[AgentMetadataVersion, AgentEmbedding]] = []
         for agent in self.versions.list_current("active"):
