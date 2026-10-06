@@ -138,7 +138,11 @@ class AgentHubWorkflowDispatcher:
                 latency_ms=max(0.0, (finished - execution.started_at).total_seconds() * 1000),
                 native_status=session.status.value, error_code=error_code,
                 workflow_completed=status == "success",
-                agent_outcome="succeeded" if status == "success" else None,
+                agent_outcome=(outcome.state if recorded.status == "recorded"
+                               and outcome is not None
+                               and outcome.run_id == context.run_id
+                               and outcome.node_id == context.workflow.agent_node_id
+                               else None),
             )
         except InvalidRunTransition:
             # A previously committed failure or cancellation wins the race.

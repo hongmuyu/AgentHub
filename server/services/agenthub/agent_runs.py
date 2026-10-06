@@ -44,6 +44,7 @@ class AgentRun(BaseModel):
     workflow_revision: int = Field(strict=True, ge=1)
     node_id: str
     status: Literal["running", "success", "failed", "cancelled"]
+    outcome_state: Literal["succeeded", "failed"] | None = None
     native_status: Literal[
         "idle", "running", "waiting_for_input", "completed", "error", "cancelled"
     ] | None = None
@@ -119,6 +120,11 @@ class AgentRun(BaseModel):
             raise ValueError("finished_at must not precede started_at")
         if (self.finished_at is None) != (self.latency_ms is None):
             raise ValueError("finished_at and latency_ms must both be present or null")
+        if self.outcome_state is not None and (
+            (self.outcome_state == "succeeded" and self.status != "success")
+            or (self.outcome_state == "failed" and self.status != "failed")
+        ):
+            raise ValueError("structured outcome must match terminal business status")
         return self
 
 
@@ -145,6 +151,7 @@ class AgentRunRepository:
                     workflow_revision INTEGER NOT NULL CHECK (workflow_revision >= 1),
                     node_id TEXT NOT NULL,
                     status TEXT NOT NULL CHECK (status IN ('running', 'success', 'failed', 'cancelled')),
+                    outcome_state TEXT CHECK (outcome_state IN ('succeeded', 'failed')),
                     native_status TEXT CHECK (native_status IN (
                         'idle', 'running', 'waiting_for_input', 'completed', 'error', 'cancelled'
                     )),
@@ -162,6 +169,12 @@ class AgentRunRepository:
                 )
                 """
             )
+            columns = {row[1] for row in connection.execute("PRAGMA table_info(agenthub_agent_runs)")}
+            if "outcome_state" not in columns:
+                connection.execute(
+                    "ALTER TABLE agenthub_agent_runs ADD COLUMN outcome_state TEXT "
+                    "CHECK (outcome_state IN ('succeeded', 'failed'))"
+                )
             connection.execute(
                 """
                 CREATE TRIGGER IF NOT EXISTS agenthub_agent_runs_snapshot_immutable
@@ -195,16 +208,17 @@ class AgentRunRepository:
             """
             INSERT INTO agenthub_agent_runs (
                 agent_run_id, run_id, agent_id, agent_version, runtime_ref, session_id,
-                workflow_id, workflow_revision, node_id, status, native_status,
+                workflow_id, workflow_revision, node_id, status, outcome_state, native_status,
                 started_at, finished_at, latency_ms, token_usage_json, result_ref,
                 result_summary, error_code, error_message, native_error_code
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 str(execution.agent_run_id), str(execution.run_id), str(execution.agent_id),
                 execution.agent_version, execution.runtime_ref, execution.session_id,
                 execution.workflow_id, execution.workflow_revision, execution.node_id,
-                execution.status, execution.native_status, execution.started_at.isoformat(),
+                execution.status, execution.outcome_state, execution.native_status,
+                execution.started_at.isoformat(),
                 execution.finished_at.isoformat() if execution.finished_at else None,
                 execution.latency_ms,
                 execution.token_usage.model_dump_json() if execution.token_usage else None,
@@ -230,7 +244,7 @@ class AgentRunRepository:
                 """
                 SELECT agent_run_id, run_id, agent_id, agent_version, runtime_ref,
                        session_id, workflow_id, workflow_revision, node_id, status,
-                       native_status, started_at, finished_at, latency_ms,
+                       outcome_state, native_status, started_at, finished_at, latency_ms,
                        token_usage_json, result_ref, result_summary, error_code,
                        error_message, native_error_code
                 FROM agenthub_agent_runs WHERE run_id = ?
@@ -242,9 +256,9 @@ class AgentRunRepository:
         fields = (
             "agent_run_id", "run_id", "agent_id", "agent_version", "runtime_ref",
             "session_id", "workflow_id", "workflow_revision", "node_id", "status",
-            "native_status", "started_at", "finished_at", "latency_ms", "token_usage",
+            "outcome_state", "native_status", "started_at", "finished_at", "latency_ms", "token_usage",
             "result_ref", "result_summary", "error_code", "error_message", "native_error_code",
         )
         values = list(row)
-        values[14] = json.loads(values[14]) if values[14] is not None else None
+        values[15] = json.loads(values[15]) if values[15] is not None else None
         return AgentRun.model_validate(dict(zip(fields, values)))

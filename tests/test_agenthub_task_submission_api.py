@@ -570,6 +570,7 @@ def test_provider_failure_can_complete_web_workflow_but_fails_business_run(
     assert session.status == SessionStatus.COMPLETED
     assert "workflow_completed" in {event["type"] for event in session.message_buffer}
     assert observed["recorder"].read().outcome.state == "failed"
+    assert execution.outcome_state == "failed"
     assert "synthetic-private-provider-detail" not in run.model_dump_json()
     assert "synthetic-private-provider-detail" not in execution.model_dump_json()
 
@@ -591,12 +592,14 @@ def test_completed_workflow_with_untrusted_outcome_never_succeeds(
     assert run.error_code == execution.error_code == expected_code
     assert execution.native_status == "completed"
     assert session.status == SessionStatus.COMPLETED
+    assert execution.outcome_state is None
 
 
 def test_repeated_completion_keeps_first_terminal_snapshot(api, monkeypatch):
     run_id, observed = _submit_completion_case(api, monkeypatch)
     first = _wait_for_run_status(api, run_id, "success")
     first_execution = api["executions"].get_by_run_id(run_id)
+    assert first_execution.outcome_state == "succeeded"
     dispatcher = api["service"].dispatcher
 
     dispatcher._record_completion(observed["context"], observed["recorder"])

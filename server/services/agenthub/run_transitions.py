@@ -88,12 +88,19 @@ class RunTransitionService:
                     raise ValueError("success evidence requires completed workflow and succeeded Agent")
                 if error_code is not None or error_message is not None or native_status in ("error", "cancelled"):
                     raise ValueError("success evidence conflicts with failure or cancellation")
+            if agent_outcome is not None and (
+                (agent_outcome == "succeeded" and status != "success")
+                or (agent_outcome == "failed" and status != "failed")
+                or agent_outcome not in ("succeeded", "failed")
+            ):
+                raise ValueError("structured outcome must match terminal status")
             if status == "rejected" and error_code != "NO_SUITABLE_AGENT":
                 raise ValueError("rejection requires NO_SUITABLE_AGENT")
             if status == "failed" and error_code is None:
                 raise ValueError("failure requires an error_code")
             if task.status == "pending" and (
                 latency_ms is not None or native_status is not None or token_usage is not None
+                or agent_outcome is not None
             ):
                 raise ValueError("pending TaskRun has no AgentRun execution data")
             if task.status == "pending" and task.agent_run_id is not None:
@@ -113,6 +120,7 @@ class RunTransitionService:
                     raise ValueError("success evidence conflicts with native failure or cancellation")
                 updated_execution = AgentRun.model_validate({
                     **execution.model_dump(), "status": status,
+                    "outcome_state": agent_outcome,
                     "native_status": native_status if native_status is not None else execution.native_status,
                     "finished_at": at, "latency_ms": latency_ms,
                     "token_usage": token_usage, "error_code": error_code,
@@ -133,11 +141,11 @@ class RunTransitionService:
                 raise InvalidRunTransition("TaskRun terminal commit lost its race")
             if updated_execution is not None:
                 changed = connection.execute(
-                    """UPDATE agenthub_agent_runs SET status = ?, native_status = ?,
+                    """UPDATE agenthub_agent_runs SET status = ?, outcome_state = ?, native_status = ?,
                               finished_at = ?, latency_ms = ?, token_usage_json = ?,
                               error_code = ?, error_message = ?, result_ref = ?, result_summary = ?
                        WHERE agent_run_id = ? AND status = 'running'""",
-                    (status, updated_execution.native_status,
+                    (status, updated_execution.outcome_state, updated_execution.native_status,
                      updated_execution.finished_at.isoformat(), updated_execution.latency_ms,
                      updated_execution.token_usage.model_dump_json()
                      if updated_execution.token_usage is not None else None,
