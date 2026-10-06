@@ -1,1 +1,3 @@
-{}
+{
+  "workflow://research-agent/1": "agenthub_research.yaml"
+}

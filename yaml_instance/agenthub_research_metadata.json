@@ -1,0 +1,19 @@
+{
+  "name": "Research Agent",
+  "description": "Researches technical topics for internal R&D using supplied material and configured public web sources. External lookup depends on available tools; it does not verify inaccessible sources, run experiments, or implement code.",
+  "capabilities": [
+    "Find public technical information",
+    "Summarize research findings with source links",
+    "Compare technologies using cited evidence"
+  ],
+  "tools": [
+    "web_search",
+    "read_webpage_content"
+  ],
+  "tags": [
+    "research",
+    "technical",
+    "knowledge-work"
+  ],
+  "runtime_ref": "workflow://research-agent/1"
+}
