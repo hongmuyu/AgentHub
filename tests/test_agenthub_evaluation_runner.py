@@ -9,6 +9,10 @@ import pytest
 from server.services.agenthub.database import AgentHubDatabase
 from server.services.agenthub.discovery import discovery_text
 from server.services.agenthub.embeddings import FakeEmbeddingBackend
+from server.services.agenthub.evaluation_calibration import (
+    run_frozen_test,
+    select_calibration_config,
+)
 from server.services.agenthub.evaluation_dataset import RoutingDataset
 from server.services.agenthub.evaluation_runner import run_routing_benchmark
 from server.services.agenthub.metadata import AgentMetadataInput
@@ -251,3 +255,55 @@ def test_rerank_config_and_unresolved_attachment_are_not_silently_used(
     payload["cases"][0]["attachment_fixture_ref"] = "fixture://sample"
     with pytest.raises(ValueError, match="attachment"):
         _run(registry, RoutingDataset.model_validate(payload))
+
+
+def test_calibration_freezes_gate_from_calibration_only(catalog_and_dataset):
+    registry, dataset, _, second = catalog_and_dataset
+    payload = dataset.model_dump(mode="json")
+    payload["cases"][1]["split"] = "calibration"
+    dataset = RoutingDataset.model_validate(payload)
+    candidates = tuple(run_routing_benchmark(
+        dataset, registry, strategy="semantic", split="calibration", top_k=k,
+        threshold=CalibratedThreshold(value, "candidate-grid-v1"),
+        environment_label="local-fake",
+    ) for k, value in ((1, -1.0), (1, 0.5), (2, 0.5)))
+
+    frozen, reports = select_calibration_config(dataset, candidates)
+    assert (frozen.top_k, frozen.threshold.value) == (1, 0.5)
+    assert frozen.calibration_config_id == candidates[1].config_id
+    assert len(reports) == 3
+    assert reports[0].false_accept_rate.value == 1
+    assert reports[1].reject_accuracy.value == 1
+    assert all(report.split == "calibration" for report in reports)
+    assert all(row.case_id != "error-case" for run in candidates for row in run.cases)
+    changed_test = dataset.model_dump(mode="json")
+    changed_test["cases"][2]["expected_agent_ids"] = [str(second.snapshot.id)]
+    assert select_calibration_config(
+        RoutingDataset.model_validate(changed_test), candidates,
+    )[0] == frozen
+
+    class IdentityTransport:
+        def complete(self, request):
+            return json.dumps({
+                "candidate_ids": [item["id"] for item in request["candidates"]],
+                "reason_code": "FIXTURE_IDENTITY",
+            })
+
+    results = run_frozen_test(
+        dataset, registry, frozen, environment_label="local-fake",
+        reranker=RerankAdapter(IdentityTransport()), rerank_model_key="fake-rerank-v1",
+    )
+    assert [run.config.strategy for run, _ in results] == ["semantic", "semantic_llm"]
+    assert all(run.config.split == "test" and run.config.top_k == 1 and
+               run.config.threshold_value == 0.5 and
+               run.config.threshold_source == f"calibration:{candidates[1].config_id}"
+               for run, _ in results)
+    assert all(report.infra_error_case_ids == ("error-case",) for _, report in results)
+
+
+def test_calibration_rejects_test_split_and_missing_no_match(catalog_and_dataset):
+    registry, dataset, _, _ = catalog_and_dataset
+    with pytest.raises(ValueError, match="calibration"):
+        select_calibration_config(dataset, (_run(registry, dataset, split="test"),))
+    with pytest.raises(ValueError, match="valid route and no-match"):
+        select_calibration_config(dataset, (_run(registry, dataset),))

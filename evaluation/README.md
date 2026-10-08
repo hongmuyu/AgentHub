@@ -136,3 +136,67 @@ p50 are 40 ms, p95 is 70 ms. The 50 ms infrastructure-error sample is included
 in latency only; the other error has no measured query and no invented duration.
 These numbers verify formulas in a fixture, not a benchmark result for the demo
 catalog or a live provider.
+
+# T43 calibration and catalog-size evidence — 2026-10-08
+
+`select_calibration_config()` accepts only `semantic` runs on the calibration
+split, with one catalog/dataset/model/environment provenance. It refuses an
+empty route or no-match denominator, any infrastructure error, and repeated
+candidate gates. The declared selection rule maximizes **Top-K Recall + Reject
+Accuracy**, then Top-1 Accuracy, then prefers smaller K and higher threshold.
+The selected `FrozenRoutingConfig` stores the winning calibration `config_id`;
+`run_frozen_test()` applies that K and threshold to both strategies on the
+independent test split. A small fake fixture verifies the boundary. Its labels
+and timing are engineering checks, not 60-case quality measurements.
+
+The [measured offline catalog-size report](t43_offline_catalog_size_2026-10-08.json)
+was produced by:
+
+```bash
+.venv/bin/python -m evaluation.catalog_size_benchmark --output evaluation/t43_offline_catalog_size_2026-10-08.json
+```
+
+It uses a fixed SHA-256 seed, 16-dimensional fake vectors, one active indexed
+metadata version per Agent, and allowlisted `runtime_ref` entries mapped to a
+statically validated thin workflow. It performs no workflow or provider call.
+The threshold is `-1.0` solely to keep the scan path open; K is 3. Each size
+has two warmup requests and 36 measured requests per strategy (12 fixed
+queries × three repeats). SQLite and OS caches remain warm. The report records
+the script hash, hardware, Python/OS, build time, sample counts, errors, and
+all segment p50/p95 values. The reranker is a local identity transport, so its
+timing is **not** LLM latency. All values below are measured milliseconds on
+this machine; no target or production estimate is implied.
+
+| Agents | Strategy | Full route p50/p95 | Query-to-decision p50/p95 | Discovery excluding embedding p50/p95 | Query embedding p50/p95 | Local rerank p50/p95 |
+| ---: | --- | ---: | ---: | ---: | ---: | ---: |
+| 10 | semantic | 9.394 / 9.766 | 0.072 / 0.087 | 9.374 / 9.744 | 0.013 / 0.019 | not applicable |
+| 10 | semantic_llm | 9.405 / 9.658 | 0.108 / 0.118 | 9.345 / 9.598 | 0.013 / 0.014 | 0.026 / 0.032 |
+| 50 | semantic | 44.646 / 45.458 | 0.215 / 0.236 | 44.612 / 45.436 | 0.013 / 0.024 | not applicable |
+| 50 | semantic_llm | 44.599 / 45.646 | 0.255 / 0.277 | 44.540 / 45.586 | 0.013 / 0.014 | 0.027 / 0.038 |
+| 100 | semantic | 90.423 / 98.400 | 0.404 / 0.440 | 90.401 / 98.378 | 0.013 / 0.017 | not applicable |
+| 100 | semantic_llm | 90.320 / 96.638 | 0.446 / 0.530 | 90.259 / 96.575 | 0.013 / 0.014 | 0.028 / 0.038 |
+
+Each row has 36 measured samples and zero routing errors. Catalog/index build
+times for 10/50/100 are 38.519/183.895/365.535 ms, measured separately.
+`query-to-decision` starts at query embedding, matching the T41 runner; it
+excludes the status check, static workflow validation and index loading that
+precede embedding. `full route` includes that work. `discovery excluding
+embedding` contains those pre-query steps, exact cosine and sorting, so it is
+**not** an isolated cosine scan figure. The sub-millisecond query-to-decision
+figures show small local vector math cost under this fixture, while full route
+cost rises materially with catalog size. These measurements alone do not prove
+an exact scan meets a live latency objective or that a vector database would
+help: the dominant measured work includes repeated validation and SQLite
+loading. P0 can retain the current simple exact scan pending live workload
+evidence; any architecture change needs separate review.
+
+**Live verification: NOT VERIFIED.** This checkout has no configured
+`AGENTHUB_EMBEDDING_BASE_URL`, model, dimensions or credential selector, and no
+AgentHub live reranker transport/configuration. No live endpoint was called.
+Consequently the 60-case calibration gate was not selected/frozen, the
+independent 30-case test split was not evaluated, and there are no valid live
+Top-1, Top-K, Reject Accuracy, False Accept Rate, strategy comparison, or
+provider-latency results. The offline catalog-size numbers must not be used as
+semantic quality or live latency evidence. T43 remains blocked on a safely
+configured embedding endpoint and a reranker transport; only explicit opt-in
+live evaluation may fill these gaps.
