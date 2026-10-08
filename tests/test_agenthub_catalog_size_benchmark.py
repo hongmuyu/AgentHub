@@ -1,5 +1,6 @@
 """Controlled timing checks for the offline scale benchmark."""
 
+import json
 from unittest.mock import patch
 
 from evaluation.catalog_size_benchmark import (
@@ -7,6 +8,8 @@ from evaluation.catalog_size_benchmark import (
     TimedDiscovery,
     TimedEmbeddingBackend,
     TimedReranker,
+    _catalog,
+    _measure,
     _percentiles,
     run_offline_benchmark,
 )
@@ -64,3 +67,29 @@ def test_all_three_catalog_sizes_are_measured_without_live_provider():
             assert result["segments"]["query_embedding_ms"]["sample_count"] == 12
             assert result["segments"]["discovery_excluding_embedding_ms"]["sample_count"] == 12
             assert result["segments"]["rerank_ms"]["sample_count"] == (12 if strategy == "semantic_llm" else 0)
+
+
+def test_shared_scale_measurement_accepts_injected_backends_without_network(tmp_path):
+    class OtherEmbedding(OfflineEmbeddingBackend):
+        model_key = "injected-fake-16d-v1"
+
+    class SpyTransport:
+        calls = 0
+
+        def complete(self, request):
+            self.calls += 1
+            return json.dumps({
+                "candidate_ids": [item["id"] for item in request["candidates"]],
+                "reason_code": "OFFLINE_IDENTITY",
+            })
+
+    transport = SpyTransport()
+    registry, _ = _catalog(tmp_path, 10, backend=OtherEmbedding())
+    report = _measure(
+        registry, 10, top_k=3, warmup=0, repeats=1,
+        rerank_transport=transport,
+    )
+
+    assert registry.backend.model_key == "injected-fake-16d-v1"
+    assert transport.calls == 12
+    assert report["semantic_llm"]["errors"] == []

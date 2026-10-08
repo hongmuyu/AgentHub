@@ -1,6 +1,6 @@
 {
   "label": "deterministic_offline_engineering_only",
-  "measured_at_utc": "2026-10-08T05:33:26.934569+00:00",
+  "measured_at_utc": "2026-10-08T10:32:50.264038+00:00",
   "hardware": {
     "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
     "python": "3.12.13",
@@ -9,7 +9,7 @@
     "memory_total_kib": 32146840
   },
   "config": {
-    "source_sha256": "41f712676c415157ff952f304b1cef142e7225b17f83c2ddedb19ec378da05cf",
+    "source_sha256": "f949404c14eab85916d1325b4ed7711aaafe6666027d96b0a2020fd7542004e2",
     "catalog_version": "synthetic-v1",
     "catalog_universe_fingerprint": "2021381247ea562d6f54c0d68ae0e87d86dcbf3d3d30bc4f5dbee6139bf84bda",
     "seed": "agenthub-t43-offline-v1",
@@ -36,7 +36,7 @@
   "sizes": [
     {
       "catalog_size": 10,
-      "catalog_and_index_build_ms": 38.518944,
+      "catalog_and_index_build_ms": 36.3428,
       "strategies": {
         "semantic": {
           "catalog_size": 10,
@@ -45,13 +45,13 @@
           "segments": {
             "query_embedding_ms": {
               "sample_count": 36,
-              "p50_ms": 0.013061,
-              "p95_ms": 0.018997
+              "p50_ms": 0.01306,
+              "p95_ms": 0.018996
             },
             "discovery_excluding_embedding_ms": {
               "sample_count": 36,
-              "p50_ms": 9.37387,
-              "p95_ms": 9.744311999999999
+              "p50_ms": 9.281008,
+              "p95_ms": 9.473348
             },
             "rerank_ms": {
               "sample_count": 0,
@@ -60,13 +60,13 @@
             },
             "routing_query_to_decision_ms": {
               "sample_count": 36,
-              "p50_ms": 0.072426,
-              "p95_ms": 0.086674
+              "p50_ms": 0.067675,
+              "p95_ms": 0.077174
             },
             "routing_full_ms": {
               "sample_count": 36,
-              "p50_ms": 9.394054,
-              "p95_ms": 9.765685
+              "p50_ms": 9.301192,
+              "p95_ms": 9.49472
             }
           }
         },
@@ -82,23 +82,23 @@
             },
             "discovery_excluding_embedding_ms": {
               "sample_count": 36,
-              "p50_ms": 9.345375,
-              "p95_ms": 9.598272
+              "p50_ms": 9.399737,
+              "p95_ms": 9.772545000000001
             },
             "rerank_ms": {
               "sample_count": 36,
-              "p50_ms": 0.026121,
-              "p95_ms": 0.032057
+              "p50_ms": 0.024933,
+              "p95_ms": 0.028495
             },
             "routing_query_to_decision_ms": {
               "sample_count": 36,
-              "p50_ms": 0.108046,
-              "p95_ms": 0.117544
+              "p50_ms": 0.105669,
+              "p95_ms": 0.119916
             },
             "routing_full_ms": {
               "sample_count": 36,
-              "p50_ms": 9.40474,
-              "p95_ms": 9.657638
+              "p50_ms": 9.45554,
+              "p95_ms": 9.834284
             }
           }
         }
@@ -106,7 +106,7 @@
     },
     {
       "catalog_size": 50,
-      "catalog_and_index_build_ms": 183.895257,
+      "catalog_and_index_build_ms": 181.746064,
       "strategies": {
         "semantic": {
           "catalog_size": 50,
@@ -116,12 +116,12 @@
             "query_embedding_ms": {
               "sample_count": 36,
               "p50_ms": 0.01306,
-              "p95_ms": 0.023747
+              "p95_ms": 0.024933
             },
             "discovery_excluding_embedding_ms": {
               "sample_count": 36,
-              "p50_ms": 44.61226,
-              "p95_ms": 45.436259
+              "p50_ms": 44.942308,
+              "p95_ms": 46.789725999999995
             },
             "rerank_ms": {
               "sample_count": 0,
@@ -130,13 +130,13 @@
             },
             "routing_query_to_decision_ms": {
               "sample_count": 36,
-              "p50_ms": 0.214904,
-              "p95_ms": 0.236276
+              "p50_ms": 0.211337,
+              "p95_ms": 0.238644
             },
             "routing_full_ms": {
               "sample_count": 36,
-              "p50_ms": 44.645506,
-              "p95_ms": 45.457629
+              "p50_ms": 44.96368,
+              "p95_ms": 46.811097
             }
           }
         },
@@ -148,27 +148,27 @@
             "query_embedding_ms": {
               "sample_count": 36,
               "p50_ms": 0.01306,
-              "p95_ms": 0.014248
+              "p95_ms": 0.014247
             },
             "discovery_excluding_embedding_ms": {
               "sample_count": 36,
-              "p50_ms": 44.539837,
-              "p95_ms": 45.58586
+              "p50_ms": 44.893632999999994,
+              "p95_ms": 45.978814
             },
             "rerank_ms": {
               "sample_count": 36,
               "p50_ms": 0.027308,
-              "p95_ms": 0.037994
+              "p95_ms": 0.042742
             },
             "routing_query_to_decision_ms": {
               "sample_count": 36,
-              "p50_ms": 0.255273,
-              "p95_ms": 0.276645
+              "p50_ms": 0.248142,
+              "p95_ms": 0.273076
             },
             "routing_full_ms": {
               "sample_count": 36,
-              "p50_ms": 44.599203,
-              "p95_ms": 45.646414
+              "p50_ms": 44.952997,
+              "p95_ms": 46.041739
             }
           }
         }
@@ -176,7 +176,7 @@
     },
     {
       "catalog_size": 100,
-      "catalog_and_index_build_ms": 365.534655,
+      "catalog_and_index_build_ms": 361.028548,
       "strategies": {
         "semantic": {
           "catalog_size": 100,
@@ -186,12 +186,12 @@
             "query_embedding_ms": {
               "sample_count": 36,
               "p50_ms": 0.01306,
-              "p95_ms": 0.016622
+              "p95_ms": 0.014248
             },
             "discovery_excluding_embedding_ms": {
               "sample_count": 36,
-              "p50_ms": 90.401161,
-              "p95_ms": 98.37756300000001
+              "p50_ms": 90.234881,
+              "p95_ms": 111.689126
             },
             "rerank_ms": {
               "sample_count": 0,
@@ -200,13 +200,13 @@
             },
             "routing_query_to_decision_ms": {
               "sample_count": 36,
-              "p50_ms": 0.403688,
-              "p95_ms": 0.440495
+              "p50_ms": 0.397741,
+              "p95_ms": 0.42861
             },
             "routing_full_ms": {
               "sample_count": 36,
-              "p50_ms": 90.422533,
-              "p95_ms": 98.400123
+              "p50_ms": 90.25744,
+              "p95_ms": 111.711684
             }
           }
         },
@@ -217,28 +217,28 @@
           "segments": {
             "query_embedding_ms": {
               "sample_count": 36,
-              "p50_ms": 0.013061,
-              "p95_ms": 0.014248
+              "p50_ms": 0.01306,
+              "p95_ms": 0.020184
             },
             "discovery_excluding_embedding_ms": {
               "sample_count": 36,
-              "p50_ms": 90.25869700000001,
-              "p95_ms": 96.57522900000001
+              "p50_ms": 90.376174,
+              "p95_ms": 96.413531
             },
             "rerank_ms": {
               "sample_count": 36,
               "p50_ms": 0.028495,
-              "p95_ms": 0.037994
+              "p95_ms": 0.036806
             },
             "routing_query_to_decision_ms": {
               "sample_count": 36,
-              "p50_ms": 0.446432,
-              "p95_ms": 0.529543
+              "p50_ms": 0.436921,
+              "p95_ms": 0.548526
             },
             "routing_full_ms": {
               "sample_count": 36,
-              "p50_ms": 90.320439,
-              "p95_ms": 96.638157
+              "p50_ms": 90.436726,
+              "p95_ms": 96.474083
             }
           }
         }

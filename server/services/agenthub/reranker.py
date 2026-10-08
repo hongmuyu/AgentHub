@@ -2,14 +2,19 @@
 
 import json
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Protocol, Sequence
+from typing import Protocol
 from uuid import UUID
 
 from .discovery import DiscoveryCandidate
 
-
 _REASON_CODE = re.compile(r"[A-Z][A-Z0-9_]{0,63}")
+_SAFE_TRANSPORT_CODES = frozenset({
+    "RERANK_CREDENTIAL_MISSING", "RERANK_TIMEOUT", "RERANK_SERVICE_ERROR",
+    "RERANK_AUTH_FAILED", "RERANK_RATE_LIMITED", "RERANK_SERVICE_UNAVAILABLE",
+    "RERANK_REQUEST_FAILED", "RERANK_INVALID_RESPONSE", "RERANK_TRUNCATED_RESPONSE",
+})
 
 
 def _unique_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
@@ -71,9 +76,12 @@ class RerankAdapter:
         }
         try:
             response = self.transport.complete(request)
+        except RerankError as exc:
+            code = exc.code if exc.code in _SAFE_TRANSPORT_CODES else "RERANK_SERVICE_ERROR"
+            raise RerankError(code) from None
         except TimeoutError:
             raise RerankError("RERANK_TIMEOUT") from None
-        except Exception:
+        except Exception:  # noqa: BLE001 - transport details must not escape
             raise RerankError("RERANK_SERVICE_ERROR") from None
 
         if not isinstance(response, str):

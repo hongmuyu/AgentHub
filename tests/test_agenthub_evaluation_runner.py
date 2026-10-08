@@ -6,10 +6,12 @@ from unittest.mock import patch
 
 import pytest
 
+from evaluation.live_routing_benchmark import _threshold_grid
 from server.services.agenthub.database import AgentHubDatabase
 from server.services.agenthub.discovery import discovery_text
 from server.services.agenthub.embeddings import FakeEmbeddingBackend
 from server.services.agenthub.evaluation_calibration import (
+    derive_calibration_runs,
     run_frozen_test,
     select_calibration_config,
 )
@@ -307,3 +309,66 @@ def test_calibration_rejects_test_split_and_missing_no_match(catalog_and_dataset
         select_calibration_config(dataset, (_run(registry, dataset, split="test"),))
     with pytest.raises(ValueError, match="valid route and no-match"):
         select_calibration_config(dataset, (_run(registry, dataset),))
+
+
+def test_calibration_does_not_choose_reject_all_from_gate_independent_recall(
+    catalog_and_dataset,
+):
+    registry, dataset, _, _ = catalog_and_dataset
+    registry.backend._vectors[SELECT_TASK] = (0.9, -0.435889894)
+    registry.backend._vectors["Near no-match"] = (0.95, 0.3122499)
+    payload = dataset.model_dump(mode="json")
+    payload["cases"][1]["split"] = "calibration"
+    payload["cases"].append({
+        "case_id": "near-no-match", "task_text": "Near no-match",
+        "expected_agent_ids": [], "should_reject": True,
+        "category": "no_match", "annotation_reason": "No matching capability.",
+        "dataset_version": "fixture-v1", "split": "calibration",
+    })
+    dataset = RoutingDataset.model_validate(payload)
+    runs = tuple(run_routing_benchmark(
+        dataset, registry, strategy="semantic", split="calibration", top_k=2,
+        threshold=CalibratedThreshold(value, "candidate-grid-v1"),
+        environment_label="local-fake",
+    ) for value in (0.85, 1.0))
+
+    frozen, reports = select_calibration_config(dataset, runs)
+
+    assert frozen.threshold.value == 0.85
+    assert reports[0].top1_accuracy.value == 1
+    assert reports[0].reject_accuracy.value == 0.5
+    assert reports[1].top1_accuracy.value == 0
+    assert reports[1].reject_accuracy.value == 1
+    assert reports[0].top_k_recall.value == reports[1].top_k_recall.value == 1
+
+
+def test_derived_calibration_gates_match_direct_router_without_invented_latency(
+    catalog_and_dataset,
+):
+    registry, dataset, _, _ = catalog_and_dataset
+    payload = dataset.model_dump(mode="json")
+    payload["cases"][1]["split"] = "calibration"
+    dataset = RoutingDataset.model_validate(payload)
+    baseline = run_routing_benchmark(
+        dataset, registry, strategy="semantic", split="calibration", top_k=2,
+        threshold=CalibratedThreshold(-1.0, "calibration-scan"),
+        environment_label="local-fake",
+    )
+    derived = derive_calibration_runs(baseline, top_ks=(1, 2), thresholds=(0.5,))
+    assert len(derived) == 2
+    for run in derived:
+        direct = run_routing_benchmark(
+            dataset, registry, strategy="semantic", split="calibration",
+            top_k=run.config.top_k,
+            threshold=CalibratedThreshold(0.5, "direct-fixture"),
+            environment_label="local-fake",
+        )
+        assert [(row.status, row.selected_agent, row.semantic_candidates)
+                for row in run.cases] == [
+                    (row.status, row.selected_agent, row.semantic_candidates)
+                    for row in direct.cases
+                ]
+        assert all(row.routing_latency_ms is None and row.timing_scope == "query_not_started"
+                   for row in run.cases)
+        assert all(row.case_id != "error-case" for row in run.cases)
+    assert _threshold_grid(baseline) == pytest.approx((-1.0, -0.8, 0.1, 1.0))

@@ -1,0 +1,4006 @@
+{
+  "calibration_artifact": "t43_live_calibration_attempt1_2026-10-08.json",
+  "catalog_snapshot_id": "demo-catalog-25207e307d86eedf4332a5bcbc2a63d6eccbfce37d136c858d42ba2e09b3788c",
+  "dataset_version": "routing-v1",
+  "frozen_config_id": "0111662eee1972a8e0c223e53e3d1a5530dfac84a9b463ac918d6df4a1e3957a",
+  "provenance": {
+    "cache": "new temporary SQLite catalog/index; provider-side caches uncontrolled",
+    "credential_sources": "ignored local .env; only selector names are used in process",
+    "embedding_config_sha256": "cc5b1d818356aacd17b0d9db8e7a020cad28a2e10a00ecd0a96e970673bb7765",
+    "embedding_dimensions": 1024,
+    "embedding_model_key": "qwen-text-embedding-v4-1024",
+    "embedding_provider": "DashScope",
+    "label": "live_provider_measurement",
+    "logical_cpus": 16,
+    "measured_at_utc": "2026-10-08T10:20:31.681315+00:00",
+    "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+    "python": "3.12.13",
+    "rerank_config_sha256": "fa7e7380f452e5d24d7b6f0c1ddcb561e2b1242f1b545966e3369d0b9fc52df4",
+    "rerank_model_key": "deepseek-flash",
+    "rerank_provider": "DeepSeek",
+    "source_sha256": "14f0da38ba809ef1661da4f09c651077a07e8f9893b202f2f955806be3aca428"
+  },
+  "results": [
+    {
+      "metrics": {
+        "applicable_case_count": 24,
+        "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+        "dataset_version": "routing-v1",
+        "false_accept_case_ids": [
+          "no-match-procurement-08",
+          "no-match-image-10",
+          "no-match-scan-12"
+        ],
+        "false_accept_rate": {
+          "denominator": 6,
+          "numerator": 3,
+          "value": 0.5
+        },
+        "infra_error_case_ids": [],
+        "latency": {
+          "included_infra_error_case_ids": [],
+          "mean_ms": 408.6879176,
+          "p50_ms": 389.265127,
+          "p95_ms": 654.17085,
+          "sample_count": 30,
+          "unmeasured_case_ids": []
+        },
+        "no_match_case_count": 6,
+        "reject_accuracy": {
+          "denominator": 6,
+          "numerator": 3,
+          "value": 0.5
+        },
+        "split": "test",
+        "strategy": "semantic",
+        "top1_accuracy": {
+          "denominator": 24,
+          "numerator": 11,
+          "value": 0.4583333333333333
+        },
+        "top1_incorrect_case_ids": [
+          "clear-research-05",
+          "clear-research-06",
+          "clear-code-04",
+          "clear-code-05",
+          "clear-code-06",
+          "clear-document-05",
+          "clear-planning-04",
+          "clear-planning-05",
+          "clear-planning-06",
+          "clear-review-04",
+          "clear-review-05",
+          "ambiguous-planning-review-02",
+          "ambiguous-document-review-02"
+        ],
+        "top_k_miss_case_ids": [],
+        "top_k_recall": {
+          "denominator": 24,
+          "numerator": 24,
+          "value": 1.0
+        },
+        "total_case_count": 30,
+        "valid_route_count": 30
+      },
+      "run": {
+        "cases": [
+          {
+            "case_id": "clear-research-04",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": null,
+            "routing_latency_ms": 1188.730606,
+            "selected_agent": {
+              "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.4014477682061898,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.3893919150416711,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.33399806556537476,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.3248609758554277,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.3152848181016626,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-research-05",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": "NO_SUITABLE_AGENT",
+            "rerank": null,
+            "routing_latency_ms": 649.247672,
+            "selected_agent": null,
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.27193683183445294,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.2412856773221688,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.22113460507349664,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.21821645670574158,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.1986381986454963,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "rejected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-research-06",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": null,
+            "routing_latency_ms": 242.814184,
+            "selected_agent": {
+              "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.38471481535284513,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.3705912413861368,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.33855462795987246,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.33256407135089755,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.23800156780824494,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-code-04",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": "NO_SUITABLE_AGENT",
+            "rerank": null,
+            "routing_latency_ms": 389.265127,
+            "selected_agent": null,
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.332169858486167,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.30941634633223974,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.2983966713778736,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.267980774433834,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.2665295355744765,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "rejected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-code-05",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": "NO_SUITABLE_AGENT",
+            "rerank": null,
+            "routing_latency_ms": 242.935304,
+            "selected_agent": null,
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.3312623409361728,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.3242200517241821,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.3168557018189232,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.3049718119300194,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.29354792086702647,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "rejected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-code-06",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": "NO_SUITABLE_AGENT",
+            "rerank": null,
+            "routing_latency_ms": 390.224457,
+            "selected_agent": null,
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.31880778748639305,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.30965820934316174,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.30296283302150945,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.28872541398327617,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.2851554205813716,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "rejected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-data-04",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": null,
+            "routing_latency_ms": 291.150775,
+            "selected_agent": {
+              "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.45491977240861653,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.40342530130503906,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.3974805035898088,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.3888792169960564,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.373025676817173,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-data-05",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": null,
+            "routing_latency_ms": 559.943848,
+            "selected_agent": {
+              "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.43629705603874647,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.3666264692702493,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.32186753712059224,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.3144524496536148,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.29780601067118795,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-data-06",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": null,
+            "routing_latency_ms": 426.114238,
+            "selected_agent": {
+              "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.39826270925200613,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.3637752653545756,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.31595310081443906,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.31206419208223724,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.2994723669728973,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-document-04",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": null,
+            "routing_latency_ms": 233.197769,
+            "selected_agent": {
+              "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.435349723233798,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.4238880764460854,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.36545451481247443,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.36067962110668633,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.3439475882254747,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-document-05",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": "NO_SUITABLE_AGENT",
+            "rerank": null,
+            "routing_latency_ms": 336.704579,
+            "selected_agent": null,
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.35011469803993867,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.3483250624666493,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.345952188616396,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.3224256606017063,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.31707565545869654,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "rejected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-document-06",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": null,
+            "routing_latency_ms": 280.836268,
+            "selected_agent": {
+              "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.40649365350392336,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.3854793791704938,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.3802223921262549,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.3727670026457996,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.3355579092180931,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-planning-04",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": null,
+            "routing_latency_ms": 639.604247,
+            "selected_agent": {
+              "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.441055946157325,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.36315537974609136,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.3579597904720086,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.3560358395318962,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.32759410703861735,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-planning-05",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": null,
+            "routing_latency_ms": 299.816433,
+            "selected_agent": {
+              "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.3614552365681259,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.33102178587338216,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.3279750695726842,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.3109093129430905,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.30318206406061976,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-planning-06",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": null,
+            "routing_latency_ms": 358.604149,
+            "selected_agent": {
+              "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.4471297106495854,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.4259697615390665,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.3802163202663737,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.3791946750100796,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.37047018316163877,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-review-04",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": null,
+            "routing_latency_ms": 397.769471,
+            "selected_agent": {
+              "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.6165681421720063,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.563245915458093,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.5480270099717941,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.5339270308062577,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.5276064609700757,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-review-05",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": null,
+            "routing_latency_ms": 426.779258,
+            "selected_agent": {
+              "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.3808900948949876,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.36214095603339136,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.3279629369437339,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.3013502820221628,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.29262044616488886,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-review-06",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": null,
+            "routing_latency_ms": 254.243776,
+            "selected_agent": {
+              "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.4212582602335341,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.33801049446086007,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.31109631366136425,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.3059854385651358,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.2721371170674464,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "ambiguous-research-document-02",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": null,
+            "routing_latency_ms": 372.939946,
+            "selected_agent": {
+              "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.5364930891854891,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.4828281306421496,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.47219250605702123,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.45982058360350403,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.40007992762126376,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "ambiguous-code-review-02",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": null,
+            "routing_latency_ms": 434.765774,
+            "selected_agent": {
+              "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.40685702954400454,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.3977115060631155,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.38749909697183177,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.3824149904431223,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.3589852086470887,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "ambiguous-data-document-02",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": null,
+            "routing_latency_ms": 428.373816,
+            "selected_agent": {
+              "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.4615147383802178,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.4289841454446604,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.3829807232460941,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.35757502502771893,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.34627532763621677,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "ambiguous-planning-review-02",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": "NO_SUITABLE_AGENT",
+            "rerank": null,
+            "routing_latency_ms": 428.177923,
+            "selected_agent": null,
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.3241004755656623,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.30911818626918114,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.2935170493593063,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.2856576504057432,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.2797413748653189,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "rejected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "ambiguous-document-review-02",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": null,
+            "routing_latency_ms": 212.777697,
+            "selected_agent": {
+              "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.3629515455211921,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.3600485089504908,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.33885043228602635,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.2998175974735686,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.2901098088710179,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "ambiguous-data-review-02",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": null,
+            "routing_latency_ms": 419.514814,
+            "selected_agent": {
+              "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.5202915243041576,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.5072516508937204,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.4640225909147602,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.4615039692001985,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.4247992471546274,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "no-match-email-02",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": "NO_SUITABLE_AGENT",
+            "rerank": null,
+            "routing_latency_ms": 288.980811,
+            "selected_agent": null,
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.3290543853107912,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.31339024384041614,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.2875488196570717,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.27876203586209525,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.24589484359149177,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "rejected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "no-match-deploy-04",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": "NO_SUITABLE_AGENT",
+            "rerank": null,
+            "routing_latency_ms": 353.669079,
+            "selected_agent": null,
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.22680794022028816,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.21793524531427533,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.2025994359533887,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.20183308696392266,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.200878726806341,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "rejected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "no-match-hr-06",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": "NO_SUITABLE_AGENT",
+            "rerank": null,
+            "routing_latency_ms": 416.32124,
+            "selected_agent": null,
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.3358077320705014,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.3263970130241116,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.29703751301091297,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.27724574439205224,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.2312856344796569,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "rejected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "no-match-procurement-08",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": null,
+            "routing_latency_ms": 234.829218,
+            "selected_agent": {
+              "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.4100209340199212,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.3708474918880574,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.3624038729492648,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.33016469092229545,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.28357941657097574,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "no-match-image-10",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": null,
+            "routing_latency_ms": 408.134199,
+            "selected_agent": {
+              "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.40384397002416483,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.3715532885201232,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.35120426182471104,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.3457933002507084,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.32148187081714463,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "no-match-scan-12",
+            "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": null,
+            "routing_latency_ms": 654.17085,
+            "selected_agent": {
+              "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.37274202058453776,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.3726477220183195,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.34217061153548634,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.34053805824363337,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.336624108775927,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          }
+        ],
+        "config": {
+          "catalog_agents": [
+            {
+              "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+              "status": "active",
+              "version": 1
+            },
+            {
+              "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+              "status": "active",
+              "version": 1
+            },
+            {
+              "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+              "status": "active",
+              "version": 1
+            },
+            {
+              "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+              "status": "active",
+              "version": 1
+            },
+            {
+              "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+              "status": "active",
+              "version": 1
+            },
+            {
+              "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+              "status": "active",
+              "version": 1
+            }
+          ],
+          "catalog_snapshot_id": "demo-catalog-25207e307d86eedf4332a5bcbc2a63d6eccbfce37d136c858d42ba2e09b3788c",
+          "dataset_version": "routing-v1",
+          "embedding_model_key": "qwen-text-embedding-v4-1024",
+          "environment": {
+            "label": "live-dashscope-deepseek",
+            "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+            "python_version": "3.12.13"
+          },
+          "rerank_model_key": null,
+          "split": "test",
+          "strategy": "semantic",
+          "threshold_source": "calibration:0111662eee1972a8e0c223e53e3d1a5530dfac84a9b463ac918d6df4a1e3957a",
+          "threshold_value": 0.35727615782291194,
+          "top_k": 5
+        },
+        "config_id": "2d2a1ff2ab19173a35262e6f79f4aa06fb6790b8d40bc82a9791f5182fe86e73"
+      }
+    },
+    {
+      "metrics": {
+        "applicable_case_count": 24,
+        "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+        "dataset_version": "routing-v1",
+        "false_accept_case_ids": [],
+        "false_accept_rate": {
+          "denominator": 3,
+          "numerator": 0,
+          "value": 0.0
+        },
+        "infra_error_case_ids": [
+          "clear-planning-05",
+          "clear-planning-06",
+          "ambiguous-code-review-02",
+          "ambiguous-data-review-02",
+          "no-match-procurement-08",
+          "no-match-image-10",
+          "no-match-scan-12"
+        ],
+        "latency": {
+          "included_infra_error_case_ids": [
+            "clear-planning-05",
+            "clear-planning-06",
+            "ambiguous-code-review-02",
+            "ambiguous-data-review-02",
+            "no-match-procurement-08",
+            "no-match-image-10",
+            "no-match-scan-12"
+          ],
+          "mean_ms": 2012.7815907,
+          "p50_ms": 1968.112348,
+          "p95_ms": 3782.535842,
+          "sample_count": 30,
+          "unmeasured_case_ids": []
+        },
+        "no_match_case_count": 6,
+        "reject_accuracy": {
+          "denominator": 3,
+          "numerator": 3,
+          "value": 1.0
+        },
+        "split": "test",
+        "strategy": "semantic_llm",
+        "top1_accuracy": {
+          "denominator": 20,
+          "numerator": 14,
+          "value": 0.7
+        },
+        "top1_incorrect_case_ids": [
+          "clear-research-05",
+          "clear-code-04",
+          "clear-code-05",
+          "clear-code-06",
+          "clear-document-05",
+          "ambiguous-planning-review-02"
+        ],
+        "top_k_miss_case_ids": [],
+        "top_k_recall": {
+          "denominator": 20,
+          "numerator": 20,
+          "value": 1.0
+        },
+        "total_case_count": 30,
+        "valid_route_count": 23
+      },
+      "run": {
+        "cases": [
+          {
+            "case_id": "clear-research-04",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": {
+              "input_candidates": [
+                {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                }
+              ],
+              "model_key": "deepseek-flash",
+              "ordered_candidates": [
+                {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                }
+              ],
+              "reason_code": "CAPABILITY_MATCH"
+            },
+            "routing_latency_ms": 2823.079376,
+            "selected_agent": {
+              "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.4014477682061898,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.3893919150416711,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.33399806556537476,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.3248609758554277,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.3152848181016626,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-research-05",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": null,
+            "rejection_reason": "NO_SUITABLE_AGENT",
+            "rerank": null,
+            "routing_latency_ms": 228.264014,
+            "selected_agent": null,
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.27193683183445294,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.2412856773221688,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.22113460507349664,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.21821645670574158,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.1986381986454963,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "rejected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-research-06",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": {
+              "input_candidates": [
+                {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                }
+              ],
+              "model_key": "deepseek-flash",
+              "ordered_candidates": [
+                {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                }
+              ],
+              "reason_code": "CAPABILITY_MATCH"
+            },
+            "routing_latency_ms": 1497.132489,
+            "selected_agent": {
+              "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.38471481535284513,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.3705912413861368,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.33855462795987246,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.33256407135089755,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.23800156780824494,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-code-04",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": null,
+            "rejection_reason": "NO_SUITABLE_AGENT",
+            "rerank": null,
+            "routing_latency_ms": 434.414887,
+            "selected_agent": null,
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.332169858486167,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.30941634633223974,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.2983966713778736,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.267980774433834,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.2665295355744765,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "rejected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-code-05",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": null,
+            "rejection_reason": "NO_SUITABLE_AGENT",
+            "rerank": null,
+            "routing_latency_ms": 289.213818,
+            "selected_agent": null,
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.3312623409361728,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.3242200517241821,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.3168557018189232,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.3049718119300194,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.29354792086702647,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "rejected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-code-06",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": null,
+            "rejection_reason": "NO_SUITABLE_AGENT",
+            "rerank": null,
+            "routing_latency_ms": 660.584767,
+            "selected_agent": null,
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.31880778748639305,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.30965820934316174,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.30296283302150945,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.28872541398327617,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.2851554205813716,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "rejected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-data-04",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": {
+              "input_candidates": [
+                {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                }
+              ],
+              "model_key": "deepseek-flash",
+              "ordered_candidates": [
+                {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                }
+              ],
+              "reason_code": "CAPABILITY_MATCH"
+            },
+            "routing_latency_ms": 2147.593393,
+            "selected_agent": {
+              "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.45491977240861653,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.40342530130503906,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.3974805035898088,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.3888792169960564,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.373025676817173,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-data-05",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": {
+              "input_candidates": [
+                {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                }
+              ],
+              "model_key": "deepseek-flash",
+              "ordered_candidates": [
+                {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                }
+              ],
+              "reason_code": "CAPABILITY_MATCH"
+            },
+            "routing_latency_ms": 1706.2264,
+            "selected_agent": {
+              "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.43629705603874647,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.3666264692702493,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.32186753712059224,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.3144524496536148,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.29780601067118795,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-data-06",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": {
+              "input_candidates": [
+                {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                }
+              ],
+              "model_key": "deepseek-flash",
+              "ordered_candidates": [
+                {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                }
+              ],
+              "reason_code": "CAPABILITY_MATCH"
+            },
+            "routing_latency_ms": 2044.606239,
+            "selected_agent": {
+              "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.39826270925200613,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.3637752653545756,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.31595310081443906,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.31206419208223724,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.2994723669728973,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-document-04",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": {
+              "input_candidates": [
+                {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                }
+              ],
+              "model_key": "deepseek-flash",
+              "ordered_candidates": [
+                {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                }
+              ],
+              "reason_code": "CAPABILITY_MATCH"
+            },
+            "routing_latency_ms": 3071.586891,
+            "selected_agent": {
+              "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.435349723233798,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.4238880764460854,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.36545451481247443,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.36067962110668633,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.3439475882254747,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-document-05",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": null,
+            "rejection_reason": "NO_SUITABLE_AGENT",
+            "rerank": null,
+            "routing_latency_ms": 324.54961,
+            "selected_agent": null,
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.35011469803993867,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.3483250624666493,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.345952188616396,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.3224256606017063,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.31707565545869654,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "rejected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-document-06",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": {
+              "input_candidates": [
+                {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                }
+              ],
+              "model_key": "deepseek-flash",
+              "ordered_candidates": [
+                {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                }
+              ],
+              "reason_code": "CAPABILITY_MATCH"
+            },
+            "routing_latency_ms": 1968.112348,
+            "selected_agent": {
+              "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.40649365350392336,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.3854793791704938,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.3802223921262549,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.3727670026457996,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.3355579092180931,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-planning-04",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": {
+              "input_candidates": [
+                {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                }
+              ],
+              "model_key": "deepseek-flash",
+              "ordered_candidates": [
+                {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                }
+              ],
+              "reason_code": "CAPABILITY_MATCH"
+            },
+            "routing_latency_ms": 2908.308569,
+            "selected_agent": {
+              "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.441055946157325,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.36315537974609136,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.3579597904720086,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.3560358395318962,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.32759410703861735,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-planning-05",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": "RERANK_TRUNCATED_RESPONSE",
+            "rejection_reason": null,
+            "rerank": null,
+            "routing_latency_ms": 3475.132345,
+            "selected_agent": null,
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.3614552365681259,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.33102178587338216,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.3279750695726842,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.3109093129430905,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.30318206406061976,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "infra_error",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-planning-06",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": "RERANK_TRUNCATED_RESPONSE",
+            "rejection_reason": null,
+            "rerank": null,
+            "routing_latency_ms": 3495.891413,
+            "selected_agent": null,
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.4471297106495854,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.4259697615390665,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.3802163202663737,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.3791946750100796,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.37047018316163877,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "infra_error",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-review-04",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": {
+              "input_candidates": [
+                {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                }
+              ],
+              "model_key": "deepseek-flash",
+              "ordered_candidates": [
+                {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                }
+              ],
+              "reason_code": "CAPABILITY_MATCH"
+            },
+            "routing_latency_ms": 1938.857329,
+            "selected_agent": {
+              "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.6165681421720063,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.563245915458093,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.5480270099717941,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.5339270308062577,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.5276064609700757,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-review-05",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": {
+              "input_candidates": [
+                {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                }
+              ],
+              "model_key": "deepseek-flash",
+              "ordered_candidates": [
+                {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                }
+              ],
+              "reason_code": "CAPABILITY_MATCH"
+            },
+            "routing_latency_ms": 2180.867219,
+            "selected_agent": {
+              "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.3808900948949876,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.36214095603339136,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.3279629369437339,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.3013502820221628,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.29262044616488886,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "clear-review-06",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": {
+              "input_candidates": [
+                {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                }
+              ],
+              "model_key": "deepseek-flash",
+              "ordered_candidates": [
+                {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                }
+              ],
+              "reason_code": "CAPABILITY_MATCH"
+            },
+            "routing_latency_ms": 3782.535842,
+            "selected_agent": {
+              "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.4212582602335341,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.33801049446086007,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.31109631366136425,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.3059854385651358,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.2721371170674464,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "ambiguous-research-document-02",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": {
+              "input_candidates": [
+                {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                }
+              ],
+              "model_key": "deepseek-flash",
+              "ordered_candidates": [
+                {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                }
+              ],
+              "reason_code": "CAPABILITY_MATCH"
+            },
+            "routing_latency_ms": 1916.269871,
+            "selected_agent": {
+              "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.5364930891854891,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.4828281306421496,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.47219250605702123,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.45982058360350403,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.40007992762126376,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "ambiguous-code-review-02",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": "RERANK_TRUNCATED_RESPONSE",
+            "rejection_reason": null,
+            "rerank": null,
+            "routing_latency_ms": 3941.907571,
+            "selected_agent": null,
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.40685702954400454,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.3977115060631155,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.38749909697183177,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.3824149904431223,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.3589852086470887,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "infra_error",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "ambiguous-data-document-02",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": {
+              "input_candidates": [
+                {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                }
+              ],
+              "model_key": "deepseek-flash",
+              "ordered_candidates": [
+                {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                }
+              ],
+              "reason_code": "CAPABILITY_MATCH"
+            },
+            "routing_latency_ms": 1817.411804,
+            "selected_agent": {
+              "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.4615147383802178,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.4289841454446604,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.3829807232460941,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.35757502502771893,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.34627532763621677,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "ambiguous-planning-review-02",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": null,
+            "rejection_reason": "NO_SUITABLE_AGENT",
+            "rerank": null,
+            "routing_latency_ms": 447.011201,
+            "selected_agent": null,
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.3241004755656623,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.30911818626918114,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.2935170493593063,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.2856576504057432,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.2797413748653189,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "rejected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "ambiguous-document-review-02",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": null,
+            "rejection_reason": null,
+            "rerank": {
+              "input_candidates": [
+                {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                }
+              ],
+              "model_key": "deepseek-flash",
+              "ordered_candidates": [
+                {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                }
+              ],
+              "reason_code": "CAPABILITY_MATCH"
+            },
+            "routing_latency_ms": 2346.158529,
+            "selected_agent": {
+              "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+              "version": 1
+            },
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.3629515455211921,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.3600485089504908,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.33885043228602635,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.2998175974735686,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.2901098088710179,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "selected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "ambiguous-data-review-02",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": "RERANK_TRUNCATED_RESPONSE",
+            "rejection_reason": null,
+            "rerank": null,
+            "routing_latency_ms": 3477.990523,
+            "selected_agent": null,
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.5202915243041576,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.5072516508937204,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.4640225909147602,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.4615039692001985,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.4247992471546274,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "infra_error",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "no-match-email-02",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": null,
+            "rejection_reason": "NO_SUITABLE_AGENT",
+            "rerank": null,
+            "routing_latency_ms": 225.557301,
+            "selected_agent": null,
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.3290543853107912,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.31339024384041614,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.2875488196570717,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.27876203586209525,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.24589484359149177,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "rejected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "no-match-deploy-04",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": null,
+            "rejection_reason": "NO_SUITABLE_AGENT",
+            "rerank": null,
+            "routing_latency_ms": 639.154237,
+            "selected_agent": null,
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.22680794022028816,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.21793524531427533,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.2025994359533887,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.20183308696392266,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.200878726806341,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "rejected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "no-match-hr-06",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": null,
+            "rejection_reason": "NO_SUITABLE_AGENT",
+            "rerank": null,
+            "routing_latency_ms": 264.103169,
+            "selected_agent": null,
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.3358077320705014,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.3263970130241116,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.29703751301091297,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.27724574439205224,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.2312856344796569,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "rejected",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "no-match-procurement-08",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": "RERANK_TRUNCATED_RESPONSE",
+            "rejection_reason": null,
+            "rerank": null,
+            "routing_latency_ms": 3475.318847,
+            "selected_agent": null,
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.4100209340199212,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.3708474918880574,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.3624038729492648,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.33016469092229545,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.28357941657097574,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "infra_error",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "no-match-image-10",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": "RERANK_TRUNCATED_RESPONSE",
+            "rejection_reason": null,
+            "rerank": null,
+            "routing_latency_ms": 3693.489724,
+            "selected_agent": null,
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.40384397002416483,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.3715532885201232,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.35120426182471104,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+                  "version": 1
+                },
+                "raw_similarity": 0.3457933002507084,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.32148187081714463,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "infra_error",
+            "timing_scope": "query_to_decision"
+          },
+          {
+            "case_id": "no-match-scan-12",
+            "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71",
+            "error_code": "RERANK_TRUNCATED_RESPONSE",
+            "rejection_reason": null,
+            "rerank": null,
+            "routing_latency_ms": 3162.117995,
+            "selected_agent": null,
+            "semantic_candidates": [
+              {
+                "agent": {
+                  "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+                  "version": 1
+                },
+                "raw_similarity": 0.37274202058453776,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+                  "version": 1
+                },
+                "raw_similarity": 0.3726477220183195,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+                  "version": 1
+                },
+                "raw_similarity": 0.34217061153548634,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+                  "version": 1
+                },
+                "raw_similarity": 0.34053805824363337,
+                "score_kind": "cosine"
+              },
+              {
+                "agent": {
+                  "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+                  "version": 1
+                },
+                "raw_similarity": 0.336624108775927,
+                "score_kind": "cosine"
+              }
+            ],
+            "status": "infra_error",
+            "timing_scope": "query_to_decision"
+          }
+        ],
+        "config": {
+          "catalog_agents": [
+            {
+              "agent_id": "f41cafc3-5a46-4e5a-b7ee-bedcd910325a",
+              "status": "active",
+              "version": 1
+            },
+            {
+              "agent_id": "89b377a4-46e2-4b32-876a-b88c0c15e06c",
+              "status": "active",
+              "version": 1
+            },
+            {
+              "agent_id": "1bbc2ea9-ad7b-4a3c-9594-85c95c357809",
+              "status": "active",
+              "version": 1
+            },
+            {
+              "agent_id": "29ba1f35-7600-4a42-9fdb-5e307df2bbe2",
+              "status": "active",
+              "version": 1
+            },
+            {
+              "agent_id": "cd08c8ed-2b0d-4c4a-9b72-37140bdff588",
+              "status": "active",
+              "version": 1
+            },
+            {
+              "agent_id": "d725ce0e-9dc7-455b-ba74-c97bb55797b7",
+              "status": "active",
+              "version": 1
+            }
+          ],
+          "catalog_snapshot_id": "demo-catalog-25207e307d86eedf4332a5bcbc2a63d6eccbfce37d136c858d42ba2e09b3788c",
+          "dataset_version": "routing-v1",
+          "embedding_model_key": "qwen-text-embedding-v4-1024",
+          "environment": {
+            "label": "live-dashscope-deepseek",
+            "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+            "python_version": "3.12.13"
+          },
+          "rerank_model_key": "deepseek-flash",
+          "split": "test",
+          "strategy": "semantic_llm",
+          "threshold_source": "calibration:0111662eee1972a8e0c223e53e3d1a5530dfac84a9b463ac918d6df4a1e3957a",
+          "threshold_value": 0.35727615782291194,
+          "top_k": 5
+        },
+        "config_id": "d3721ce18dcb99d14eb030332d24c489bc3c6701c0fbabf779c9c6b7f92a7b71"
+      }
+    }
+  ],
+  "status": "measured_independent_test",
+  "test_query_embedding_latency": {
+    "p50_ms": 396.798323,
+    "p95_ms": 659.593434,
+    "sample_count": 60
+  },
+  "test_rerank_transport_latency": {
+    "p50_ms": 2404.24467,
+    "p95_ms": 3290.840464,
+    "sample_count": 21
+  }
+}

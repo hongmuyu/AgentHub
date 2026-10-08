@@ -49,11 +49,10 @@ class OfflineEmbeddingBackend:
 
 
 class TimedEmbeddingBackend:
-    model_key = MODEL_KEY
-    dimensions = DIMENSIONS
-
     def __init__(self, backend):
         self.backend = backend
+        self.model_key = backend.model_key
+        self.dimensions = backend.dimensions
         self.start_ns = None
         self.duration_ms = None
 
@@ -86,8 +85,8 @@ class IdentityTransport:
 
 
 class TimedReranker:
-    def __init__(self):
-        self.adapter = RerankAdapter(IdentityTransport())
+    def __init__(self, transport=None):
+        self.adapter = RerankAdapter(transport if transport is not None else IdentityTransport())
         self.duration_ms = None
 
     def rerank(self, task, candidates):
@@ -128,7 +127,7 @@ def _hardware():
     }
 
 
-def _catalog(root: Path, size: int):
+def _catalog(root: Path, size: int, *, backend=None):
     workflow_root = root / "workflows"
     workflow_root.mkdir()
     (workflow_root / "thin.yaml").write_text(yaml.safe_dump({
@@ -146,7 +145,7 @@ def _catalog(root: Path, size: int):
     registry = AgentRegistry(
         AgentHubDatabase(root / "catalog.db"),
         ThinWorkflowValidator(RuntimeRefResolver(workflow_root)),
-        OfflineEmbeddingBackend(),
+        backend if backend is not None else OfflineEmbeddingBackend(),
     )
     started = time.perf_counter_ns()
     for index, runtime_ref in enumerate(manifest):
@@ -160,14 +159,15 @@ def _catalog(root: Path, size: int):
     return registry, build_ms
 
 
-def _measure(registry, size: int, *, top_k: int, warmup: int, repeats: int):
+def _measure(registry, size: int, *, top_k: int, warmup: int, repeats: int,
+             rerank_transport=None):
     backend = TimedEmbeddingBackend(registry.backend)
     discovery = TimedDiscovery(AgentDiscovery(
         registry.versions, registry.index, registry.validator, backend,
     ))
     threshold = CalibratedThreshold(-1.0, "offline-scan-no-gate-v1")
     semantic = SemanticRouter(discovery, threshold=threshold, top_k=top_k)
-    reranker = TimedReranker()
+    reranker = TimedReranker(rerank_transport)
     routers = {"semantic": semantic, "semantic_llm": SemanticLLMRouter(semantic, reranker)}
     tasks = tuple(f"synthetic query {index:02d}" for index in range(12))
     results = {}

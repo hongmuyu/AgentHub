@@ -32,9 +32,8 @@ the mapping; a fresh database creates a different snapshot ID.
 
 Within each group, the six requests differ in artifact, operation or reasoning
 required; none is a sentence-level rewrite of another. All task text and source
-excerpts are synthetic. This file records label review, not measured routing or
-task-quality results. Threshold calibration and benchmark execution are outside
-T39.
+excerpts are synthetic. This T39 review records labels rather than measured
+routing or task-quality results; live routing evidence appears in T43 below.
 
 # T40 complete routing labels
 
@@ -43,8 +42,8 @@ explicit acceptable `runtime_ref` sets and 12 out-of-catalog cases marked
 `should_reject`. `build_full_dataset()` combines them with the 36 clear cases,
 binds all accepted references to the same registered UUID/version snapshot, and
 validates the 60-case `RoutingDataset`. Each category has an even
-`calibration`/`test` split (18/18 clear, 6/6 ambiguous, 6/6 no-match). These are
-synthetic labels, with no routing decisions, timing or quality scores recorded.
+`calibration`/`test` split (18/18 clear, 6/6 ambiguous, 6/6 no-match). The T40
+label artifact itself contains no routing decisions, timing or quality scores.
 
 ## Manual semantic review — 2026-10-08
 
@@ -72,7 +71,7 @@ synthetic labels, with no routing decisions, timing or quality scores recorded.
 Each overlap pair has one `calibration` and one held-out `test` case. The 24
 added tasks differ in artifact and requested operation, and duplicate IDs/text
 are rejected across the full dataset. This review establishes label intent,
-not Router accuracy; threshold choice and benchmark execution remain unmeasured.
+not Router accuracy; the subsequent T43 measurements appear below.
 
 # T41 routing benchmark runner
 
@@ -142,8 +141,10 @@ catalog or a live provider.
 `select_calibration_config()` accepts only `semantic` runs on the calibration
 split, with one catalog/dataset/model/environment provenance. It refuses an
 empty route or no-match denominator, any infrastructure error, and repeated
-candidate gates. The declared selection rule maximizes **Top-K Recall + Reject
-Accuracy**, then Top-1 Accuracy, then prefers smaller K and higher threshold.
+candidate gates. The declared selection rule maximizes **Top-1 Accuracy + Reject
+Accuracy**, then Top-K Recall, then prefers smaller K and higher threshold.
+Top-K Recall is independent of the threshold and therefore cannot select the
+gate by itself.
 The selected `FrozenRoutingConfig` stores the winning calibration `config_id`;
 `run_frozen_test()` applies that K and threshold to both strategies on the
 independent test split. A small fake fixture verifies the boundary. Its labels
@@ -169,15 +170,15 @@ this machine; no target or production estimate is implied.
 
 | Agents | Strategy | Full route p50/p95 | Query-to-decision p50/p95 | Discovery excluding embedding p50/p95 | Query embedding p50/p95 | Local rerank p50/p95 |
 | ---: | --- | ---: | ---: | ---: | ---: | ---: |
-| 10 | semantic | 9.394 / 9.766 | 0.072 / 0.087 | 9.374 / 9.744 | 0.013 / 0.019 | not applicable |
-| 10 | semantic_llm | 9.405 / 9.658 | 0.108 / 0.118 | 9.345 / 9.598 | 0.013 / 0.014 | 0.026 / 0.032 |
-| 50 | semantic | 44.646 / 45.458 | 0.215 / 0.236 | 44.612 / 45.436 | 0.013 / 0.024 | not applicable |
-| 50 | semantic_llm | 44.599 / 45.646 | 0.255 / 0.277 | 44.540 / 45.586 | 0.013 / 0.014 | 0.027 / 0.038 |
-| 100 | semantic | 90.423 / 98.400 | 0.404 / 0.440 | 90.401 / 98.378 | 0.013 / 0.017 | not applicable |
-| 100 | semantic_llm | 90.320 / 96.638 | 0.446 / 0.530 | 90.259 / 96.575 | 0.013 / 0.014 | 0.028 / 0.038 |
+| 10 | semantic | 9.301 / 9.495 | 0.068 / 0.077 | 9.281 / 9.473 | 0.013 / 0.019 | not applicable |
+| 10 | semantic_llm | 9.456 / 9.834 | 0.106 / 0.120 | 9.400 / 9.773 | 0.013 / 0.014 | 0.025 / 0.028 |
+| 50 | semantic | 44.964 / 46.811 | 0.211 / 0.239 | 44.942 / 46.790 | 0.013 / 0.025 | not applicable |
+| 50 | semantic_llm | 44.953 / 46.042 | 0.248 / 0.273 | 44.894 / 45.979 | 0.013 / 0.014 | 0.027 / 0.043 |
+| 100 | semantic | 90.257 / 111.712 | 0.398 / 0.429 | 90.235 / 111.689 | 0.013 / 0.014 | not applicable |
+| 100 | semantic_llm | 90.437 / 96.474 | 0.437 / 0.549 | 90.376 / 96.414 | 0.013 / 0.020 | 0.028 / 0.037 |
 
 Each row has 36 measured samples and zero routing errors. Catalog/index build
-times for 10/50/100 are 38.519/183.895/365.535 ms, measured separately.
+times for 10/50/100 are 36.343/181.746/361.029 ms, measured separately.
 `query-to-decision` starts at query embedding, matching the T41 runner; it
 excludes the status check, static workflow validation and index loading that
 precede embedding. `full route` includes that work. `discovery excluding
@@ -190,13 +191,100 @@ help: the dominant measured work includes repeated validation and SQLite
 loading. P0 can retain the current simple exact scan pending live workload
 evidence; any architecture change needs separate review.
 
-**Live verification: NOT VERIFIED.** This checkout has no configured
-`AGENTHUB_EMBEDDING_BASE_URL`, model, dimensions or credential selector, and no
-AgentHub live reranker transport/configuration. No live endpoint was called.
-Consequently the 60-case calibration gate was not selected/frozen, the
-independent 30-case test split was not evaluated, and there are no valid live
-Top-1, Top-K, Reject Accuracy, False Accept Rate, strategy comparison, or
-provider-latency results. The offline catalog-size numbers must not be used as
-semantic quality or live latency evidence. T43 remains blocked on a safely
-configured embedding endpoint and a reranker transport; only explicit opt-in
-live evaluation may fill these gaps.
+## T43 live provider verification — 2026-10-08
+
+The opt-in DashScope embedding and DeepSeek JSON chat rerank smoke tests passed
+before the measured run. The local ignored `.env` maps
+`AGENTHUB_EMBEDDING_API_KEY_ENV` to `DASHSCOPE_API_KEY` and
+`AGENTHUB_RERANK_API_KEY_ENV` to `DEEPSEEK_API_KEY`. No credential values appear
+in these artifacts. The live embedding model key is
+`qwen-text-embedding-v4-1024` (1024 dimensions); the rerank model is
+`deepseek-flash`. The scripts require the configured HTTPS provider hosts and
+the 60-case script records hashes of non-secret endpoint/model configuration.
+The thin workflows
+use validation-only placeholders; no workflow is executed.
+
+Run the 60-case quality evaluation explicitly:
+
+```bash
+.venv/bin/python -m evaluation.live_routing_benchmark --output-dir evaluation
+```
+
+The [calibration artifact](t43_live_calibration_2026-10-08.json) contains all
+30 calibration decisions, 183 K/threshold candidate gates, measured baseline
+latency, dataset/catalog/model provenance, and the selected configuration. The
+gate was written **before** the independent test run. Only calibration labels
+and scores selected K=5 and cosine threshold=0.35727615782291194. Its selected
+calibration scores were Top-1 15/24, Top-K 24/24, Reject 4/6, False Accept
+2/6, with zero infrastructure errors. Derived gate decisions have no invented
+per-gate latency; the 30-case baseline is the measured calibration timing.
+The 60-case dataset is 36 clear, 12 ambiguous and 12 no-match, split equally
+between calibration and test (18/6/6 each).
+
+The [independent test artifact](t43_live_test_2026-10-08.json) records every
+decision, Top-K candidate/score, rerank result, error code and query-to-decision
+latency under the same frozen gate:
+
+| Strategy | Test cases | Top-1 | Top-K | Reject | False Accept | Infra errors | Route p50/p95 ms |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| semantic | 30 | 11/24 | 24/24 | 3/6 | 3/6 | 0 | 368.009 / 643.426 |
+| semantic_llm | 30 | 18/24 | 24/24 | 3/4 | 1/4 | 2 | 2199.482 / 10066.879 |
+
+Both strategy latency distributions contain 30 measured calls, including
+measured infrastructure-error calls. The two `semantic_llm` errors were
+`RERANK_TRUNCATED_RESPONSE` on no-match cases, so its Reject/False Accept
+denominator is four; those rates are **not** directly comparable to semantic's
+six-case denominator. Both Top-1 denominators are the same 24 applicable
+cases. All 21 actual DeepSeek calls are included in rerank transport latency:
+p50/p95 2640.014/9703.747 ms. The 60 test query embedding calls across both
+strategies have p50/p95 334.196/642.572 ms. The earlier
+[512-token attempt](t43_live_test_attempt1_2026-10-08.json) and its
+[calibration artifact](t43_live_calibration_attempt1_2026-10-08.json) are
+retained: seven DeepSeek outputs were truncated. Raising only the JSON output
+limit to 2048 tokens reduced this to two; no test labels were used to retune
+K/threshold. This is one 30-case test sample, not a statistical significance
+claim or task-answer quality evaluation.
+
+The six-Agent live catalog/index build took 2324.269 ms, separately from per
+request routing. The index embedded six metadata entries. Calibration query
+embedding p50/p95 was 356.833/1251.049 ms over 30 calls. The artifacts store
+the full script/config fingerprints and platform details. The measured host
+used Python 3.12.13, Linux 6.8.0-138-generic, 16 logical CPUs and an AMD
+Ryzen 7 8745H; caches and remote provider load were uncontrolled.
+
+Run the separate synthetic catalog-size live latency benchmark explicitly:
+
+```bash
+.venv/bin/python -m evaluation.live_catalog_size_benchmark --output evaluation/t43_live_catalog_size_2026-10-08.json
+```
+
+The [live scale artifact](t43_live_catalog_size_2026-10-08.json) uses real
+1024-dimensional embeddings and DeepSeek reranking, but synthetic Agent
+metadata and queries. Each size has one warmup and 12 measured requests per
+strategy; SQLite/OS/provider caches are not flushed. K=3 and threshold=-1
+keep the scan/rerank path open. Build time is separate from routing. Values
+below are measured milliseconds; the rerank segment includes the live API
+request.
+
+| Agents | Strategy | Full route p50/p95 | Discovery excluding embedding p50/p95 | Query embedding p50/p95 | Rerank p50/p95 | Errors |
+| ---: | --- | ---: | ---: | ---: | ---: | ---: |
+| 10 | semantic | 318.952 / 617.735 | 16.241 / 18.297 | 303.130 / 601.340 | n/a | 0 |
+| 10 | semantic_llm | 2178.088 / 3974.995 | 15.811 / 17.816 | 243.991 / 474.662 | 1917.320 / 3514.593 | 0 |
+| 50 | semantic | 439.839 / 484.852 | 67.503 / 69.178 | 372.245 / 417.335 | n/a | 0 |
+| 50 | semantic_llm | 3224.426 / 10302.801 | 68.963 / 73.226 | 377.345 / 826.630 | 2446.415 / 9883.576 | 1 truncated |
+| 100 | semantic | 439.294 / 589.729 | 131.137 / 135.468 | 306.658 / 461.633 | n/a | 0 |
+| 100 | semantic_llm | 3202.536 / 10776.190 | 135.814 / 209.487 | 330.643 / 1593.711 | 2824.551 / 10334.756 | 2 truncated |
+
+All non-rerank segments have 12 samples per row; rerank has 12 actual calls
+for each `semantic_llm` row, including failed calls. Catalog/index build
+times for 10/50/100 were 3902.657/18904.271/36551.787 ms. The live report
+also contains query-to-decision p50/p95, per-sample error indexes/codes,
+hardware (16 logical CPUs, 32,146,840 KiB RAM) and source hashes. Its
+`discovery excluding embedding` segment includes status/allowlist validation,
+SQLite index loading, exact cosine and sorting; isolated cosine time was not
+measured. The larger catalogs increased that local segment on this host, while
+embedding and especially rerank calls dominated observed live latency. For
+this P0-sized catalog, retaining exact scan avoids extra infrastructure, but
+these small sequential samples establish neither an SLA nor concurrent-load
+performance. The deterministic offline figures above remain separate from
+live provider and semantic quality results.

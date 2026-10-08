@@ -1,13 +1,63 @@
 """Choose a shared routing gate from calibration runs, then lock it for test."""
 
+import hashlib
+import json
 from dataclasses import dataclass
 
 from .evaluation_dataset import RoutingDataset
 from .evaluation_metrics import RoutingMetricsReport, calculate_routing_metrics
-from .evaluation_runner import BenchmarkRun, run_routing_benchmark
+from .evaluation_runner import BenchmarkCaseResult, BenchmarkRun, run_routing_benchmark
 from .registry import AgentRegistry
 from .reranker import RerankAdapter
 from .router import CalibratedThreshold
+
+
+def derive_calibration_runs(
+    baseline: BenchmarkRun, *, top_ks: tuple[int, ...], thresholds: tuple[float, ...]
+) -> tuple[BenchmarkRun, ...]:
+    """Sweep gates over measured calibration scores without new provider calls.
+
+    Derived rows have no measured per-gate latency; baseline retains actual
+    query timings. Only the semantic candidate order and raw cosine are used.
+    """
+    if (baseline.config.strategy != "semantic" or baseline.config.split != "calibration"
+            or baseline.config.threshold_value != -1.0
+            or any(row.status == "infra_error" for row in baseline.cases)):
+        raise ValueError("gate sweep needs an error-free, ungated calibration run")
+    if (not top_ks or not thresholds or
+            any(type(k) is not int or not 0 < k <= baseline.config.top_k for k in top_ks)
+            or len(set(top_ks)) != len(top_ks)
+            or len(set(thresholds)) != len(thresholds)):
+        raise ValueError("invalid calibration gate grid")
+
+    runs = []
+    for k in top_ks:
+        for threshold in thresholds:
+            calibrated = CalibratedThreshold(threshold, "calibration-gate-sweep")
+            config = baseline.config.model_copy(update={
+                "top_k": k,
+                "threshold_value": calibrated.value,
+                "threshold_source": f"derived-from:{baseline.config_id}",
+            })
+            config_id = hashlib.sha256(json.dumps(
+                config.model_dump(mode="json"), sort_keys=True, separators=(",", ":"),
+            ).encode("utf-8")).hexdigest()
+            rows = []
+            for row in baseline.cases:
+                candidates = row.semantic_candidates[:k]
+                selected = (candidates[0].agent if candidates and
+                            candidates[0].raw_similarity >= calibrated.value else None)
+                rows.append(BenchmarkCaseResult(
+                    config_id=config_id,
+                    case_id=row.case_id,
+                    status="selected" if selected is not None else "rejected",
+                    semantic_candidates=candidates,
+                    selected_agent=selected,
+                    rejection_reason=None if selected is not None else "NO_SUITABLE_AGENT",
+                    timing_scope="query_not_started",
+                ))
+            runs.append(BenchmarkRun(config_id=config_id, config=config, cases=tuple(rows)))
+    return tuple(runs)
 
 
 @dataclass(frozen=True)
@@ -23,7 +73,7 @@ class FrozenRoutingConfig:
 def select_calibration_config(
     dataset: RoutingDataset, runs: tuple[BenchmarkRun, ...]
 ) -> tuple[FrozenRoutingConfig, tuple[RoutingMetricsReport, ...]]:
-    """Rank common gates by balanced recall/rejection; never inspect test rows.
+    """Rank common gates by balanced routed accuracy/rejection; never inspect test rows.
 
     All candidate runs must use the same calibration catalog, dataset, model,
     and strategy. Infrastructure errors or empty label groups prevent freezing.
@@ -46,10 +96,10 @@ def select_calibration_config(
     if any(report.infra_error_case_ids or report.top1_accuracy.denominator == 0 or
            report.reject_accuracy.denominator == 0 for report in reports):
         raise ValueError("calibration requires valid route and no-match samples")
-    # Equal weight to route recall and no-match rejection; smaller K breaks ties.
+    # Top-K recall is gate-independent; score the threshold with routed accuracy.
     best = max(range(len(runs)), key=lambda index: (
-        reports[index].top_k_recall.value + reports[index].reject_accuracy.value,
-        reports[index].top1_accuracy.value,
+        reports[index].top1_accuracy.value + reports[index].reject_accuracy.value,
+        reports[index].top_k_recall.value,
         -runs[index].config.top_k,
         runs[index].config.threshold_value,
     ))
