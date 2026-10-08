@@ -553,3 +553,29 @@ export async function fetchAgentHubRun(runId) {
 export async function fetchAgentHubMetrics() {
   return fetch(apiUrl('/api/agenthub/metrics'))
 }
+
+export async function fetchAgentHubAgents(offset = 0) {
+  return fetch(apiUrl(`/api/agenthub/agents?include_disabled=true&limit=100&offset=${offset}`))
+}
+
+export async function registerAgentHubAgent(metadata) {
+  return fetch(apiUrl('/api/agenthub/agents'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(metadata)
+  })
+}
+
+export async function updateAgentHubAgent(agentId, metadata) {
+  return fetch(apiUrl(`/api/agenthub/agents/${encodeURIComponent(agentId)}`), {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(metadata)
+  })
+}
+
+export async function setAgentHubAgentEnabled(agentId, enabled) {
+  return fetch(apiUrl(`/api/agenthub/agents/${encodeURIComponent(agentId)}/${enabled ? 'enable' : 'disable'}`), {
+    method: 'POST'
+  })
+}

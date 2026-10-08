@@ -19,6 +19,10 @@ const routes = [
         component: () => import('../pages/BatchRunView.vue')
     },
     {
+        path: '/agenthub/registry',
+        component: () => import('../pages/AgentHubRegistryView.vue')
+    },
+    {
         path: '/workflows/:name?',
         component: () => import('../pages/WorkflowWorkbench.vue')
     }
