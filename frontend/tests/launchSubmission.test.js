@@ -4,7 +4,10 @@ import { readFileSync } from 'node:fs'
 
 import * as apiFunctions from '../src/utils/apiFunctions.js'
 
-const { postFile, submitLaunchRequest, fetchAgentHubRun, fetchAgentHubMetrics } = apiFunctions
+const {
+  postFile, submitLaunchRequest, fetchAgentHubRun, fetchAgentHubMetrics,
+  fetchWorkflowsWithDesc, fetchWorkflowYAML, getAttachment, fetchLogsZip
+} = apiFunctions
 
 
 const ready = {
@@ -46,6 +49,103 @@ test('manual YAML launch keeps the original endpoint and body', async (t) => {
     yaml_file: 'review.yaml', task_prompt: 'Summarize the report',
     session_id: 'session-123', attachments: ['attachment-1']
   })
+})
+
+
+test('manual Launch uses the same uploaded attachment and WebSocket session', async (t) => {
+  const requests = []
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    requests.push({ url, options })
+    return url.startsWith('/api/uploads/')
+      ? { ok: true, json: async () => ({ attachment_id: 'legacy-upload', name: 'notes.txt' }) }
+      : { ok: true, json: async () => ({ status: 'started', session_id: 'session-123' }) }
+  })
+
+  const uploaded = await postFile('session-123', new Blob(['notes']))
+  const response = await submitLaunchRequest({
+    ...ready, mode: 'manual', yamlFile: 'manual.yaml',
+    attachmentIds: [uploaded.attachmentId]
+  })
+
+  assert.equal(uploaded.success, true)
+  assert.equal(response.ok, true)
+  assert.deepEqual(requests.map(({ url }) => url), [
+    '/api/uploads/session-123', '/api/workflow/execute'
+  ])
+  assert.deepEqual(JSON.parse(requests[1].options.body), {
+    yaml_file: 'manual.yaml', task_prompt: 'Summarize the report',
+    session_id: 'session-123', attachments: ['legacy-upload']
+  })
+})
+
+
+test('Registry navigation leaves original Launch and Workflow entry paths available', () => {
+  const router = readFileSync(new URL('../src/router/index.js', import.meta.url), 'utf8')
+  const sidebar = readFileSync(new URL('../src/components/Sidebar.vue', import.meta.url), 'utf8')
+  assert.match(router, /path: '\/launch',[\s\S]*?import\('\.\.\/pages\/LaunchView\.vue'\)/)
+  assert.match(router, /path: '\/workflows\/:name\?',[\s\S]*?import\('\.\.\/pages\/WorkflowWorkbench\.vue'\)/)
+  assert.match(router, /path: '\/agenthub\/registry',[\s\S]*?import\('\.\.\/pages\/AgentHubRegistryView\.vue'\)/)
+  for (const path of ['/launch', '/workflows', '/agenthub/registry']) {
+    assert.ok(sidebar.includes(`to="${path}"`))
+  }
+})
+
+
+test('Workflow page helpers retain legacy YAML list and content requests', async (t) => {
+  const requests = []
+  t.mock.method(globalThis, 'fetch', async (url) => {
+    requests.push(url)
+    if (url === '/api/workflows') {
+      return { ok: true, json: async () => ({ workflows: ['manual.yaml'] }) }
+    }
+    if (url.endsWith('/desc')) {
+      return { ok: true, json: async () => ({ description: 'Manual workflow' }) }
+    }
+    return { ok: true, json: async () => ({ content: 'name: manual\n' }) }
+  })
+
+  assert.deepEqual(await fetchWorkflowsWithDesc(), {
+    success: true, workflows: [{ name: 'manual.yaml', description: 'Manual workflow' }]
+  })
+  assert.equal(await fetchWorkflowYAML('manual.yaml'), 'name: manual\n')
+  assert.deepEqual(requests, [
+    '/api/workflows', '/api/workflows/manual.yaml/desc', '/api/workflows/manual.yaml/get'
+  ])
+})
+
+
+test('legacy artifact and session download helpers retain session routes', async (t) => {
+  const requests = []
+  const downloads = []
+  t.mock.method(globalThis, 'fetch', async (url) => {
+    requests.push(url)
+    return url.includes('/artifacts/')
+      ? { ok: true, json: async () => ({ data_uri: 'data:text/plain;base64,b2s=' }) }
+      : { ok: true, blob: async () => new Blob(['zip']) }
+  })
+  const previousWindow = globalThis.window
+  const previousDocument = globalThis.document
+  t.after(() => {
+    if (previousWindow === undefined) delete globalThis.window
+    else globalThis.window = previousWindow
+    if (previousDocument === undefined) delete globalThis.document
+    else globalThis.document = previousDocument
+  })
+  globalThis.window = {
+    URL: { createObjectURL: () => 'blob:legacy', revokeObjectURL: (url) => downloads.push(url) }
+  }
+  globalThis.document = {
+    createElement: () => ({ click() { downloads.push('clicked') } }),
+    body: { appendChild() {}, removeChild() {} }
+  }
+
+  assert.equal(await getAttachment('session-123', 'artifact-1'), 'data:text/plain;base64,b2s=')
+  assert.deepEqual(await fetchLogsZip('session-123'), { success: true })
+  assert.deepEqual(requests, [
+    '/api/sessions/session-123/artifacts/artifact-1',
+    '/api/sessions/session-123/download'
+  ])
+  assert.deepEqual(downloads, ['clicked', 'blob:legacy'])
 })
 
 
