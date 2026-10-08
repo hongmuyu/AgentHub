@@ -102,3 +102,37 @@ semantic candidate or retain `RERANK_TIMEOUT` as an infrastructure error.
 These are deterministic test decisions, not measured catalog accuracy or
 live-provider results. Latencies are measured afresh on every run and are not
 published as a fixed fixture value.
+
+# T42 routing metrics
+
+`calculate_routing_metrics(dataset, run)` checks the catalog snapshot,
+dataset version, selected split, config IDs, and exact case coverage before
+counting. For clear and ambiguous cases, Top-1 uses the final selected Agent;
+a valid rejection is incorrect. Top-K uses the **semantic candidate list**,
+including under `semantic_llm`, and asks whether any acceptable Agent appears.
+For no-match cases, a valid rejection is correct and selecting any Agent is a
+false accept. Infrastructure-error cases appear in `infra_error_case_ids` and
+are excluded from every quality-rate denominator. Each rate reports its
+numerator, valid denominator, and value; an empty denominator produces null.
+
+Latency uses every case with an actual query-to-decision measurement, including
+an infrastructure error if its query embedding started. The summary lists
+included error IDs and unmeasured IDs separately. Mean is the arithmetic
+average; p50 and p95 use the nearest-rank rule on sorted values
+(`ceil(percentile × sample_count)`). Each `BenchmarkRun` yields its own
+strategy-labelled report. These routing rates do not measure execution success
+or answer quality.
+
+## Hand-counted test fixture
+
+The eight synthetic cases contain five route-required cases (four valid, one
+infrastructure error) and three no-match cases (two valid, one infrastructure
+error). Among the four valid route-required cases, two final selections are
+acceptable and three semantic Top-K lists contain an acceptable Agent:
+Top-1 = 2/4, Top-K = 3/4. Among the two valid no-match cases, one is rejected
+and one is falsely accepted: Reject Accuracy = 1/2 and False Accept Rate = 1/2.
+Seven measured latencies are 10, 20, 30, 40, 50, 60, and 70 ms; their mean and
+p50 are 40 ms, p95 is 70 ms. The 50 ms infrastructure-error sample is included
+in latency only; the other error has no measured query and no invented duration.
+These numbers verify formulas in a fixture, not a benchmark result for the demo
+catalog or a live provider.
