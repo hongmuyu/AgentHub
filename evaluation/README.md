@@ -73,3 +73,32 @@ Each overlap pair has one `calibration` and one held-out `test` case. The 24
 added tasks differ in artifact and requested operation, and duplicate IDs/text
 are rejected across the full dataset. This review establishes label intent,
 not Router accuracy; threshold choice and benchmark execution remain unmeasured.
+
+# T41 routing benchmark runner
+
+`run_routing_benchmark()` accepts a validated `RoutingDataset`, the matching
+Registry, one split, a fixed Top-K and `CalibratedThreshold`, and either the
+existing semantic Router or its candidate-only rerank path. It verifies the
+current catalog UUID/version/status references before and after each case.
+The returned `BenchmarkRun` is JSON-serializable: its config records the
+catalog/dataset snapshot, split, embedding model key, K, threshold value and
+source, strategy, optional rerank model key, and local environment. A stable
+`config_id` connects each case row to that configuration.
+
+Each row records the final `selected`, `rejected`, or `infra_error` status,
+ordered semantic candidates and cosine scores, selected Agent or safe error
+code, and successful rerank order/reason when applicable. The measured
+`routing_latency_ms` starts immediately before query embedding and ends when
+the Router returns, including reranking. If routing returns before query
+embedding (for example, a pre-query failure or no eligible Agent), latency is
+null with `timing_scope=query_not_started`; no duration is invented. Attachment
+fixture cases are rejected until their contents can be
+supplied explicitly. This runner does not start workflows or compute metrics.
+
+The small offline fake fixture exercises these individual results:
+`selected-case → selected`, `reject-case → rejected`, and
+`error-case → infra_error`; a separate fake reranker can select the second
+semantic candidate or retain `RERANK_TIMEOUT` as an infrastructure error.
+These are deterministic test decisions, not measured catalog accuracy or
+live-provider results. Latencies are measured afresh on every run and are not
+published as a fixed fixture value.
