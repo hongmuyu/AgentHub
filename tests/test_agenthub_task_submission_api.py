@@ -16,14 +16,25 @@ from fastapi.testclient import TestClient
 
 from entity.messages import Message, MessageRole
 from runtime.node.agent import ModelResponse
-from runtime.node.agent_outcome import AgentExecutionOutcome, AgentOutcomeRecorder, OutcomeRead
+from runtime.node.agent_outcome import (
+    AgentExecutionOutcome,
+    AgentOutcomeRecorder,
+    OutcomeRead,
+)
+from server.routes import ALL_ROUTERS, agenthub_metrics, agenthub_tasks
 from server.services.agenthub.agent_runs import AgentRunRepository
 from server.services.agenthub.database import AgentHubDatabase
 from server.services.agenthub.discovery import DiscoveryCandidate, PublicAgentMetadata
 from server.services.agenthub.metadata import AgentMetadata, AgentMetadataInput
+from server.services.agenthub.metrics import MetricsService
 from server.services.agenthub.reranker import RerankResult
-from server.services.agenthub.router import CalibratedThreshold, SemanticLLMRouter, SemanticRouter
+from server.services.agenthub.router import (
+    CalibratedThreshold,
+    SemanticLLMRouter,
+    SemanticRouter,
+)
 from server.services.agenthub.routing_traces import RoutingTraceRepository
+from server.services.agenthub.run_query import RunQueryService
 from server.services.agenthub.runtime_resolver import RuntimeRefResolver
 from server.services.agenthub.task_runs import TaskRunRepository
 from server.services.agenthub.task_service import TaskSubmissionService
@@ -31,10 +42,8 @@ from server.services.agenthub.thin_workflow import ThinWorkflowValidator
 from server.services.agenthub.versions import AgentVersionRepository
 from server.services.attachment_service import AttachmentService
 from server.services.session_store import SessionStatus, WorkflowSessionStore
-from server.services.websocket_manager import WebSocketManager
 from server.services.websocket_executor import WebSocketGraphExecutor
-from server.routes import ALL_ROUTERS, agenthub_tasks
-
+from server.services.websocket_manager import WebSocketManager
 
 REFERENCE = "workflow://research-agent/1"
 TASK = "Summarize the report"
@@ -621,6 +630,48 @@ def test_completed_workflow_with_untrusted_outcome_never_succeeds(
     assert execution.outcome_state is None
 
 
+def _reopened_query_and_metrics(api, run_id):
+    reopened = AgentHubDatabase(api["database"].path)
+    app = FastAPI()
+    app.state.agenthub_run_query_service = RunQueryService(reopened)
+    app.state.agenthub_metrics_service = MetricsService(reopened)
+    app.include_router(agenthub_tasks.router)
+    app.include_router(agenthub_metrics.router)
+    with TestClient(app) as client:
+        query = client.get(f"/api/agenthub/tasks/{run_id}")
+        metrics = client.get("/api/agenthub/metrics")
+    assert query.status_code == metrics.status_code == 200
+    return query.json(), metrics.json()
+
+
+@pytest.mark.parametrize("provider_failure,outcome_mode,status,error_code,success_rate", [
+    (None, None, "success", None, (1, 1)),
+    ("call", None, "failed", "AGENT_EXECUTION_FAILED", (0, 1)),
+    (None, "missing", "failed", "EXECUTION_OUTCOME_MISSING", (0, 0)),
+])
+def test_web_outcome_projection_agrees_with_reopened_query_and_metrics(
+    api, monkeypatch, provider_failure, outcome_mode, status, error_code, success_rate,
+):
+    run_id, _ = _submit_completion_case(
+        api, monkeypatch, provider_failure=provider_failure, outcome_mode=outcome_mode,
+    )
+    assert _wait_for_run_status(api, run_id, status).status == status
+
+    query, metrics = _reopened_query_and_metrics(api, run_id)
+    assert query["status"] == query["agent_run"]["status"] == status
+    assert query["error_code"] == query["agent_run"]["error_code"] == error_code
+    assert query["agent_run"]["native_status"] == "completed"
+    assert query["routing_trace"]["status"] == "selected"
+    assert metrics["total_runs"] == 1
+    assert metrics["run_status_counts"][status] == 1
+    assert (metrics["execution_success_rate"]["numerator"],
+            metrics["execution_success_rate"]["denominator"]) == success_rate
+    assert metrics["routing_distribution"]["selected_agents"] == [{
+        "agent_id": str(api["agent"].snapshot.id), "version": 1, "count": 1,
+    }]
+    assert metrics["task_quality_success_rate"] is None
+
+
 def test_repeated_completion_keeps_first_terminal_snapshot(api, monkeypatch):
     run_id, observed = _submit_completion_case(api, monkeypatch)
     first = _wait_for_run_status(api, run_id, "success")
@@ -781,6 +832,10 @@ def test_blocked_provider_cancel_waits_for_execution_boundary(api, monkeypatch):
         session = api["manager"].session_store.get_session(api["session_id"])
         assert session.status == SessionStatus.CANCELLED
         assert before == requested == ("running", "running")
+        reopened = AgentHubDatabase(api["database"].path)
+        assert RunQueryService(reopened).get(run_id).status == "running"
+        counts = MetricsService(reopened).get().run_status_counts
+        assert counts["running"] == 1 and counts["cancelled"] == 0
     finally:
         release.set()
 
@@ -803,6 +858,11 @@ def test_blocked_provider_cancel_waits_for_execution_boundary(api, monkeypatch):
     reopened = AgentHubDatabase(api["database"].path)
     assert TaskRunRepository(reopened).get(run_id) == run
     assert AgentRunRepository(reopened).get_by_run_id(run_id) == first_execution
+    query, metrics = _reopened_query_and_metrics(api, run_id)
+    assert query["status"] == query["agent_run"]["status"] == "cancelled"
+    assert query["agent_run"]["native_status"] == "cancelled"
+    assert metrics["run_status_counts"]["cancelled"] == 1
+    assert metrics["execution_success_rate"]["denominator"] == 0
 
 
 def test_disconnect_reconnect_during_blocked_provider_does_not_cancel(api, monkeypatch):
