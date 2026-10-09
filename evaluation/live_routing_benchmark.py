@@ -223,7 +223,7 @@ def run_live_evaluation(output_dir: Path) -> tuple[Path, Path]:
             "catalog_snapshot_id": dataset.catalog_snapshot_id,
             "calibration_baseline_run": baseline.model_dump(mode="json"),
             "calibration_baseline_metrics": baseline_metrics.model_dump(mode="json"),
-            "gate_selection_rule": "maximize Top-K Recall + Reject Accuracy; then Top-1; then smaller K; then higher threshold",
+            "gate_selection_rule": "maximize Top-1 Accuracy + Reject Accuracy; then Top-K Recall; then smaller K; then higher threshold",
             "gate_grid": [{
                 "config_id": run.config_id,
                 "top_k": run.config.top_k,

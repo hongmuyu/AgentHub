@@ -7142,7 +7142,7 @@
       "top_k": 5
     }
   ],
-  "gate_selection_rule": "maximize Top-K Recall + Reject Accuracy; then Top-1; then smaller K; then higher threshold",
+  "gate_selection_rule": "maximize Top-1 Accuracy + Reject Accuracy; then Top-K Recall; then smaller K; then higher threshold",
   "index_embedding_latency": {
     "p50_ms": 281.861158,
     "p95_ms": 612.151431,

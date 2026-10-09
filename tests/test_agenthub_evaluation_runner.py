@@ -311,6 +311,31 @@ def test_calibration_rejects_test_split_and_missing_no_match(catalog_and_dataset
         select_calibration_config(dataset, (_run(registry, dataset),))
 
 
+@pytest.mark.parametrize("expected_index,expected_k", [(0, 1), (1, 2)])
+def test_calibration_ties_prefer_recall_then_smaller_k_then_higher_threshold(
+    catalog_and_dataset, expected_index, expected_k,
+):
+    registry, dataset, first, second = catalog_and_dataset
+    payload = dataset.model_dump(mode="json")
+    payload["cases"] = payload["cases"][:2]
+    for case in payload["cases"]:
+        case["split"] = "calibration"
+    payload["cases"][0]["expected_agent_ids"] = [
+        str((first, second)[expected_index].snapshot.id),
+    ]
+    dataset = RoutingDataset.model_validate(payload)
+    baseline = run_routing_benchmark(
+        dataset, registry, strategy="semantic", split="calibration", top_k=2,
+        threshold=CalibratedThreshold(-1.0, "tie-fixture"), environment_label="local-fake",
+    )
+    runs = derive_calibration_runs(baseline, top_ks=(1, 2), thresholds=(0.1, 0.5))
+    frozen, reports = select_calibration_config(dataset, runs)
+    # All four gates have equal Top-1 + Reject. If the second Agent is the
+    # expected one, K=2 wins on recall; otherwise K=1 wins. Both prefer 0.5.
+    assert len({r.top1_accuracy.value + r.reject_accuracy.value for r in reports}) == 1
+    assert (frozen.top_k, frozen.threshold.value) == (expected_k, 0.5)
+
+
 def test_calibration_does_not_choose_reject_all_from_gate_independent_recall(
     catalog_and_dataset,
 ):

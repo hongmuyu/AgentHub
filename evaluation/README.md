@@ -138,6 +138,32 @@ catalog or a live provider.
 
 # T43 calibration and catalog-size evidence — 2026-10-08
 
+## Provenance correction — 2026-10-09
+
+The final M4 audit found an inaccurate `gate_selection_rule` label in the live
+generator and both saved calibration artifacts (the final run and `attempt1`).
+The label said to maximize Top-K Recall + Reject Accuracy, then Top-1. The
+executed `select_calibration_config()` algorithm instead maximizes **Top-1
+Accuracy + Reject Accuracy**, then Top-K Recall, then smaller K, then higher
+threshold. This correction changes that label only; the selection algorithm
+is unchanged.
+
+Re-ranking each artifact's 183 saved **calibration** grid entries confirms
+K=5 and threshold `0.35727615782291194`. The final calibration configuration ID
+remains `eaf560784ee8eb9eb4d00f51bc200bc514479caab129e56bf8f481cbf1cd1b4b`;
+the attempt1 ID remains
+`0111662eee1972a8e0c223e53e3d1a5530dfac84a9b463ac918d6df4a1e3957a`.
+No test split was used for selection, and no historical provider call was
+repeated. Original case results, reranker responses, metrics, timings, splits,
+configuration IDs and frozen gates are preserved.
+
+The artifacts' original `provenance.source_sha256` values are also preserved:
+they identify the generator used for the 2026-10-08 measurements, available
+at commit `166d7d8`, rather than the corrected generator. Git history records
+the original label and this correction. Regression tests exercise the real
+generator with offline providers up to calibration freeze, reselect from the
+saved grids, and verify the algorithm's objective and tie-break order.
+
 `select_calibration_config()` accepts only `semantic` runs on the calibration
 split, with one catalog/dataset/model/environment provenance. It refuses an
 empty route or no-match denominator, any infrastructure error, and repeated
