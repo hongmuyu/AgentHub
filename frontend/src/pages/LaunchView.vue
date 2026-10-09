@@ -2141,8 +2141,12 @@ const launchWorkflow = async () => {
 
       taskPrompt.value = ''
 
-      status.value = 'Running...'
-      isWorkflowRunning.value = true
+      if (status.value === 'Launching...') {
+        status.value = 'Running...'
+      }
+      if (!['Completed', 'Cancelled', 'Error'].includes(status.value)) {
+        isWorkflowRunning.value = true
+      }
 
       // Persist session id in URL for reconnection after refresh
       router.push({
