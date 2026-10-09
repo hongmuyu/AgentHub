@@ -54,7 +54,7 @@ test('register and update send only API metadata fields', async (t) => {
   }
 })
 
-test('enable and disable use existing action endpoints without body', async (t) => {
+test('enable and disable use JSON API headers without a body', async (t) => {
   const requests = []
   t.mock.method(globalThis, 'fetch', async (url, options) => {
     requests.push({ url, options })
@@ -63,8 +63,8 @@ test('enable and disable use existing action endpoints without body', async (t) 
   await setAgentHubAgentEnabled('agent-1', false)
   await setAgentHubAgentEnabled('agent-1', true)
   assert.deepEqual(requests.map(({ url, options }) => [url, options]), [
-    ['/api/agenthub/agents/agent-1/disable', { method: 'POST' }],
-    ['/api/agenthub/agents/agent-1/enable', { method: 'POST' }]
+    ['/api/agenthub/agents/agent-1/disable', { method: 'POST', headers: { 'Content-Type': 'application/json' } }],
+    ['/api/agenthub/agents/agent-1/enable', { method: 'POST', headers: { 'Content-Type': 'application/json' } }]
   ])
 })
 

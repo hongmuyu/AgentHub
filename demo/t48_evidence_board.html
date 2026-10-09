@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AgentHub T48 measured demo evidence</title>
+<style>
+  :root { color-scheme: dark; font: 21px/1.45 system-ui, sans-serif; background: #0c1520; color: #edf5f5; }
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  nav { position: fixed; z-index: 2; top: 0; width: 100%; padding: 12px 4vw; background: #0c1520ef; border-bottom: 1px solid #38505d; display: flex; justify-content: space-between; align-items: center; }
+  nav strong { color: #7ee0d0; }
+  nav a { color: #b7d7e2; text-decoration: none; margin-left: 18px; font-size: 17px; }
+  section { min-height: 100vh; padding: 100px 5vw 35px; scroll-margin-top: 0; }
+  h1 { font-size: 53px; line-height: 1.1; margin: 10px 0 24px; max-width: 1200px; }
+  h2 { font-size: 38px; margin: 0 0 17px; }
+  .eyebrow { color: #7ee0d0; font-weight: 700; text-transform: uppercase; letter-spacing: .14em; }
+  .lead { font-size: 26px; max-width: 1250px; color: #c8d9dd; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 25px; }
+  .card { border: 1px solid #315565; border-radius: 18px; padding: 20px 25px; background: #152633; min-height: 190px; }
+  .card h3 { color: #8fe3d4; margin: 0 0 8px; font-size: 24px; }
+  .card p { margin: 7px 0; }
+  .small { font-size: 16px; color: #aec5cd; }
+  .kpi { font-size: 34px; color: #f7c975; font-weight: 700; }
+  .good { color: #78e1b0; } .reject { color: #f7c975; }
+  table { border-collapse: collapse; width: 100%; margin-top: 16px; }
+  th, td { text-align: left; padding: 9px 13px; border-bottom: 1px solid #3d5966; }
+  th { color: #9edaca; }
+  code { color: #e5c785; font-size: .83em; }
+  .footer { margin-top: 24px; font-size: 16px; color: #a6c1ca; }
+</style>
+<nav><strong>AgentHub / T48</strong><span><a href="#overview">Overview</a><a href="#clear">Clear</a><a href="#ambiguous">Top-K</a><a href="#reject">Reject</a><a href="#registry">Registry</a><a href="#benchmark">Benchmark</a></span></nav>
+<section id="overview">
+  <div class="eyebrow">Live provider demo • 2026-10-09</div>
+  <h1>One enterprise task. The right registered Agent. A traceable outcome.</h1>
+  <p class="lead">Six controlled thin workflows, live DashScope embeddings, live DeepSeek chat execution and optional reranking, existing ChatDev Workflow + WebSocket.</p>
+  <div class="grid"><div class="card"><h3>Business path</h3><p>Task → discovery → semantic Top-K → optional DeepSeek rerank → selected workflow → structured outcome → business Run state.</p></div><div class="card"><h3>Evidence boundary</h3><p>Four synthetic scenarios were executed through the configured standard Docker deployment. Recorded Run IDs, candidate scores, statuses, timings and native result hashes are in <code>t48_evidence_2026-10-09.json</code>.</p></div></div>
+  <p class="footer">Recorded run replay is historical evidence, not a new live submission. Task answer quality was not scored.</p>
+</section>
+<section id="clear">
+  <div class="eyebrow">Scenario 1 / clear task</div>
+  <h2>Research Agent selected and executed</h2>
+  <p class="lead">Compare supplied LangGraph and AutoGen technical notes, then identify source-verification gaps. External browsing was explicitly excluded.</p>
+  <div class="grid"><div class="card"><h3>Semantic candidates</h3><table><tr><th>Rank</th><th>Agent</th><th>Cosine score</th></tr><tr><td>1</td><td>Research</td><td>0.497</td></tr><tr><td>2</td><td>Code</td><td>0.479</td></tr><tr><td>3</td><td>Review</td><td>0.458</td></tr><tr><td>4</td><td>Document</td><td>0.456</td></tr><tr><td>5</td><td>Data</td><td>0.440</td></tr></table></div><div class="card"><h3>Execution proof</h3><p class="kpi good">TaskRun success</p><p>AgentRun success · native workflow completed · WebSocket result present</p><p>Routing 1874 ms · execution 5262 ms</p><p class="small">Run <code>7d623c0e-0624-4061-8e0b-13a9e1f1bbdd</code></p></div></div>
+</section>
+<section id="ambiguous">
+  <div class="eyebrow">Scenario 2 / overlapping capabilities</div>
+  <h2>Semantic Top-K, then live rerank</h2>
+  <p class="lead">A supplied operations note asks to compare Monday and Tuesday error counts. Both data analysis and document interpretation are plausible.</p>
+  <div class="grid"><div class="card"><h3>Recall before rerank</h3><table><tr><th>Rank</th><th>Agent</th><th>Cosine score</th></tr><tr><td>1</td><td>Data</td><td>0.462</td></tr><tr><td>2</td><td>Document</td><td>0.429</td></tr><tr><td>3</td><td>Code</td><td>0.383</td></tr><tr><td>4</td><td>Planning</td><td>0.358</td></tr><tr><td>5</td><td>Research</td><td>0.346</td></tr></table></div><div class="card"><h3>DeepSeek decision</h3><p class="kpi good">Data Agent → success</p><p>Rerank order: Data. The returned Agent ID belongs to semantic Top-K.</p><p>Routing 3538 ms · execution 1422 ms · native result present</p><p class="small">Run <code>ff655a2e-178d-4114-a5ef-2fee9828cc9f</code></p></div></div>
+</section>
+<section id="reject">
+  <div class="eyebrow">Scenario 3 / no matching capability</div>
+  <h2>NO_SUITABLE_AGENT is a rejection</h2>
+  <p class="lead">“Send an announcement email to all employees now.” The six-Agent catalog has no authorized sending capability.</p>
+  <div class="grid"><div class="card"><h3>Routing evidence</h3><p>Highest candidate: Document, cosine 0.329; calibrated threshold 0.357276…</p><p>Routing latency 460 ms.</p><p class="small">Run <code>4e0e77c7-a0c4-469f-9af2-84bad07283cf</code></p></div><div class="card"><h3>Business boundary</h3><p class="kpi reject">TaskRun rejected</p><p><code>NO_SUITABLE_AGENT</code></p><p>No selected Agent, no AgentRun, no native workflow completion. This is not execution failure or success.</p></div></div>
+</section>
+<section id="registry">
+  <div class="eyebrow">Scenario 4 / administrator changes catalog</div>
+  <h2>One task, different routing after disable</h2>
+  <p class="lead">The same synthetic response-time task was submitted before and after disabling Data Agent in Registry. It computes median, range and flags an outlier.</p>
+  <div class="grid"><div class="card"><h3>Before: six active Agents</h3><p class="kpi good">Data Agent → success</p><p>Data 0.455; Document 0.403</p><p>Routing 389 ms · native result present</p><p class="small">Run <code>d6d7d726-eaa9-4159-9417-b6e3adfe1657</code></p></div><div class="card"><h3>After Data Agent disabled</h3><p class="kpi good">Document Agent → success</p><p>Data absent from candidates; Document 0.403</p><p>Routing 1811 ms · native result present</p><p class="small">Run <code>3edd6519-df8a-4e1c-9700-04638ccf4f75</code></p></div></div>
+  <p class="footer">Data Agent was restored; final catalog: six active Agents. No Router source code changed.</p>
+</section>
+<section id="benchmark">
+  <div class="eyebrow">Independent T43 live benchmark • separate from T48 demo</div>
+  <h2>Measured routing quality and latency</h2>
+  <p class="lead">60 reviewed synthetic cases; 30 calibration / 30 independent test. Calibration froze K=5 and threshold 0.35727615782291194 before test.</p>
+  <div class="grid"><div class="card"><h3>Live semantic</h3><p class="kpi">11/24 Top-1</p><p>Top-K recall 24/24 · reject 3/6 · 0 infra errors</p><p>Query-to-decision p50/p95: 368 / 643 ms</p></div><div class="card"><h3>Live semantic + DeepSeek rerank</h3><p class="kpi">18/24 Top-1</p><p>Top-K recall 24/24 · reject 3/4 · 2 truncated-output errors excluded from quality denominators</p><p>Query-to-decision p50/p95: 2199 / 10067 ms</p></div></div>
+  <p class="footer">Single held-out sample, no significance or SLA claim. T48 tasks are separate live executions. Offline fake-embedding engineering benchmarks are reported separately. Answer quality, external tools and restart of in-flight calls: NOT VERIFIED.</p>
+</section>
+</html>

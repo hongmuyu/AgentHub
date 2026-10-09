@@ -576,6 +576,7 @@ export async function updateAgentHubAgent(agentId, metadata) {
 
 export async function setAgentHubAgentEnabled(agentId, enabled) {
   return fetch(apiUrl(`/api/agenthub/agents/${encodeURIComponent(agentId)}/${enabled ? 'enable' : 'disable'}`), {
-    method: 'POST'
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
   })
 }

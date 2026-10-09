@@ -1,0 +1,443 @@
+{
+  "catalog_count": 6,
+  "evidence_scope": "actual configured HTTP/WebSocket deployment; synthetic tasks",
+  "metrics_after": {
+    "agent_usage": [
+      {
+        "agent_id": "1260fa21-bd50-4543-9c1f-f5ab023a99e4",
+        "started_count": 2,
+        "version": 1
+      },
+      {
+        "agent_id": "4b99c56f-7e54-4236-b387-b5485dccce27",
+        "started_count": 5,
+        "version": 1
+      },
+      {
+        "agent_id": "f14508b7-c9a9-478c-b422-1754a2532f44",
+        "started_count": 3,
+        "version": 1
+      }
+    ],
+    "average_execution_latency_ms": {
+      "sample_count": 9,
+      "value": 4542.929888888889
+    },
+    "average_routing_latency_ms": {
+      "sample_count": 15,
+      "value": 886.1331381330577
+    },
+    "execution_failure_rate": {
+      "denominator": 9,
+      "numerator": 0,
+      "value": 0.0
+    },
+    "execution_success_rate": {
+      "denominator": 9,
+      "numerator": 9,
+      "value": 1.0
+    },
+    "rejected_rate": {
+      "denominator": 15,
+      "numerator": 5,
+      "value": 0.3333333333333333
+    },
+    "routing_distribution": {
+      "rejection_reasons": {
+        "NO_SUITABLE_AGENT": 5
+      },
+      "routing_failures": 0,
+      "selected_agents": [
+        {
+          "agent_id": "1260fa21-bd50-4543-9c1f-f5ab023a99e4",
+          "count": 2,
+          "version": 1
+        },
+        {
+          "agent_id": "4b99c56f-7e54-4236-b387-b5485dccce27",
+          "count": 5,
+          "version": 1
+        },
+        {
+          "agent_id": "f14508b7-c9a9-478c-b422-1754a2532f44",
+          "count": 3,
+          "version": 1
+        }
+      ],
+      "strategies": {
+        "semantic": 13,
+        "semantic_llm": 2
+      }
+    },
+    "run_status_counts": {
+      "cancelled": 0,
+      "failed": 0,
+      "pending": 0,
+      "rejected": 5,
+      "running": 1,
+      "success": 9
+    },
+    "task_quality_success_rate": null,
+    "token_usage": {
+      "input": {
+        "known_count": 0,
+        "sum": null,
+        "unknown_count": 10
+      },
+      "output": {
+        "known_count": 0,
+        "sum": null,
+        "unknown_count": 10
+      },
+      "total": {
+        "known_count": 0,
+        "sum": null,
+        "unknown_count": 10
+      }
+    },
+    "total_runs": 15
+  },
+  "metrics_before": {
+    "agent_usage": [
+      {
+        "agent_id": "1260fa21-bd50-4543-9c1f-f5ab023a99e4",
+        "started_count": 1,
+        "version": 1
+      },
+      {
+        "agent_id": "4b99c56f-7e54-4236-b387-b5485dccce27",
+        "started_count": 3,
+        "version": 1
+      },
+      {
+        "agent_id": "f14508b7-c9a9-478c-b422-1754a2532f44",
+        "started_count": 2,
+        "version": 1
+      }
+    ],
+    "average_execution_latency_ms": {
+      "sample_count": 5,
+      "value": 5513.5232
+    },
+    "average_routing_latency_ms": {
+      "sample_count": 10,
+      "value": 521.8749119958375
+    },
+    "execution_failure_rate": {
+      "denominator": 5,
+      "numerator": 0,
+      "value": 0.0
+    },
+    "execution_success_rate": {
+      "denominator": 5,
+      "numerator": 5,
+      "value": 1.0
+    },
+    "rejected_rate": {
+      "denominator": 10,
+      "numerator": 4,
+      "value": 0.4
+    },
+    "routing_distribution": {
+      "rejection_reasons": {
+        "NO_SUITABLE_AGENT": 4
+      },
+      "routing_failures": 0,
+      "selected_agents": [
+        {
+          "agent_id": "1260fa21-bd50-4543-9c1f-f5ab023a99e4",
+          "count": 1,
+          "version": 1
+        },
+        {
+          "agent_id": "4b99c56f-7e54-4236-b387-b5485dccce27",
+          "count": 3,
+          "version": 1
+        },
+        {
+          "agent_id": "f14508b7-c9a9-478c-b422-1754a2532f44",
+          "count": 2,
+          "version": 1
+        }
+      ],
+      "strategies": {
+        "semantic": 9,
+        "semantic_llm": 1
+      }
+    },
+    "run_status_counts": {
+      "cancelled": 0,
+      "failed": 0,
+      "pending": 0,
+      "rejected": 4,
+      "running": 1,
+      "success": 5
+    },
+    "task_quality_success_rate": null,
+    "token_usage": {
+      "input": {
+        "known_count": 0,
+        "sum": null,
+        "unknown_count": 6
+      },
+      "output": {
+        "known_count": 0,
+        "sum": null,
+        "unknown_count": 6
+      },
+      "total": {
+        "known_count": 0,
+        "sum": null,
+        "unknown_count": 6
+      }
+    },
+    "total_runs": 10
+  },
+  "provider_note": "verify the active provider separately; this script does not inspect credentials",
+  "recorded_at_utc": "2026-10-09T06:06:56.965486+00:00",
+  "registry_restored": true,
+  "scenarios": {
+    "ambiguous_rerank": {
+      "agent_status": "success",
+      "candidates": [
+        {
+          "name": "Data Agent",
+          "raw_similarity": 0.4615147383802178,
+          "score_kind": "cosine"
+        },
+        {
+          "name": "Document Agent",
+          "raw_similarity": 0.4289841454446604,
+          "score_kind": "cosine"
+        },
+        {
+          "name": "Code Agent",
+          "raw_similarity": 0.3829807232460941,
+          "score_kind": "cosine"
+        },
+        {
+          "name": "Planning Agent",
+          "raw_similarity": 0.35757502502771893,
+          "score_kind": "cosine"
+        },
+        {
+          "name": "Research Agent",
+          "raw_similarity": 0.34627532763621677,
+          "score_kind": "cosine"
+        }
+      ],
+      "error_code": null,
+      "execution_latency_ms": 1422.337,
+      "native_output": {
+        "result_characters": 614,
+        "result_present": true,
+        "result_sha256": "4b6d59614dfa84cf250a4b91ea44894ca966826d20fc971aa2b15e10a87c0b68",
+        "workflow_completed": true
+      },
+      "native_status": "completed",
+      "rejection_reason": null,
+      "rerank_order": [
+        "Data Agent"
+      ],
+      "routing_latency_ms": 3538.3569250116125,
+      "routing_status": "selected",
+      "run_id": "ff655a2e-178d-4114-a5ef-2fee9828cc9f",
+      "selected_agent": "Data Agent",
+      "status": "success",
+      "strategy": "semantic_llm",
+      "task": "From this supplied operations note, compare the stated error counts: Monday 8 and Tuesday 5. Identify which day has the larger count."
+    },
+    "clear_research": {
+      "agent_status": "success",
+      "candidates": [
+        {
+          "name": "Research Agent",
+          "raw_similarity": 0.496856332407012,
+          "score_kind": "cosine"
+        },
+        {
+          "name": "Code Agent",
+          "raw_similarity": 0.47883444210833176,
+          "score_kind": "cosine"
+        },
+        {
+          "name": "Review Agent",
+          "raw_similarity": 0.4580057356056872,
+          "score_kind": "cosine"
+        },
+        {
+          "name": "Document Agent",
+          "raw_similarity": 0.4561500997539219,
+          "score_kind": "cosine"
+        },
+        {
+          "name": "Data Agent",
+          "raw_similarity": 0.44046446169335396,
+          "score_kind": "cosine"
+        }
+      ],
+      "error_code": null,
+      "execution_latency_ms": 5261.828,
+      "native_output": {
+        "result_characters": 3904,
+        "result_present": true,
+        "result_sha256": "af6712a857ca003611e5b5421aad2694ebfeec12d5254852bacf5cbcacfbe130",
+        "workflow_completed": true
+      },
+      "native_status": "completed",
+      "rejection_reason": null,
+      "rerank_order": [],
+      "routing_latency_ms": 1874.0824799751863,
+      "routing_status": "selected",
+      "run_id": "7d623c0e-0624-4061-8e0b-13a9e1f1bbdd",
+      "selected_agent": "Research Agent",
+      "status": "success",
+      "strategy": "semantic",
+      "task": "Research question for internal R&D: using only these supplied technical notes, compare LangGraph and AutoGen for an enterprise Agent project. Note A says LangGraph uses explicit state graphs. Note B says AutoGen emphasizes multi-agent conversations. Summarize the supported tradeoff and gaps needing future source verification. Do not browse or call external tools."
+    },
+    "no_suitable_agent": {
+      "agent_status": null,
+      "candidates": [
+        {
+          "name": "Document Agent",
+          "raw_similarity": 0.3290543853107912,
+          "score_kind": "cosine"
+        },
+        {
+          "name": "Planning Agent",
+          "raw_similarity": 0.31339024384041614,
+          "score_kind": "cosine"
+        },
+        {
+          "name": "Data Agent",
+          "raw_similarity": 0.2875488196570717,
+          "score_kind": "cosine"
+        },
+        {
+          "name": "Research Agent",
+          "raw_similarity": 0.27876203586209525,
+          "score_kind": "cosine"
+        },
+        {
+          "name": "Code Agent",
+          "raw_similarity": 0.24589484359149177,
+          "score_kind": "cosine"
+        }
+      ],
+      "error_code": "NO_SUITABLE_AGENT",
+      "execution_latency_ms": null,
+      "native_output": {
+        "result_characters": 0,
+        "result_present": false,
+        "result_sha256": null,
+        "workflow_completed": false
+      },
+      "native_status": null,
+      "rejection_reason": "NO_SUITABLE_AGENT",
+      "rerank_order": [],
+      "routing_latency_ms": 460.29254398308694,
+      "routing_status": "rejected",
+      "run_id": "4e0e77c7-a0c4-469f-9af2-84bad07283cf",
+      "selected_agent": null,
+      "status": "rejected",
+      "strategy": "semantic",
+      "task": "Send an announcement email to all employees now."
+    },
+    "registry_after_disable": {
+      "agent_status": "success",
+      "candidates": [
+        {
+          "name": "Document Agent",
+          "raw_similarity": 0.40342530130503906,
+          "score_kind": "cosine"
+        },
+        {
+          "name": "Review Agent",
+          "raw_similarity": 0.3974805035898088,
+          "score_kind": "cosine"
+        },
+        {
+          "name": "Research Agent",
+          "raw_similarity": 0.3888792169960564,
+          "score_kind": "cosine"
+        },
+        {
+          "name": "Code Agent",
+          "raw_similarity": 0.373025676817173,
+          "score_kind": "cosine"
+        },
+        {
+          "name": "Planning Agent",
+          "raw_similarity": 0.3550989586525567,
+          "score_kind": "cosine"
+        }
+      ],
+      "error_code": null,
+      "execution_latency_ms": 2711.931,
+      "native_output": {
+        "result_characters": 922,
+        "result_present": true,
+        "result_sha256": "6253c8efe5eab719c540701bbc4048bc8a2de9cd7d83749eff8c6d6bb19db4f1",
+        "workflow_completed": true
+      },
+      "native_status": "completed",
+      "rejection_reason": null,
+      "rerank_order": [],
+      "routing_latency_ms": 1811.125192034524,
+      "routing_status": "selected",
+      "run_id": "3edd6519-df8a-4e1c-9700-04638ccf4f75",
+      "selected_agent": "Document Agent",
+      "status": "success",
+      "strategy": "semantic",
+      "task": "Given synthetic response times 10, 11, 12, 13, and 80 ms, compute the median and range and identify the value needing outlier review."
+    },
+    "registry_before": {
+      "agent_status": "success",
+      "candidates": [
+        {
+          "name": "Data Agent",
+          "raw_similarity": 0.45491977240861653,
+          "score_kind": "cosine"
+        },
+        {
+          "name": "Document Agent",
+          "raw_similarity": 0.40342530130503906,
+          "score_kind": "cosine"
+        },
+        {
+          "name": "Review Agent",
+          "raw_similarity": 0.3974805035898088,
+          "score_kind": "cosine"
+        },
+        {
+          "name": "Research Agent",
+          "raw_similarity": 0.3888792169960564,
+          "score_kind": "cosine"
+        },
+        {
+          "name": "Code Agent",
+          "raw_similarity": 0.373025676817173,
+          "score_kind": "cosine"
+        }
+      ],
+      "error_code": null,
+      "execution_latency_ms": 3922.657,
+      "native_output": {
+        "result_characters": 883,
+        "result_present": true,
+        "result_sha256": "3e427c2b7cbb2430eb65fa78644915ad418ea3f4e067bc32ed0e5195a37adb6d",
+        "workflow_completed": true
+      },
+      "native_status": "completed",
+      "rejection_reason": null,
+      "rerank_order": [],
+      "routing_latency_ms": 389.39081103308126,
+      "routing_status": "selected",
+      "run_id": "d6d7d726-eaa9-4159-9417-b6e3adfe1657",
+      "selected_agent": "Data Agent",
+      "status": "success",
+      "strategy": "semantic",
+      "task": "Given synthetic response times 10, 11, 12, 13, and 80 ms, compute the median and range and identify the value needing outlier review."
+    }
+  }
+}
