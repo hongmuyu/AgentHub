@@ -1,417 +1,208 @@
-# ChatDev 2.0 - DevAll
+# AgentHub
 
-> **AgentHub P0** — [部署与架构](docs/agenthub.md) · [发布说明](docs/RELEASE_NOTES.md) · [路由评测](evaluation/README.md) · [Demo 与视频](demo/README.md) · [简历材料](docs/PORTFOLIO.md) · [面试指南](docs/INTERVIEW_GUIDE.md)。AgentHub 基于下方介绍的 ChatDev Runtime 扩展，保留上游署名与许可证。
+[English](README.md) | **简体中文**
 
-<p align="center">
-  <img src="frontend/public/media/logo.png" alt="DevAll Logo" width="500"/>
-</p>
+**面向 Agent 注册、能力发现、动态路由、执行与可观测性的 Agent 平台。**
+Based on [OpenBMB/ChatDev 2.0](https://github.com/OpenBMB/ChatDev)（DevAll）。
 
+用户只需描述任务，无需事先知道应调用哪个 Agent。AgentHub 检索已登记的能力元数据，选择一个合适的 Agent，通过 ChatDev 执行其受控 Workflow，并记录路由决策与业务结果。这是面向**可信本地/内部环境**的 P0 工程项目，包含六个示例 Agent 和可复现的评测证据。
 
-<p align="center">
-  <strong>用于开发一切的零代码多智能体平台</strong>
-</p>
+**P0 已发布 v1.0.0。** `main` 为稳定分支；`agenthub-dev` 承载后续文档与开发变更。[Release Notes](docs/RELEASE_NOTES.md) · [部署指南](docs/agenthub.md) · [Benchmark](evaluation/README.md) · [Demo](demo/README.md)
 
-<p align="center">
-  【<a href="./README.md">English</a> | <a href="./README-zh.md">简体中文</a>】
-</p>
-<p align="center">
-    【📚 <a href="#开发者">开发者</a> | 👥 <a href="#主要贡献者">贡献者</a>｜⭐️ <a href="https://github.com/OpenBMB/ChatDev/tree/chatdev1.0">ChatDev 1.0 (Legacy)</a>】
-</p>
+## 项目演示与实际界面
 
-## 📖 概览
-ChatDev 已从一个专门的软件开发多智能体系统演变为一个全面的多智能体编排平台。
+**[观看 225 秒 Demo — MP4，1280×720，约 1.4 MiB](demo/agenthub_t48_demo.mp4)**
 
-- <a href="https://github.com/OpenBMB/ChatDev/tree/main">**ChatDev 2.0 (DevAll)**</a> 是一个用于“开发一切”的**零代码多智能体平台**。它通过简单的配置，赋能用户快速构建并执行定制化的多智能体系统。无需编写代码，用户即可定义智能体、工作流和任务，以编排如数据可视化、3D 生成和深度调研等复杂场景。
-- <a href="https://github.com/OpenBMB/ChatDev/tree/chatdev1.0">**ChatDev 1.0 (经典版)**</a> 以**虚拟软件公司**模式运行。它通过各种智能体（如 CEO、CTO、程序员）参与专门的功能研讨会，实现整个软件开发生命周期的自动化——包括设计、编码、测试和文档编写。它是沟通型智能体协作的基石范式。
+录屏展示实际 Registry UI、任务提交、候选与所选 Agent、原生执行输出及独立的业务状态。内容包括一次新的 UI 提交、已完成真实 Provider Run 的回放/查询、Registry 禁用与恢复操作，以及实测证据看板；不代表所有展示的 Run 都在录制期间重新执行。
 
-### AgentHub 扩展
+- **Registry**（`/agenthub/registry`）：查看六个 Agent 及能力，禁用并恢复 Data Agent。
+- **Launch**（`/launch`）：提交任务、查看路由，并对照 ChatDev 输出与 AgentHub 状态。
+- **四类场景**：明确任务、需要重排的模糊任务、无匹配拒绝，以及禁用 Agent 后路由发生变化。
 
-本仓库还提供 AgentHub：面向可信内部环境的 Agent 目录、能力路由和业务运行状态查询，执行仍复用 ChatDev 2.0 工作流运行时。标准 Docker 启动、六个示例 Agent 的登记、任务入口、接口与状态语义，以及实测路由评测见 [AgentHub 使用与复现指南](docs/agenthub.md)。原有手选 YAML Launch 和 Workflow 页面继续可用。
+[T48 原始记录](demo/t48_evidence_2026-10-09.json)包含**五条验收 Run：4 success、1 rejected**。这是合成 Demo 场景，不是生产业务成功率，也不是独立答案质量评测。详见[录制范围与复现说明](demo/README.md)。
 
-## 🎉 新闻
-• **2026年1月7日：🚀 我们非常高兴地宣布 ChatDev 2.0 (DevAll) 正式发布！** 该版本引入了全新的零代码多智能体编排平台。经典的 ChatDev (v1.x) 已移至 [`chatdev1.0`](https://github.com/OpenBMB/ChatDev/tree/chatdev1.0) 分支进行维护。
+## 核心特性
 
-<details>
-<summary>历史新闻</summary>
+- **版本化 Agent Registry**：稳定 Agent 身份、不可变元数据版本、当前版本/状态管理、Embedding 索引、API 与轻量管理界面。
+- **Embedding Discovery**：对能力元数据生成向量，过滤 active/current Agent，校验 Workflow 可执行性，通过 Exact Cosine Scan 检索 Top-K。
+- **Semantic Routing + 可选 LLM Rerank**：使用校准后的置信度门槛；LLM 只能从已检索的候选 ID 中选择，低置信度请求返回 `NO_SUITABLE_AGENT`。
+- **Workflow Execution**：一个任务选择一个 Agent 及其服务端批准的薄 Workflow，复用 ChatDev 执行链。
+- **Run State 与失败处理**：持久化 `pending`、`running`、`success`、`failed`、`rejected`、`cancelled`；区分 Provider/Outcome 失败、路由拒绝与已确认取消。
+- **Trace 与 Metrics**：记录候选、分数、策略、选择、延迟及安全错误码；汇总计数、显式分母的比率、Agent 使用量及已知/未知 Token 用量。
 
-•2025年9月24日：🎉 我们的论文 [Multi-Agent Collaboration via Evolving Orchestration](https://arxiv.org/abs/2505.19591) 已被 NeurIPS 2025 接收。其实现可在本仓库的 `puppeteer` 分支中找到。
+## 与原版 ChatDev 的差异
 
-•2025年5月26日：🎉 我们提出了一种新型的“木偶戏”式范式，用于大语言模型智能体之间的多智能体协作。通过利用强化学习优化的可学习中央编排器，我们的方法动态地激活并排列智能体，以构建高效、情境感知的推理路径。这种方法不仅提高了推理质量，还降低了计算成本，使多智能体协作在复杂任务中具有可扩展性和适应性。详见论文：[Multi-Agent Collaboration via Evolving Orchestration](https://arxiv.org/abs/2505.19591)。
-  <p align="center">
-  <img src='./assets/puppeteer.png' width=800>
-  </p>
+| 领域 | 复用 ChatDev 2.0 | AgentHub 二次开发 |
+| --- | --- | --- |
+| 执行 | YAML Workflow/Runtime、Agent 节点、Provider、工具 | 经校验的 `runtime_ref` → 受控薄 Workflow → 现有执行服务 |
+| Agent 选择 | 用户手动选择 Workflow、预配置节点 | 业务 Agent Registry、能力发现、语义路由、可选 Top-K LLM 重排 |
+| Web 体验 | FastAPI、Vue 前端、WebSocket 会话、日志/输出、附件、取消 | AgentHub 任务模式、Registry UI、候选/决策展示、业务 Run 查询 |
+| 状态与观测 | 原生 Workflow/Session 状态、日志及 Token 跟踪 | SQLite TaskRun/RoutingTrace/AgentRun、结构化成功判定、业务指标 |
+| 交付 | 上游源码、示例、资源与部署基础 | 六 Agent 目录、路由评测、集成测试、部署验收与 Demo 证据 |
 
-•2024年6月25日：🎉 为了促进 LLM 驱动的多智能体协作🤖🤖及相关领域的发展，ChatDev 团队策划了一系列开创性的论文📄，并以[开源](https://github.com/OpenBMB/ChatDev/tree/main/MultiAgentEbook)交互式电子书📚的形式呈现。现在您可以在 [电子书网站](https://thinkwee.top/multiagent_ebook) 探索最新进展，并下载 [论文列表](https://github.com/OpenBMB/ChatDev/blob/main/MultiAgentEbook/papers.csv)。
-  <p align="center">
-  <img src='./assets/ebook.png' width=800>
-  </p>
-  
-•2024年6月12日：我们推出了多智能体协作网络 (MacNet) 🎉，它利用有向无环图 (DAG) 通过语言交互促进智能体之间有效的面向任务的协作 🤖🤖。MacNet 支持跨各种拓扑结构以及在超过一千个智能体之间进行协作，且不超出上下文限制。MacNet 更加通用和可扩展，可以被视为 ChatDev 链式拓扑的更高级版本。我们的预印本论文可在 [https://arxiv.org/abs/2406.07155](https://arxiv.org/abs/2406.07155) 获取。该技术已整合到 [macnet](https://github.com/OpenBMB/ChatDev/tree/macnet) 分支，增强了对多样化组织结构的支持，并提供了除软件开发之外的更丰富解决方案（例如，逻辑推理、数据分析、故事生成等）。
-  <p align="center">
-  <img src='./assets/macnet.png' width=500>
-  </p>
+Workflow Runtime、工作流编辑器和原生工具执行属于上游能力。AgentHub 在应用服务边界扩展平台功能，不替换 Runtime，也不将其声称为原创；手动 YAML 执行入口继续可用。
 
-• 2024年5月7日，我们推出了“迭代经验提炼”（IER），这是一种新方法，指导者智能体和助手智能体通过增强捷径导向的经验来高效适应新任务。这种方法涵盖了在一系列任务中获取、利用、传播和消除经验的过程，使过程更加简短高效。我们的预印本论文可在 https://arxiv.org/abs/2405.04219 获取，该技术将很快整合到 ChatDev 中。
-  <p align="center">
-  <img src='./assets/ier.png' width=220>
-  </p>
+## 系统架构与任务执行流程
 
-• 2024年1月25日：我们已在 ChatDev 中集成了体验式共同学习模块。请参阅 [体验式共同学习指南](wiki.md#co-tracking)。
+```mermaid
+flowchart TD
+    U[User task + current WebSocket session] --> S[AgentHub task service]
+    S --> D[Versioned Registry + eligible Agent filtering]
+    D --> E[Embedding Discovery: Exact Cosine Top-K]
+    E --> G{Calibrated confidence gate}
+    G -->|below threshold / no candidate| N[rejected: NO_SUITABLE_AGENT]
+    G -->|semantic| A[Selected Agent + metadata version]
+    G -->|semantic_llm| L[LLM Rerank: Top-K IDs only]
+    L --> A
+    A --> V[Server-owned runtime_ref manifest + thin workflow validation]
+    V --> W[ChatDev WorkflowRunService + WebSocket Runtime]
+    W --> O[Native completion + structured target Agent outcome]
+    S --> DB[(SQLite: TaskRun / RoutingTrace / AgentRun)]
+    N --> DB
+    O --> DB
+    DB --> Q[Run query / Trace / Metrics]
+```
 
-• 2023年12月28日：我们提出了体验式共同学习，这是一种创新方法，指导者智能体和助手智能体积累捷径导向的经验，以有效地解决新任务，减少重复错误并提高效率。请查看我们的预印本论文 https://arxiv.org/abs/2312.17025，该技术将很快集成到 ChatDev 中。
-  <p align="center">
-  <img src='./assets/ecl.png' width=860>
-  </p>
-• 2023年11月15日：我们推出了 ChatDev SaaS 平台，使软件开发人员和创新创业者能够以极低的成本高效构建软件，并消除准入门槛。请访问 https://chatdev.modelbest.cn/ 试用。
-  <p align="center">
-  <img src='./assets/saas.png' width=560>
-  </p>
+实现入口：[Registry](server/services/agenthub/registry.py) · [Discovery](server/services/agenthub/discovery.py) · [Router](server/services/agenthub/router.py) · [执行适配](server/services/agenthub/workflow_dispatcher.py) · [Metrics](server/services/agenthub/metrics.py)。
 
-• 2023年11月2日：ChatDev 现在支持一项新功能：增量开发，允许智能体在现有代码基础上进行开发。尝试 ```--config "incremental" --path "[source_code_directory_path]"``` 开始使用。
-  <p align="center">
-  <img src='./assets/increment.png' width=700>
-  </p>
+`workflow_completed != execution_success`：业务成功需要 Workflow 正常完成，**且**所选目标 Agent 返回有效的结构化成功 Outcome，并且没有失败/取消信号。缺少 Outcome 会明确失败；发出取消请求本身不等于已确认取消。完整契约见[部署与状态指南](docs/agenthub.md)。
 
-• 2023年10月26日：ChatDev 现在支持 Docker 安全运行（感谢 [ManindraDeMel](https://github.com/ManindraDeMel) 的贡献）。请参阅 [Docker 快速开始指南](wiki.md#docker-start)。
-  <p align="center">
-  <img src='./assets/docker.png' width=400>
-  </p>
+新增 Agent 需要元数据以及**经批准的服务端 Workflow/manifest 条目**，无需为 Agent 名称增加 Router 分支；这不意味着允许任意上传的 Workflow 或用户提供的文件路径直接执行。
 
-• 2023年9月25日：**Git** 模式现已上线，允许程序员 <img src='visualizer/static/figures/programmer.png' height=20> 利用 Git 进行版本控制。要启用此功能，只需在 ``ChatChainConfig.json`` 中将 ``"git_management"`` 设置为 ``"True"``。参见 [指南](wiki.md#git-mode)。
-  <p align="center">
-  <img src='./assets/github.png' width=600>
-  </p>
+## 技术栈
 
-• 2023年9月20日：**人机交互**模式现已上线！您可以通过扮演评论员的角色 <img src='visualizer/static/figures/reviewer.png' height=20> 并向程序员 <img src='visualizer/static/figures/programmer.png' height=20> 提出建议来参与到 ChatDev 团队中；
-  尝试 ``python3 run.py --task [description_of_your_idea] --config "Human"``。参见 [指南](wiki.md#human-agent-interaction) 和 [示例](WareHouse/Gomoku_HumanAgentInteraction_20230920135038)。
-  <p align="center">
-  <img src='./assets/Human_intro.png' width=600>
-  </p>
+- **后端与运行时**：Python 3.12、FastAPI、Pydantic 2、ChatDev YAML Workflow 与 WebSocket 执行链。
+- **Registry 与状态**：SQLite WAL，版本化元数据、Embedding 索引和持久化业务 Run。
+- **检索与排序**：Exact Cosine Scan，兼容 OpenAI 接口的 Embedding/Rerank 适配器；T43 使用 DashScope `text-embedding-v4`（1024 维）和 DeepSeek `deepseek-flash`。
+- **前端与部署**：Vue 3、Vite、Node.js 24、Docker Compose。
+- **验证**：pytest、Node test runner、合成标注路由数据集及已归档的 live/offline 证据。
 
-• 2023年9月1日：**艺术**模式现已上线！您可以激活设计师智能体 <img src='visualizer/static/figures/designer.png' height=20> 来生成软件中使用的图像；
-  尝试 ``python3 run.py --task [description_of_your_idea] --config "Art"``。参见 [指南](wiki.md#art) 和 [示例](WareHouse/gomokugameArtExample_THUNLP_20230831122822)。
+## Docker Quick Start
 
-• 2023年8月28日：系统公开发布。
+前提：Git、带 Compose 插件的 Docker Engine，以及有效的 Provider 访问配置。Docker 提供 Python/Node 环境。以下命令从仓库根目录执行：
 
-• 2023年8月17日：v1.0.0 版本准备发布。
-
-• 2023年7月30日：用户可以自定义 ChatChain、Phase 和 Role 设置。此外，现在已支持在线日志模式和回放模式。
-
-• 2023年7月16日：该项目相关的 [预印本论文](https://arxiv.org/abs/2307.07924) 发表。
-
-• 2023年6月30日：ChatDev 仓库的初始版本发布。
-</details>
-
-
-## 🚀 快速开始
-
-### 📋 环境要求
-
-*   **操作系统**: macOS / Linux / WSL / Windows
-*   **Python**: 3.12+
-*   **Node.js**: 18+
-*   **包管理器**: [uv](https://docs.astral.sh/uv/)
-
-### 📦 安装
-
-1.  **后端依赖**（由 `uv` 管理 Python）：
-    ```bash
-    uv sync
-    ```
-
-2.  **前端依赖**（Vite + Vue 3）：
-    ```bash
-    cd frontend && npm install
-    ```
-
-### ⚡️ 运行应用（本地）
-
-#### 使用 Makefile（推荐）
-
-**同时启动后端与前端**：
 ```bash
-make dev
+git clone https://github.com/hongmuyu/AgentHub.git
+cd AgentHub
+# 保留已有私有配置。
+[ -f .env ] || cp .env.example .env
 ```
 
-> 然后访问 Web 控制台：**[http://localhost:5173](http://localhost:5173)**。
+**启动前在本机私下编辑已忽略的 `.env`。** 为聊天 Provider 设置 `BASE_URL`、`API_KEY`、`MODEL_NAME`，模型必须由该 Provider 支持；六个 Demo Workflow 均依赖这些变量。模板含占位符，单独复制模板不会启用 AgentHub。补充以下与已归档 T43 校准一致的非秘密 Embedding 配置：
 
-#### 手动命令
-
-1.  **启动后端**：
-    ```bash
-    # 从项目根目录运行
-    uv run python server_main.py --port 6400 --reload
-    ```
-    > `--reload` 仅监听服务端 Python 源代码目录，`WareHouse/` 下的智能体生成文件不会再触发重启。可通过 `--reload-dir` / `--reload-exclude`（可多次指定）自定义。
-
-2.  **启动前端**：
-    ```bash
-    cd frontend
-    VITE_API_BASE_URL=http://localhost:6400 npm run dev
-    ```
-    > 然后访问 Web 控制台：**[http://localhost:5173](http://localhost:5173)**。
-
-    > **💡 提示**：如果前端无法连接后端，可能是默认端口 `6400` 已被占用。
-    > 请将前后端同时切换到一个空闲端口，例如：
-    >
-    > * **后端**：启动时指定 `--port 6401`
-    > * **前端**：设置 `VITE_API_BASE_URL=http://localhost:6401`
-
-#### 常用命令
-
-*   **帮助命令**：
-    ```bash
-    make help
-    ```
-
-*   **同步 YAML 工作流到前端**：
-    ```bash
-    make sync
-    ```
-    将 `yaml_instance/` 中的所有工作流文件上传到数据库。
-
-*   **校验所有 YAML 工作流**：
-    ```bash
-    make validate-yamls
-    ```
-    检查所有 YAML 文件的语法与 schema 错误。
-
-### 🦞 使用 OpenClaw 运行
-
-OpenClaw 可以与 ChatDev 集成，通过 **调用已有的 agent 团队**，或在 ChatDev 中 **动态创建新的 agent 团队** 来完成任务。
-
-开始使用：
-
-1. 启动 ChatDev 2.0 后端。
-2. 为你的 OpenClaw 实例安装所需的技能：
-
-    ```bash
-    clawdhub install chatdev
-    ```
-
-3. 让 OpenClaw 创建一个 ChatDev 工作流。例如：
-
-  * **自动化信息收集与内容发布**
-
-    ```
-    创建一个 ChatDev 工作流，用于自动收集热点信息，生成一篇小红书文案，并发布该内容
-    ```
-
-  * **多智能体地缘政治模拟**
-
-    ```
-    创建一个 ChatDev 工作流，构建多个 agent，用于模拟中东局势未来可能的发展
-    ```
-
-
-### 🐳 使用 Docker 运行
-你也可以通过 Docker Compose 运行整个应用。该方式可简化依赖管理，并提供一致的运行环境。
-
-1.  **前置条件**：
-    *   已安装 [Docker](https://docs.docker.com/get-docker/) 和 [Docker Compose](https://docs.docker.com/compose/install/)。
-    *   请确保在项目根目录中存在用于配置 API Key 的 `.env` 文件。
-
-2.  **构建并运行**：
-    ```bash
-    # 在项目根目录执行
-    docker compose up --build
-    ```
-
-3.  **访问地址**：
-    *   **后端**：`http://localhost:6400`
-    *   **前端**：`http://localhost:5173`
-
-> 服务在异常退出后会自动重启，本地文件的修改会同步映射到容器中，便于实时开发。
-
-### 🔑 配置
-
-*   **环境变量**：在项目根目录创建一个 `.env` 文件。
-*   **模型密钥**：在 `.env` 中设置 `API_KEY` 和 `BASE_URL` 对应您的 LLM 提供商。
-*   **YAML 占位符**：在配置文件中使用 `${VAR}`（如 `${API_KEY}`）来引用这些变量。
-
----
-
-## 💡 如何使用
-
-### 🖥️ Web 控制台
-
-DevAll 界面为构建和执行提供了无缝体验：
-
-*   **教程 (Tutorial)**：平台内置了全面的分步指南和文档，帮助您快速上手。
-<img src="assets/tutorial-en.png"/> 
-
-*   **工作流 (Workflow)**：可视化画布，用于设计您的多智能体系统。通过轻松的拖拽来配置节点参数、定义上下文流并编排复杂的智能体交互。
-<img src="assets/workflow.gif"/>
-
-*   **运行 (Launch)**：启动工作流、监控实时日志、检查中间产物，并提供人机协同反馈。
-<img src="assets/launch.gif"/>
-
-### 🧰 Python SDK
-对于自动化和批量处理，使用我们轻量级的 Python SDK 编排任务并直接获取结果。
-
-```python
-from runtime.sdk import run_workflow
-
-# 执行工作流并获取最后一条节点消息
-result = run_workflow(
-    yaml_file="yaml_instance/demo.yaml",
-    task_prompt="用一句话总结附件文档。",
-    attachments=["/path/to/document.pdf"],
-    variables={"API_KEY": "sk-xxxx"} # 如果需要，可覆盖 .env 中的变量
-)
-
-if result.final_message:
-    print(f"Output: {result.final_message.text_content()}")
+```dotenv
+AGENTHUB_EMBEDDING_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+AGENTHUB_EMBEDDING_MODEL=text-embedding-v4
+AGENTHUB_EMBEDDING_MODEL_KEY=qwen-text-embedding-v4-1024
+AGENTHUB_EMBEDDING_DIMENSIONS=1024
+AGENTHUB_EMBEDDING_API_KEY_ENV=DASHSCOPE_API_KEY
 ```
 
-**我们也发布了 ChatDev Python SDK（PyPI 包 `chatdev`）**，便于在 Python 中直接运行 YAML 工作流编排并执行多智能体任务。安装详情与版本说明见 [PyPI：chatdev 0.1.0](https://pypi.org/project/chatdev/0.1.0/)。
+另在私有 `.env` 中设置真实 `DASHSCOPE_API_KEY`。若启用可选的 `semantic_llm` 路由，再加入以下配置和真实 `DEEPSEEK_API_KEY`：
 
----
-
-<a id="开发者"></a>
-## ⚙️ 给开发者
-
-**如果您打算进行二次开发和扩展，请参阅本章节。**
-
-您可以通过扩展节点、Provider 与工具来增强 DevAll。
-项目采用模块化结构：
-*   **核心系统**：`server/` 承载 FastAPI 后端，`runtime/` 负责智能体抽象与工具执行。
-*   **编排层**：`workflow/` 负责多智能体逻辑，配置位于 `entity/`。
-*   **前端**：`frontend/` 是 Vue 3 Web 控制台。
-*   **可扩展性**：`functions/` 用于自定义 Python 工具。
-
-相关参考文档：
-*   **快速开始**：[Start Guide](./docs/user_guide/zh/index.md)
-*   **核心模块**：[Workflow Authoring](./docs/user_guide/zh/workflow_authoring.md)、[Memory](./docs/user_guide/zh/modules/memory.md) 和 [Tooling](./docs/user_guide/zh/modules/tooling/README.md)
-
----
-
-## 🌟 推荐工作流
-我们为常见场景提供了开箱即用的强大模板。所有可运行的工作流配置均位于 `yaml_instance/` 目录下。
-*   **示例 (Demos)**：以 `demo_*.yaml` 命名的文件展示了特定功能或模块。
-*   **实现 (Implementations)**：直接命名的文件（如 `ChatDev_v1.yaml`）是完整的自研或复刻流程。如下所示：
-
-### 📋 工作流合集
-
-| 类别 | 工作流                                                                                                         | 案例 | 
-| :--- |:------------------------------------------------------------------------------------------------------------| :--- | 
-| **📈 数据可视化** | `data_visualization_basic.yaml`<br>`data_visualization_enhanced.yaml`                                       | <img src="assets/cases/data_analysis/data_analysis.gif" width="100%"><br>提示词：*"Create 4–6 high-quality PNG charts for my large real-estate transactions dataset."* |
-| **🛠️ 3D 场景生成**<br>*(需要 [Blender](https://www.blender.org/) 和 [blender-mcp](https://github.com/ahujasid/blender-mcp))* | `blender_3d_builder_simple.yaml`<br>`blender_3d_builder_hub.yaml`<br>`blender_scientific_illustration.yaml` | <img src="assets/cases/3d_generation/3d.gif" width="100%"><br>提示词：*"Please build a Christmas tree."* |
-| **🎮 游戏开发** | `GameDev_v1.yaml`<br>`ChatDev_v1.yaml`                                                                      | <img src="assets/cases/game_development/game.gif" width="100%"><br>提示词：*"Please help me design and develop a Tank Battle game."* |
-| **📚 深度研究** | `deep_research_v1.yaml`                                                                                     | <img src="assets/cases/deep_research/deep_research.gif" width="85%"><br>提示词：*"Research about recent advances in the field of LLM-based agent RL"* |
-| **🎓 教学视频** | `teach_video.yaml` (请在运行此工作流之前运行 `uv add manim` 命令)                                                         | <img src="assets/cases/video_generation/video.gif" width="140%"><br>提示词：*"讲一下什么是凸优化"* |
-
-------
-
-### 💡 使用指南
-对于这些实现，您可以使用 **Launch** 标签页来执行它们。
-1.  **选择**：在 **Launch** 标签页选择一个工作流。
-2.  **上传**：如果需要，上传相关文件（例如用于数据分析的 `.csv`）。
-3.  **提示**：输入您的请求（例如*“可视化销售趋势”*或*“设计一个贪吃蛇游戏”*）。
-
----
-
-## 🤝 参与贡献
-
-我们欢迎社区的任何形式的贡献！无论是修复 Bug、添加新的工作流模板，还是分享由 DevAll 生成的优质案例/产物，您的帮助都至关重要。欢迎通过提交 **Issue** 或 **Pull Request** 来参与。
-
-通过参与贡献，您的名字将被列入下方的 **贡献者** 名单中。请查看 [开发者指南](#开发者) 开始您的贡献之旅！
-
-### 👥 贡献者
-
-#### 主要贡献者
-
-<table>
-  <tr>
-    <td align="center"><a href="https://github.com/NA-Wen"><img src="https://github.com/NA-Wen.png?size=100" width="64px;" alt=""/><br /><sub><b>NA-Wen</b></sub></a></td>
-    <td align="center"><a href="https://github.com/zxrys"><img src="https://github.com/zxrys.png?size=100" width="64px;" alt=""/><br /><sub><b>zxrys</b></sub></a></td>
-    <td align="center"><a href="https://github.com/swugi"><img src="https://github.com/swugi.png?size=100" width="64px;" alt=""/><br /><sub><b>swugi</b></sub></a></td>
-    <td align="center"><a href="https://github.com/huatl98"><img src="https://github.com/huatl98.png?size=100" width="64px;" alt=""/><br /><sub><b>huatl98</b></sub></a></td>
-  </tr>
-</table>
-
-#### 贡献者
-<table>
-  <tr>
-    <td align="center"><a href="https://github.com/LaansDole"><img src="https://github.com/LaansDole.png?size=100" width="64px;"/><br /><sub><b>LaansDole</b></sub></a></td>
-    <td align="center"><a href="https://github.com/zivkovicp"><img src="https://github.com/zivkovicp.png?size=100" width="64px;"/><br /><sub><b>zivkovicp</b></sub></a></td>
-    <td align="center"><a href="https://github.com/ACE-Prism"><img src="https://github.com/ACE-Prism.png?size=100" width="64px;"/><br /><sub><b>ACE-Prism</b></sub></a></td>
-    <td align="center"><a href="https://github.com/shiowen"><img src="https://github.com/shiowen.png?size=100" width="64px;"/><br /><sub><b>shiowen</b></sub></a></td>
-    <td align="center"><a href="https://github.com/kilo2127"><img src="https://github.com/kilo2127.png?size=100" width="64px;"/><br /><sub><b>kilo2127</b></sub></a></td>
-    <td align="center"><a href="https://github.com/AckerlyLau"><img src="https://github.com/AckerlyLau.png?size=100" width="64px;"/><br /><sub><b>AckerlyLau</b></sub></a></td>
-    <td align="center"><a href="https://github.com/rainoeelmae"><img src="https://github.com/rainoeelmae.png?size=100" width="64px;"/><br /><sub><b>rainoeelmae</b></sub></a></td>
-    <td align="center"><a href="https://github.com/conprour"><img src="https://github.com/conprour.png?size=100" width="64px;"/><br /><sub><b>conprour</b></sub></a></td>
-  </tr>
-  <tr>
-    <td align="center"><a href="https://github.com/Br1an67"><img src="https://github.com/Br1an67.png?size=100" width="64px;"/><br /><sub><b>Br1an67</b></sub></a></td>
-    <td align="center"><a href="https://github.com/NINE-J"><img src="https://github.com/NINE-J.png?size=100" width="64px;"/><br /><sub><b>NINE-J</b></sub></a></td>
-    <td align="center"><a href="https://github.com/Yanghuabei-design"><img src="https://github.com/Yanghuabei-design.png?size=100" width="64px;"/><br /><sub><b>Yanghuabei</b></sub></a></td>
-    <td align="center"><a href="https://github.com/nregret"><img src="https://github.com/nregret.png?size=100" width="64px;"/><br /><sub><b>nregret</b></sub></a></td>
-    <td align="center"><a href="https://github.com/kartik-mem0"><img src="https://github.com/kartik-mem0.png?size=100" width="64px;"/><br /><sub><b>kartik-mem0</b></sub></a></td>
-    <td align="center"><a href="https://github.com/Yanghuabei-design"><img src="https://github.com/Yanghuabei-design.png?size=100" width="64px;"/><br /><sub><b>Yanghuabei-design</b></sub></a></td>
-    <td align="center"><a href="https://github.com/benjamin7007"><img src="https://github.com/benjamin7007.png?size=100" width="64px;"/><br /><sub><b>benjamin7007</b></sub></a></td>
-    <td align="center"><a href="https://github.com/gouziman"><img src="https://github.com/gouziman.png?size=100" width="64px;"/><br /><sub><b>gouziman</b></sub></a></td>
-  </tr>
-  <tr>
-    <td align="center"><a href="https://github.com/hobostay"><img src="https://github.com/hobostay.png?size=100" width="64px;"/><br /><sub><b>hobostay</b></sub></a></td>
-    <td align="center"><a href="https://github.com/token2everything"><img src="https://github.com/token2everything.png?size=100" width="64px;"/><br /><sub><b>token2everything</b></sub></a></td>
-  </tr>
-</table>
-
-## 🤝 致谢
-
-<a href="http://nlp.csai.tsinghua.edu.cn/"><img src="assets/thunlp.png" height=50pt></a>&nbsp;&nbsp;
-<a href="https://modelbest.cn/"><img src="assets/modelbest.png" height=50pt></a>&nbsp;&nbsp;
-<a href="https://github.com/OpenBMB/AgentVerse/"><img src="assets/agentverse.png" height=50pt></a>&nbsp;&nbsp;
-<a href="https://github.com/OpenBMB/RepoAgent"><img src="assets/repoagent.png"  height=50pt></a>
-<a href="https://app.commanddash.io/agent?github=https://github.com/OpenBMB/ChatDev"><img src="assets/CommandDash.png" height=50pt></a>
-<a href="www.teachmaster.cn"><img src="assets/teachmaster.png" height=50pt></a>
-<a href="https://github.com/OpenBMB/AppCopilot"><img src="assets/appcopilot.png" height=50pt></a>
-
-## 🔎 引用
-
-```
-@article{chatdev,
-    title = {ChatDev: Communicative Agents for Software Development},
-    author = {Chen Qian and Wei Liu and Hongzhang Liu and Nuo Chen and Yufan Dang and Jiahao Li and Cheng Yang and Weize Chen and Yusheng Su and Xin Cong and Juyuan Xu and Dahai Li and Zhiyuan Liu and Maosong Sun},
-    journal = {arXiv preprint arXiv:2307.07924},
-    url = {https://arxiv.org/abs/2307.07924},
-    year = {2023}
-}
-
-@article{colearning,
-    title = {Experiential Co-Learning of Software-Developing Agents},
-    author = {Chen Qian and Yufan Dang and Jiahao Li and Wei Liu and Zihao Xie and Yifei Wang and Weize Chen and Cheng Yang and Xin Cong and Xiaoyin Che and Zhiyuan Liu and Maosong Sun},
-    journal = {arXiv preprint arXiv:2312.17025},
-    url = {https://arxiv.org/abs/2312.17025},
-    year = {2023}
-}
-
-@article{macnet,
-    title={Scaling Large-Language-Model-based Multi-Agent Collaboration},
-    author={Chen Qian and Zihao Xie and Yifei Wang and Wei Liu and Yufan Dang and Zhuoyun Du and Weize Chen and Cheng Yang and Zhiyuan Liu and Maosong Sun}
-    journal={arXiv preprint arXiv:2406.07155},
-    url = {https://arxiv.org/abs/2406.07155},
-    year={2024}
-}
-
-@article{iagents,
-    title={Autonomous Agents for Collaborative Task under Information Asymmetry},
-    author={Wei Liu and Chenxi Wang and Yifei Wang and Zihao Xie and Rennai Qiu and Yufan Dnag and Zhuoyun Du and Weize Chen and Cheng Yang and Chen Qian},
-    journal={arXiv preprint arXiv:2406.14928},
-    url = {https://arxiv.org/abs/2406.14928},
-    year={2024}
-}
-
-@article{puppeteer,
-      title={Multi-Agent Collaboration via Evolving Orchestration}, 
-      author={Yufan Dang and Chen Qian and Xueheng Luo and Jingru Fan and Zihao Xie and Ruijie Shi and Weize Chen and Cheng Yang and Xiaoyin Che and Ye Tian and Xuantang Xiong and Lei Han and Zhiyuan Liu and Maosong Sun},
-      journal={arXiv preprint arXiv:2505.19591},
-      url={https://arxiv.org/abs/2505.19591},
-      year={2025}
-}
+```dotenv
+AGENTHUB_RERANK_BASE_URL=https://api.deepseek.com
+AGENTHUB_RERANK_MODEL=deepseek-flash
+AGENTHUB_RERANK_API_KEY_ENV=DEEPSEEK_API_KEY
 ```
 
-## 📬 联系方式
+`*_API_KEY_ENV` 的值是**凭据环境变量的名称**，不是密钥。启动时会依据[冻结校准文件](evaluation/t43_live_calibration_2026-10-08.json)核对端点、模型及向量空间配置；更换这些设置可能触发 `AGENTHUB_CALIBRATION_MISMATCH`。换模型需要相应校准，不能沿用旧阈值；仅轮换凭据不影响该指纹。实际运行仍要求 Provider/模型可用，历史评测不保证其未来可用性。
 
-如果您有任何问题、反馈或希望取得联系，请随时通过电子邮件发送至 [qianc62@gmail.com](mailto:qianc62@gmail.com)
+[compose.yml](compose.yml) 依次加载 `.env` 与已跟踪的非秘密 [.env.docker](.env.docker)。保留后者的 Docker 网络配置，避免出现冲突的 Provider 变量；不要打印或提交展开后的环境值。
+
+```bash
+docker compose config --quiet
+docker compose build backend frontend
+docker compose up -d
+docker compose ps
+curl -fsS --retry 12 --retry-delay 1 --retry-connrefused http://localhost:6400/health
+```
+
+打开 [Launch](http://localhost:5173/launch) 或 [Registry](http://localhost:5173/agenthub/registry)。这是启动后才可访问的本地地址，前端/后端默认端口为 `5173`/`6400`。配置与重启检查见[部署指南](docs/agenthub.md)。此方案面向本地开发演示，不是加固后的公网服务部署。
+
+## Agent 注册与任务运行示例
+
+登记六个已审阅的示例：Research、Code、Data、Document、Planning、Review。登记会校验[受控 manifest](yaml_instance/agenthub_manifest.json)与薄 Workflow，并调用配置的 Embedding Provider 建立索引。
+
+```bash
+docker compose exec -T backend python -m server.services.agenthub.demo_catalog
+curl -fsS 'http://localhost:6400/api/agenthub/agents?limit=100'
+curl -fsS http://localhost:6400/api/agenthub/metrics
+```
+
+重复登记相同目录会保留 Agent UUID/version；若已有目录发生冲突，需要显式协调。六个 Agent 是普通示例，不是硬编码的支持类型。Registry 生命周期操作见 [API 与部署指南](docs/agenthub.md)。
+
+1. 在 `/launch` 选择 **AgentHub task**，选择 `semantic` 或已配置的 `semantic_llm`。
+2. 提交合成任务：“Given synthetic response times 10, 11, 12, 13, and 80 ms, compute the median and range and identify the value needing outlier review.”（计算所给响应时间的中位数、极差，并找出需复核的异常值。）
+3. 查看候选、所选 Agent、原生输出和业务状态；真实重跑的选择与输出可能变化。
+4. 使用返回的 `run_id` 调用 `GET /api/agenthub/tasks/{run_id}`，查询持久化 Run 与 Trace。
+
+`POST /api/agenthub/tasks` 要求**真实且当前有效的 WebSocket `session_id`**，由 UI 建立；HTTP 202 仅表示已接受，不表示执行成功。选择 **Manual YAML** 可使用原版 ChatDev 流程；工作流编辑器仍位于 `/workflows`。
+
+## 真实 Benchmark 与延迟权衡
+
+T43 使用 **60 条合成标注样例**：36 clear、12 ambiguous、12 no-match；划分为 **30 calibration / 30 independent test**，每部分为 18/6/6。仅用 calibration 选择 **K=5**、阈值 **0.35727615782291194**，在运行测试前冻结。
+
+以下为 **2026-10-08 真实路由测试**，使用 DashScope Embedding 与 DeepSeek Rerank。来源：[校准 JSON](evaluation/t43_live_calibration_2026-10-08.json)、[含逐条结果的测试 JSON](evaluation/t43_live_test_2026-10-08.json)、[方法与复现说明](evaluation/README.md)。
+
+| 独立测试指标 | Semantic | Semantic + LLM Rerank |
+| --- | ---: | ---: |
+| Top-1 Routing Accuracy（可匹配样例） | 11/24 (45.83%) | 18/24 (75.00%) |
+| Semantic Top-K Recall | 24/24 | 24/24 |
+| Reject Accuracy | 3/6 | 3/4 |
+| False Accept Rate | 3/6 | 1/4 |
+| 基础设施错误 | 0 | 2 |
+| Query-to-decision p50 / p95 | 368.009 / 643.426 ms | 2199.482 / 10066.879 ms |
+
+每个策略有 30 个实测路由延迟样本，包含错误调用。两次 Rerank 错误均为 no-match 样例上的 `RERANK_TRUNCATED_RESPONSE`，从质量比率分母中排除，因此是 `/4` 而不是 `/6`。在这批样例上，重排选中了更多正确的 Top-1 Agent，但延迟更高，也出现了 Provider 错误。
+
+[前一次尝试](evaluation/t43_live_test_attempt1_2026-10-08.json)在 512-token 输出上限下有七次截断。此处报告的运行在将传输输出上限调为 2048 后复用了测试集，仍有两次错误；没有用测试标签重新调 K/阈值。这是小规模留出路由样本，不能宣称为完全未复用的一次性质量研究、统计显著性结论或 SLA。
+
+[10/50/100 Agent 真实规模报告](evaluation/t43_live_catalog_size_2026-10-08.json)使用合成元数据、真实 Provider 调用，以独立的 K=3、threshold=-1 配置测量延迟。[离线报告](evaluation/t43_offline_catalog_size_2026-10-08.json)使用 fake embeddings/本地重排，不能称为 live 性能；两者均不验证并发承载能力。
+
+**Routing Accuracy ≠ 执行成功率 ≠ Task Quality。** 该路由 Benchmark 不执行 Workflow。Task Quality 尚未独立评测；T48 的 4 success / 1 rejected 是另一组执行演示记录。
+
+## 测试与验收证据
+
+- **T46 部署**：标准后端/前端镜像构建、真实目录登记与任务执行，以及后端重启后已完成 Run 的查询一致性。[验收记录与命令](docs/agenthub.md)。
+- **T48 Demo**：实际 UI 录屏、五条验收 Run 的业务/原生状态证据。[Demo 指南](demo/README.md)。
+- **2026-10-10 仓库审计**：Python **634 passed、2 skipped**，排除 `tests/test_websocket_send_message_sync.py`；前端 **42 passed**；Compose 配置检查通过。这些是注明日期的审计结果，不是本次 README 更新重新测得的 live 结果。[审计详情](docs/REPOSITORY_AUDIT.md)。
+
+已安装宿主机开发依赖时，可从仓库根目录复现限定范围的自动化检查：
+
+```bash
+env -u AGENTHUB_EMBEDDING_LIVE -u AGENTHUB_RERANK_LIVE PYTHONDONTWRITEBYTECODE=1 \
+  timeout 120s .venv/bin/python -m pytest -q \
+  --ignore=tests/test_websocket_send_message_sync.py -p no:cacheprovider
+node --test frontend/tests/*.test.js
+docker compose config --quiet
+```
+
+**完整 Python 套件：NOT VERIFIED。** 继承的 WebSocket 测试夹具阻塞完整套件完成，不能把通过的子集称为全量通过；两个跳过项需要显式启用 live Provider 测试。审计还记录了宿主机已有 `frontend/dist` 的权限问题：同一前端构建改用新的临时输出目录后通过，未修改已有目录权限。
+
+## 已知限制
+
+- P0 **一个任务选择一个 Agent**；不包含动态 Agent Team、分布式调度、多租户/RBAC 或不可信公网 Agent 上传。
+- SQLite + Exact Cosine Scan 面向当前小目录；PostgreSQL/Qdrant、生产吞吐量与并发保证不属于已验证 P0 范围。
+- 持久化业务 Run 可在重启后查询；正在执行的 Provider/工具调用及原生内存 WebSocket 会话不能恢复执行。
+- Provider/Rerank 错误记录为失败；P0 没有自动切换第二 Agent 或复杂重试链。
+- Token 用量未知时保持未知；结构化执行成功不证明答案质量。
+- 任务文本会本地持久化并发送到 Embedding Provider；可选重排还会将任务文本与候选元数据发送给 LLM。使用获准数据，私有 `.env`、SQLite 文件和用户产物不进入 Git。
+- 完整 Python 验证及继承的文档/构建问题仍按[仓库审计](docs/REPOSITORY_AUDIT.md)单列。
+
+## 文档导航
+
+- [部署、API 用法、状态语义与 T46 验收](docs/agenthub.md)
+- [P0 冻结设计](AGENTHUB_DESIGN.md) · [T00–T49 任务证据](TASKS.md)
+- [评测方法、原始结果与复现](evaluation/README.md)
+- [Demo 场景、录屏与复现](demo/README.md)
+- [P0 Release Notes](docs/RELEASE_NOTES.md)
+- [简历项目材料](docs/PORTFOLIO.md) · [面试指南](docs/INTERVIEW_GUIDE.md)
+- [仓库审计与继承问题](docs/REPOSITORY_AUDIT.md)
+- [ChatDev 用户指南：手动 Workflow 与工具](docs/user_guide/zh/index.md)
+
+## 上游致谢与许可证
+
+AgentHub 基于 **OpenBMB/ChatDev 2.0（DevAll）**，导入基线为 `4fb2db0ea90375ce1059f44fe03ffbd191a7a169`。原版 Runtime、Workflow 系统、前端、工具和资源归功于 OpenBMB/ChatDev 作者与贡献者；AgentHub 的平台扩展范围已在上文列明。
+
+**Copyright 2025 OpenBMB.** 保留上游版权声明、[Apache-2.0 LICENSE](LICENSE)及源码/资源中的许可声明。上游历史、论文、作者/贡献者信息与引用方式请参阅 [ChatDev 官方仓库](https://github.com/OpenBMB/ChatDev)。本 README 已为 AgentHub 衍生项目重写，上游资源与 Git 历史保留。

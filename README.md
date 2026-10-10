@@ -1,418 +1,208 @@
-# ChatDev 2.0 - DevAll
+# AgentHub
 
-> **AgentHub P0** — [Setup and architecture](docs/agenthub.md) · [Release notes](docs/RELEASE_NOTES.md) · [Benchmarks](evaluation/README.md) · [Demo and video](demo/README.md) · [Portfolio](docs/PORTFOLIO.md) · [Interview guide](docs/INTERVIEW_GUIDE.md). AgentHub extends the ChatDev runtime documented below; upstream attribution and licenses are preserved.
+**English** | [简体中文](README-zh.md)
 
-<p align="center">
-  <img src="frontend/public/media/logo.png" alt="DevAll Logo" width="500"/>
-</p>
+**An Agent platform for registration, capability discovery, dynamic routing, execution, and observability.**
+Based on [OpenBMB/ChatDev 2.0](https://github.com/OpenBMB/ChatDev) (DevAll).
 
+AgentHub lets a user describe a task without knowing which Agent to call. It searches registered capability metadata, selects one eligible Agent, executes its approved workflow through ChatDev, and records the routing decision and business outcome. It is a P0 engineering project for **trusted local/internal use**, with six example Agents and reproducible evaluation evidence.
 
-<p align="center">
-  <strong>A Zero-Code Multi-Agent Platform for Developing Everything</strong>
-</p>
+**P0: v1.0.0 released.** `main` is the stable branch; `agenthub-dev` contains ongoing documentation/development changes. [Release notes](docs/RELEASE_NOTES.md) · [Setup guide](docs/agenthub.md) · [Benchmark](evaluation/README.md) · [Demo](demo/README.md)
 
-<p align="center">
-  【<a href="./README.md">English</a> | <a href="./README-zh.md">简体中文</a>】
-</p>
-<p align="center">
-    【📚 <a href="#developers">Developers</a> | 👥 <a href="#primary-contributors">Contributors</a>｜⭐️ <a href="https://github.com/OpenBMB/ChatDev/tree/chatdev1.0">ChatDev 1.0 (Legacy)</a>】
-</p>
+## Demo and actual interface
 
-## 📖 Overview
-ChatDev has evolved from a specialized software development multi-agent system into a comprehensive multi-agent orchestration platform.
+**[Watch the 225-second Demo — MP4, 1280×720, about 1.4 MiB](demo/agenthub_t48_demo.mp4)**
 
-- <a href="https://github.com/OpenBMB/ChatDev/tree/main">**ChatDev 2.0 (DevAll)**</a> is a **Zero-Code Multi-Agent Platform** for "Developing Everything". It empowers users to rapidly build and execute customized multi-agent systems through simple configuration. No coding is required—users can define agents, workflows, and tasks to orchestrate complex scenarios such as data visualization, 3D generation, and deep research.
-- <a href="https://github.com/OpenBMB/ChatDev/tree/chatdev1.0">**ChatDev 1.0 (Legacy)**</a> operates as a **Virtual Software Company**. It utilizes various intelligent agents (e.g., CEO, CTO, Programmer) participating in specialized functional seminars to automate the entire software development life cycle—including designing, coding, testing, and documenting. It serves as the foundational paradigm for communicative agent collaboration.
+The screen recording shows the actual Registry UI, task submission, candidates and selected Agent, native execution output, and separate business status. It combines a fresh UI submission, replay/query of completed real-provider runs, Registry disable/restore actions, and a measured evidence board. It is not a claim that every displayed run was newly executed during the recording.
 
-### AgentHub extension
+- **Registry** (`/agenthub/registry`): inspect six Agents and their capabilities; disable and restore Data Agent.
+- **Launch** (`/launch`): submit a task, inspect routing, and view ChatDev output alongside AgentHub state.
+- **Four scenarios**: a clear task, an ambiguous task with reranking, a no-match rejection, and changed routing after an Agent is disabled.
 
-This repository also includes AgentHub, a trusted internal Agent registry, capability router, and business run view built around the existing ChatDev 2.0 workflow runtime. For the verified Docker setup, six-Agent catalog, task entry, API/state semantics, and measured routing benchmarks, see the [AgentHub guide](docs/agenthub.md). The original manual YAML Launch and Workflow pages remain available.
+The [T48 original record](demo/t48_evidence_2026-10-09.json) contains **five acceptance runs: 4 success, 1 rejected**. These are synthetic Demo scenarios, not a production success rate or independent answer-quality evaluation. See the [recording scope and reproduction instructions](demo/README.md).
 
-## 🎉 News
-• **Jan 07, 2026: 🚀 We are excited to announce the official release of ChatDev 2.0 (DevAll)!** This version introduces a zero-code multi-agent orchestration platform. The classic ChatDev (v1.x) has been moved to the [`chatdev1.0`](https://github.com/OpenBMB/ChatDev/tree/chatdev1.0) branch for maintenance. More details about ChatDev 2.0 can be found on [our official post](https://x.com/OpenBMB/status/2008916790399701335).
+## Core features
 
-<details>
-<summary>Old News</summary>
+- **Versioned Agent Registry** — stable Agent identity, immutable metadata versions, current-version/status management, embedding index, API and a minimal administrator UI.
+- **Embedding Discovery** — capability metadata embeddings, active/current Agent filtering, workflow eligibility checks, and Exact Cosine Scan for Top-K retrieval.
+- **Semantic Routing + optional LLM Rerank** — a calibrated confidence gate; the LLM can choose only among retrieved candidate IDs. Low-confidence requests become `NO_SUITABLE_AGENT`.
+- **Workflow Execution** — one task selects one Agent and its server-approved thin workflow; the existing ChatDev execution chain handles the workflow.
+- **Run State and failure handling** — persistent `pending`, `running`, `success`, `failed`, `rejected`, `cancelled`; provider/outcome failures and confirmed cancellation stay distinct.
+- **Trace and Metrics** — candidates, scores, strategy, selection, latency and safe errors; aggregate counts, rates with explicit denominators, Agent usage and known/unknown token usage.
 
-•Sep 24, 2025: 🎉 Our paper [Multi-Agent Collaboration via Evolving Orchestration](https://arxiv.org/abs/2505.19591) has been accepted to NeurIPS 2025. The implementation is available in the `puppeteer` branch of this repository.
+## What AgentHub adds to ChatDev
 
-•May 26, 2025: 🎉 We propose a novel puppeteer-style paradigm for multi-agent collaboration among large language model based agents. By leveraging a learnable central orchestrator optimized with reinforcement learning, our method dynamically activates and sequences agents to construct efficient, context-aware reasoning paths. This approach not only improves reasoning quality but also reduces computational costs, enabling scalable and adaptable multi-agent cooperation in complex tasks.
-See our paper in [Multi-Agent Collaboration via Evolving Orchestration](https://arxiv.org/abs/2505.19591).
-  <p align="center">
-  <img src='./assets/puppeteer.png' width=800>
-  </p>
+| Area | Reused from ChatDev 2.0 | AgentHub secondary development |
+| --- | --- | --- |
+| Execution | YAML Workflow/Runtime, Agent nodes, providers, tools | Validated `runtime_ref` → approved thin workflow → existing execution service |
+| Agent selection | User-selected/manual workflows and configured nodes | Business Agent Registry, capability discovery, semantic routing and optional Top-K LLM reranking |
+| Web experience | FastAPI, Vue frontend, WebSocket sessions, logs/output, attachments, cancellation | AgentHub task mode, Registry UI, candidate/decision display and business-run query |
+| State and observation | Native workflow/session status, logging and token tracking | SQLite TaskRun/RoutingTrace/AgentRun, structured success checks and business metrics |
+| Delivery | Upstream source, examples, resources and deployment foundation | Six-Agent catalog, routing evaluation, integration tests, deployment acceptance and Demo evidence |
 
-•June 25, 2024: 🎉To foster development in LLM-powered multi-agent collaboration🤖🤖 and related fields, the ChatDev team has curated a collection of seminal papers📄 presented in a [open-source](https://github.com/OpenBMB/ChatDev/tree/main/MultiAgentEbook) interactive e-book📚 format. Now you can explore the latest advancements on the [Ebook Website](https://thinkwee.top/multiagent_ebook) and download the [paper list](https://github.com/OpenBMB/ChatDev/blob/main/MultiAgentEbook/papers.csv).
-  <p align="center">
-  <img src='./assets/ebook.png' width=800>
-  </p>
-  
-•June 12, 2024: We introduced Multi-Agent Collaboration Networks (MacNet) 🎉, which utilize directed acyclic graphs to facilitate effective task-oriented collaboration among agents through linguistic interactions 🤖🤖. MacNet supports co-operation across various topologies and among more than a thousand agents without exceeding context limits. More versatile and scalable, MacNet can be considered as a more advanced version of ChatDev's chain-shaped topology. Our preprint paper is available at [https://arxiv.org/abs/2406.07155](https://arxiv.org/abs/2406.07155). This technique has been incorporated into the [macnet](https://github.com/OpenBMB/ChatDev/tree/macnet) branch, enhancing support for diverse organizational structures and offering richer solutions beyond software development (e.g., logical reasoning, data analysis, story generation, and more).
-  <p align="center">
-  <img src='./assets/macnet.png' width=500>
-  </p>
+Workflow Runtime, the workflow editor and native tool execution are upstream capabilities. AgentHub extends the application-service boundary rather than replacing the runtime or claiming it as original work. Manual YAML execution remains available.
 
-• May 07, 2024, we introduced "Iterative Experience Refinement" (IER), a novel method where instructor and assistant agents enhance shortcut-oriented experiences to efficiently adapt to new tasks. This approach encompasses experience acquisition, utilization, propagation and elimination across a series of tasks and making the pricess shorter and efficient. Our preprint paper is available at https://arxiv.org/abs/2405.04219, and this technique will soon be incorporated into ChatDev.
-  <p align="center">
-  <img src='./assets/ier.png' width=220>
-  </p>
+## Architecture and execution flow
 
-• January 25, 2024: We have integrated Experiential Co-Learning Module into ChatDev. Please see the [Experiential Co-Learning Guide](wiki.md#co-tracking).
+```mermaid
+flowchart TD
+    U[User task + current WebSocket session] --> S[AgentHub task service]
+    S --> D[Versioned Registry + eligible Agent filtering]
+    D --> E[Embedding Discovery: Exact Cosine Top-K]
+    E --> G{Calibrated confidence gate}
+    G -->|below threshold / no candidate| N[rejected: NO_SUITABLE_AGENT]
+    G -->|semantic| A[Selected Agent + metadata version]
+    G -->|semantic_llm| L[LLM Rerank: Top-K IDs only]
+    L --> A
+    A --> V[Server-owned runtime_ref manifest + thin workflow validation]
+    V --> W[ChatDev WorkflowRunService + WebSocket Runtime]
+    W --> O[Native completion + structured target Agent outcome]
+    S --> DB[(SQLite: TaskRun / RoutingTrace / AgentRun)]
+    N --> DB
+    O --> DB
+    DB --> Q[Run query / Trace / Metrics]
+```
 
-• December 28, 2023: We present Experiential Co-Learning, an innovative approach where instructor and assistant agents accumulate shortcut-oriented experiences to effectively solve new tasks, reducing repetitive errors and enhancing efficiency.  Check out our preprint paper at https://arxiv.org/abs/2312.17025 and this technique will soon be integrated into ChatDev.
-  <p align="center">
-  <img src='./assets/ecl.png' width=860>
-  </p>
-• November 15, 2023: We launched ChatDev as a SaaS platform that enables software developers and innovative entrepreneurs to build software efficiently at a very low cost and remove the barrier to entry. Try it out at https://chatdev.modelbest.cn/.
-  <p align="center">
-  <img src='./assets/saas.png' width=560>
-  </p>
+Implementation: [Registry](server/services/agenthub/registry.py) · [Discovery](server/services/agenthub/discovery.py) · [Router](server/services/agenthub/router.py) · [execution adapter](server/services/agenthub/workflow_dispatcher.py) · [Metrics](server/services/agenthub/metrics.py).
 
-• November 2, 2023: ChatDev is now supported with a new feature: incremental development, which allows agents to develop upon existing codes. Try ```--config "incremental" --path "[source_code_directory_path]"``` to start it.
-  <p align="center">
-  <img src='./assets/increment.png' width=700>
-  </p>
+`workflow_completed != execution_success`: business success requires normal workflow completion **and** a valid successful structured outcome from the selected target Agent, without a failure/cancellation signal. Missing outcomes fail explicitly. A cancel request alone is not confirmed cancellation. The [setup/state guide](docs/agenthub.md) explains the contracts.
 
-• October 26, 2023: ChatDev is now supported with Docker for safe execution (thanks to contribution from [ManindraDeMel](https://github.com/ManindraDeMel)). Please see [Docker Start Guide](wiki.md#docker-start).
-  <p align="center">
-  <img src='./assets/docker.png' width=400>
-  </p>
-  
-• September 25, 2023: The **Git** mode is now available, enabling the programmer <img src='visualizer/static/figures/programmer.png' height=20> to utilize Git for version control. To enable this feature, simply set ``"git_management"`` to ``"True"`` in ``ChatChainConfig.json``. See [guide](wiki.md#git-mode).
-  <p align="center">
-  <img src='./assets/github.png' width=600>
-  </p>
+Adding an Agent requires metadata plus an **approved server-owned workflow/manifest entry**. It does not require a Router branch for its name, and it does not permit arbitrary uploaded workflows or user-supplied filesystem paths.
 
-• September 20, 2023: The **Human-Agent-Interaction** mode is now available! You can get involved with the ChatDev team by playing the role of reviewer <img src='visualizer/static/figures/reviewer.png' height=20> and making suggestions to the programmer <img src='visualizer/static/figures/programmer.png' height=20>;
-  try ``python3 run.py --task [description_of_your_idea] --config "Human"``. See [guide](wiki.md#human-agent-interaction) and [example](WareHouse/Gomoku_HumanAgentInteraction_20230920135038).
-  <p align="center">
-  <img src='./assets/Human_intro.png' width=600>
-  </p>
+## Technology stack
 
-• September 1, 2023: The **Art** mode is available now! You can activate the designer agent <img src='visualizer/static/figures/designer.png' height=20> to generate images used in the software;
-  try ``python3 run.py --task [description_of_your_idea] --config "Art"``. See [guide](wiki.md#art) and [example](WareHouse/gomokugameArtExample_THUNLP_20230831122822).
-  
-• August 28, 2023: The system is publicly available.
+- **Backend/runtime:** Python 3.12, FastAPI, Pydantic 2, existing ChatDev YAML workflows and WebSocket execution.
+- **Registry/state:** SQLite with WAL; versioned metadata, embedding index and persistent business runs.
+- **Retrieval/ranking:** Exact Cosine Scan; OpenAI-compatible embedding and rerank adapters. T43 uses DashScope `text-embedding-v4` (1024 dimensions) and DeepSeek `deepseek-flash`.
+- **Frontend/deployment:** Vue 3, Vite, Node.js 24, Docker Compose.
+- **Verification:** pytest, Node test runner, synthetic labeled routing datasets and checked-in live/offline evidence.
 
-• August 17, 2023: The v1.0.0 version was ready for release.
+## Docker Quick Start
 
-• July 30, 2023: Users can customize ChatChain, Phasea and Role settings. Additionally, both online Log mode and replay
-  mode are now supported.
+Prerequisites: Git, Docker Engine with the Compose plugin, and valid provider access. Docker supplies the Python/Node environments. Run from the repository root:
 
-• July 16, 2023: The [preprint paper](https://arxiv.org/abs/2307.07924) associated with this project was published.
-
-• June 30, 2023: The initial version of the ChatDev repository was released.
-</details>
-
-
-## 🚀 Quick Start
-
-### 📋 Prerequisites
-
-*   **OS**: macOS / Linux / WSL / Windows
-*   **Python**: 3.12+
-*   **Node.js**: 18+
-*   **Package Manager**: [uv](https://docs.astral.sh/uv/)
-
-### 📦 Installation
-
-1.  **Backend Dependencies** (Python managed by `uv`):
-    ```bash
-    uv sync
-    ```
-
-2.  **Frontend Dependencies** (Vite + Vue 3):
-    ```bash
-    cd frontend && npm install
-    ```
-
-### 🔑 Configuration
-
-*   **Environment Variables**:
-    ```bash
-    cp .env.example .env
-    ```
-*   **Model Keys**: Set `API_KEY` and `BASE_URL` in `.env` for your LLM provider.
-*   **YAML placeholders**: Use `${VAR}`（e.g., `${API_KEY}`）in configuration files to reference these variables.
-
-### ⚡️ Run the Application
-
-#### Using Makefile (Recommended)
-
-**Start both Backend and Frontent**:
 ```bash
-make dev
+git clone https://github.com/hongmuyu/AgentHub.git
+cd AgentHub
+# Preserve an existing private configuration.
+[ -f .env ] || cp .env.example .env
 ```
 
-> Then access the Web Console at **[http://localhost:5173](http://localhost:5173)**.
+**Edit the ignored `.env` privately before starting.** Set `BASE_URL`, `API_KEY` and `MODEL_NAME` for a chat model supported by your provider; all six demo workflows require them. The template contains placeholders and does not enable AgentHub by itself. Add the following non-secret embedding configuration, matching the checked-in T43 calibration:
 
-#### Manual Commands
-
-1.  **Start Backend**:
-    ```bash
-    # Run from the project root
-    uv run python server_main.py --port 6400 --reload
-    ```
-    > `--reload` watches the server's Python source folders only; agent-generated files under `WareHouse/` no longer trigger restarts. Pass `--reload-dir` or `--reload-exclude` (repeatable) to customise.
-
-2.  **Start Frontend**:
-    ```bash
-    cd frontend
-    VITE_API_BASE_URL=http://localhost:6400 npm run dev
-    ```
-    > Then access the Web Console at **[http://localhost:5173](http://localhost:5173)**. 
-    
-    
-    > **💡 Tip**: If the frontend fails to connect to the backend, the default port `6400` may already be occupied.
-    > Please switch both services to an available port, for example:
-    >
-    > * **Backend**: start with `--port 6401`
-    > * **Frontend**: set `VITE_API_BASE_URL=http://localhost:6401`
-
-#### Utility Commands
-
-*   **Help command**:
-    ```bash
-    make help
-    ```
-
-*   **Sync YAML workflows to frontend**:
-    ```bash
-    make sync
-    ```
-    Uploads all workflow files from `yaml_instance/` to the database.
-
-*   **Validate all YAML workflows**:
-    ```bash
-    make validate-yamls
-    ```
-    Checks all YAML files for syntax and schema errors.
-
-### 🦞 Run with OpenClaw
-OpenClaw can integrate with ChatDev by invoking existing agent teams or dynamically creating new agent teams within ChatDev.
-To get started:
-1. Start the ChatDev 2.0 backend.
-2. Install the required skills for your OpenClaw instance:
-    ```bash
-    clawdhub install chatdev
-    ```
-
-3. Ask your OpenClaw to create a ChatDev workflow. For example:
-
-* **Automated information collection and content publishing**
-
-  ```
-  Create a ChatDev workflow to automatically collect trending information, generate a Xiaohongshu post, and publish it.
-  ```
-
-* **Multi-agent geopolitical simulation**
-  ```
-  Create a ChatDev workflow with multiple agents to simulate possible future developments of the Middle East situation.
-  ```
-
-
-### 🐳 Run with Docker
-Alternatively, you can run the entire application using Docker Compose. This method simplifies dependency management and provides a consistent environment.
-
-1.  **Prerequisites**:
-    *   [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) installed.
-    *   Ensure you have a `.env` file in the project root for your API keys.
-
-2.  **Build and Run**:
-    ```bash
-    # From the project root
-    docker compose up --build
-    ```
-
-3.  **Access**:
-    *   **Backend**: `http://localhost:6400`
-    *   **Frontend**: `http://localhost:5173`
-
-> The services will automatically restart if they crash, and local file changes will be reflected inside the containers for live development.
-
----
-
-## 💡 How to Use
-
-### 🖥️ Web Console
-
-The DevAll interface provides a seamless experience for both construction and execution
-
-*   **Tutorial**: Comprehensive step-by-step guides and documentation integrated directly into the platform to help you get started quickly.
-<img src="assets/tutorial-en.png"/> 
-
-*   **Workflow**: A visual canvas to design your multi-agent systems. Configure node parameters, define context flows, and orchestrate complex agent interactions with drag-and-drop ease.
-<img src="assets/workflow.gif"/>
-
-*   **Launch**: Initiate workflows, monitor real-time logs, inspect intermediate artifacts, and provide human-in-the-loop feedback.
-<img src="assets/launch.gif"/>
-
-### 🧰 Python SDK
-For automation and batch processing, use our lightweight Python SDK to execute workflows programmatically and retrieve results directly.
-
-```python
-from runtime.sdk import run_workflow
-
-# Execute a workflow and get the final node message
-result = run_workflow(
-    yaml_file="yaml_instance/demo.yaml",
-    task_prompt="Summarize the attached document in one sentence.",
-    attachments=["/path/to/document.pdf"],
-    variables={"API_KEY": "sk-xxxx"} # Override .env variables if needed
-)
-
-if result.final_message:
-    print(f"Output: {result.final_message.text_content()}")
+```dotenv
+AGENTHUB_EMBEDDING_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+AGENTHUB_EMBEDDING_MODEL=text-embedding-v4
+AGENTHUB_EMBEDDING_MODEL_KEY=qwen-text-embedding-v4-1024
+AGENTHUB_EMBEDDING_DIMENSIONS=1024
+AGENTHUB_EMBEDDING_API_KEY_ENV=DASHSCOPE_API_KEY
 ```
 
-**We have released the ChatDev Python SDK (PyPI package `chatdev`)**, so you can also run YAML workflow and multi-agent tasks directly in Python. For installation and version details, see [PyPI: chatdev 0.1.0](https://pypi.org/project/chatdev/0.1.0/).
+Also set your actual `DASHSCOPE_API_KEY` in the private `.env`. For optional `semantic_llm` routing, add this block and your actual `DEEPSEEK_API_KEY`:
 
----
-
-<a id="developers"></a>
-## ⚙️ For Developers
-
-**For secondary development and extensions, please proceed with this section.**
-
-Extend DevAll with new nodes, providers, and tools.
-The project is organized into a modular structure:
-*   **Core Systems**: `server/` hosts the FastAPI backend, while `runtime/` manages agent abstraction and tool execution.
-*   **Orchestration**: `workflow/` handles the multi-agent logic, driven by configurations in `entity/`.
-*   **Frontend**: `frontend/` contains the Vue 3 Web Console.
-*   **Extensibility**: `functions/` is the place for custom Python tools.
-
-Relevant reference documentation:
-*   **Getting Started**: [Start Guide](./docs/user_guide/en/index.md)
-*   **Core Modules**: [Workflow Authoring](./docs/user_guide/en/workflow_authoring.md), [Memory](./docs/user_guide/en/modules/memory.md), and [Tooling](./docs/user_guide/en/modules/tooling/README.md)
-
----
-
-## 🌟 Featured Workflows
-We provide robust, out-of-the-box templates for common scenarios. All runnable workflow configs are located in `yaml_instance/`.
-*   **Demos**: Files named `demo_*.yaml` showcase specific features or modules.
-*   **Implementations**: Files named directly (e.g., `ChatDev_v1.yaml`) are full in-house or recreated workflows. As follows:
-
-### 📋 Workflow Collection
-
-| Category | Workflow                                                                                                    | Case | 
-| :--- |:------------------------------------------------------------------------------------------------------------| :--- | 
-| **📈 Data Visualization** | `data_visualization_basic.yaml`<br>`data_visualization_enhanced.yaml`                                       | <img src="assets/cases/data_analysis/data_analysis.gif" width="100%"><br>Prompt: *"Create 4–6 high-quality PNG charts for my large real-estate transactions dataset."* |
-| **🛠️ 3D Generation**<br>*(Requires [Blender](https://www.blender.org/) & [blender-mcp](https://github.com/ahujasid/blender-mcp))* | `blender_3d_builder_simple.yaml`<br>`blender_3d_builder_hub.yaml`<br>`blender_scientific_illustration.yaml` | <img src="assets/cases/3d_generation/3d.gif" width="100%"><br>Prompt: *"Please build a Christmas tree."* |
-| **🎮 Game Dev** | `GameDev_v1.yaml`<br>`ChatDev_v1.yaml`                                                                      | <img src="assets/cases/game_development/game.gif" width="100%"><br>Prompt: *"Please help me design and develop a Tank Battle game."* |
-| **📚 Deep Research** | `deep_research_v1.yaml`                                                                                     | <img src="assets/cases/deep_research/deep_research.gif" width="85%"><br>Prompt: *"Research about recent advances in the field of LLM-based agent RL"* |
-| **🎓 Teach Video** | `teach_video.yaml` (Please run command `uv add manim` before running this workflow)                         | <img src="assets/cases/video_generation/video.gif" width="140%"><br>Prompt: *"讲一下什么是凸优化"* |
-
----
-
-### 💡 Usage Guide
-For those implementations, you can use the **Launch** tab to execute them.
-1.  **Select**: Choose a workflow in the **Launch** tab.
-2.  **Upload**: Upload necessary files (e.g., `.csv` for data analysis) if required.
-3.  **Prompt**: Enter your request (e.g., *"Visualize the sales trends"* or *"Design a snake game"*).
-
----
-
-## 🤝 Contributing
-
-We welcome contributions from the community! Whether you're fixing bugs, adding new workflow templates, or sharing high-quality cases/artifacts produced by DevAll, your help is much appreciated. Feel free to contribute by submitting **Issues** or **Pull Requests**.
-
-By contributing to DevAll, you'll be recognized in our **Contributors** list below. Check out our [Developer Guide](#developers) to get started!
-
-### 👥 Contributors
-
-#### Primary Contributors
-
-<table>
-  <tr>
-    <td align="center"><a href="https://github.com/NA-Wen"><img src="https://github.com/NA-Wen.png?size=100" width="64px;" alt=""/><br /><sub><b>NA-Wen</b></sub></a></td>
-    <td align="center"><a href="https://github.com/zxrys"><img src="https://github.com/zxrys.png?size=100" width="64px;" alt=""/><br /><sub><b>zxrys</b></sub></a></td>
-    <td align="center"><a href="https://github.com/swugi"><img src="https://github.com/swugi.png?size=100" width="64px;" alt=""/><br /><sub><b>swugi</b></sub></a></td>
-    <td align="center"><a href="https://github.com/huatl98"><img src="https://github.com/huatl98.png?size=100" width="64px;" alt=""/><br /><sub><b>huatl98</b></sub></a></td>
-  </tr>
-</table>
-
-#### Contributors
-<table>
-  <tr>
-    <td align="center"><a href="https://github.com/LaansDole"><img src="https://github.com/LaansDole.png?size=100" width="64px;"/><br /><sub><b>LaansDole</b></sub></a></td>
-    <td align="center"><a href="https://github.com/zivkovicp"><img src="https://github.com/zivkovicp.png?size=100" width="64px;"/><br /><sub><b>zivkovicp</b></sub></a></td>
-    <td align="center"><a href="https://github.com/ACE-Prism"><img src="https://github.com/ACE-Prism.png?size=100" width="64px;"/><br /><sub><b>ACE-Prism</b></sub></a></td>
-    <td align="center"><a href="https://github.com/shiowen"><img src="https://github.com/shiowen.png?size=100" width="64px;"/><br /><sub><b>shiowen</b></sub></a></td>
-    <td align="center"><a href="https://github.com/kilo2127"><img src="https://github.com/kilo2127.png?size=100" width="64px;"/><br /><sub><b>kilo2127</b></sub></a></td>
-    <td align="center"><a href="https://github.com/AckerlyLau"><img src="https://github.com/AckerlyLau.png?size=100" width="64px;"/><br /><sub><b>AckerlyLau</b></sub></a></td>
-    <td align="center"><a href="https://github.com/rainoeelmae"><img src="https://github.com/rainoeelmae.png?size=100" width="64px;"/><br /><sub><b>rainoeelmae</b></sub></a></td>
-    <td align="center"><a href="https://github.com/conprour"><img src="https://github.com/conprour.png?size=100" width="64px;"/><br /><sub><b>conprour</b></sub></a></td>
-  </tr>
-  <tr>
-    <td align="center"><a href="https://github.com/Br1an67"><img src="https://github.com/Br1an67.png?size=100" width="64px;"/><br /><sub><b>Br1an67</b></sub></a></td>
-    <td align="center"><a href="https://github.com/NINE-J"><img src="https://github.com/NINE-J.png?size=100" width="64px;"/><br /><sub><b>NINE-J</b></sub></a></td>
-    <td align="center"><a href="https://github.com/Yanghuabei-design"><img src="https://github.com/Yanghuabei-design.png?size=100" width="64px;"/><br /><sub><b>Yanghuabei</b></sub></a></td>
-    <td align="center"><a href="https://github.com/nregret"><img src="https://github.com/nregret.png?size=100" width="64px;"/><br /><sub><b>nregret</b></sub></a></td>
-    <td align="center"><a href="https://github.com/kartik-mem0"><img src="https://github.com/kartik-mem0.png?size=100" width="64px;"/><br /><sub><b>kartik-mem0</b></sub></a></td>
-    <td align="center"><a href="https://github.com/Yanghuabei-design"><img src="https://github.com/Yanghuabei-design.png?size=100" width="64px;"/><br /><sub><b>Yanghuabei-design</b></sub></a></td>
-    <td align="center"><a href="https://github.com/benjamin7007"><img src="https://github.com/benjamin7007.png?size=100" width="64px;"/><br /><sub><b>benjamin7007</b></sub></a></td>
-    <td align="center"><a href="https://github.com/gouziman"><img src="https://github.com/gouziman.png?size=100" width="64px;"/><br /><sub><b>gouziman</b></sub></a></td>
-  </tr>
-  <tr>
-    <td align="center"><a href="https://github.com/hobostay"><img src="https://github.com/hobostay.png?size=100" width="64px;"/><br /><sub><b>hobostay</b></sub></a></td>
-    <td align="center"><a href="https://github.com/token2everything"><img src="https://github.com/token2everything.png?size=100" width="64px;"/><br /><sub><b>token2everything</b></sub></a></td>
-  </tr>
-</table>
-
-## 🤝 Acknowledgments
-
-<a href="http://nlp.csai.tsinghua.edu.cn/"><img src="assets/thunlp.png" height=50pt></a>&nbsp;&nbsp;
-<a href="https://modelbest.cn/"><img src="assets/modelbest.png" height=50pt></a>&nbsp;&nbsp;
-<a href="https://github.com/OpenBMB/AgentVerse/"><img src="assets/agentverse.png" height=50pt></a>&nbsp;&nbsp;
-<a href="https://github.com/OpenBMB/RepoAgent"><img src="assets/repoagent.png"  height=50pt></a>
-<a href="https://app.commanddash.io/agent?github=https://github.com/OpenBMB/ChatDev"><img src="assets/CommandDash.png" height=50pt></a>
-<a href="www.teachmaster.cn"><img src="assets/teachmaster.png" height=50pt></a>
-<a href="https://github.com/OpenBMB/AppCopilot"><img src="assets/appcopilot.png" height=50pt></a>
-
-## 🔎 Citation
-
-```
-@article{chatdev,
-    title = {ChatDev: Communicative Agents for Software Development},
-    author = {Chen Qian and Wei Liu and Hongzhang Liu and Nuo Chen and Yufan Dang and Jiahao Li and Cheng Yang and Weize Chen and Yusheng Su and Xin Cong and Juyuan Xu and Dahai Li and Zhiyuan Liu and Maosong Sun},
-    journal = {arXiv preprint arXiv:2307.07924},
-    url = {https://arxiv.org/abs/2307.07924},
-    year = {2023}
-}
-
-@article{colearning,
-    title = {Experiential Co-Learning of Software-Developing Agents},
-    author = {Chen Qian and Yufan Dang and Jiahao Li and Wei Liu and Zihao Xie and Yifei Wang and Weize Chen and Cheng Yang and Xin Cong and Xiaoyin Che and Zhiyuan Liu and Maosong Sun},
-    journal = {arXiv preprint arXiv:2312.17025},
-    url = {https://arxiv.org/abs/2312.17025},
-    year = {2023}
-}
-
-@article{macnet,
-    title={Scaling Large-Language-Model-based Multi-Agent Collaboration},
-    author={Chen Qian and Zihao Xie and Yifei Wang and Wei Liu and Yufan Dang and Zhuoyun Du and Weize Chen and Cheng Yang and Zhiyuan Liu and Maosong Sun}
-    journal={arXiv preprint arXiv:2406.07155},
-    url = {https://arxiv.org/abs/2406.07155},
-    year={2024}
-}
-
-@article{iagents,
-    title={Autonomous Agents for Collaborative Task under Information Asymmetry},
-    author={Wei Liu and Chenxi Wang and Yifei Wang and Zihao Xie and Rennai Qiu and Yufan Dnag and Zhuoyun Du and Weize Chen and Cheng Yang and Chen Qian},
-    journal={arXiv preprint arXiv:2406.14928},
-    url = {https://arxiv.org/abs/2406.14928},
-    year={2024}
-}
-
-@article{puppeteer,
-      title={Multi-Agent Collaboration via Evolving Orchestration}, 
-      author={Yufan Dang and Chen Qian and Xueheng Luo and Jingru Fan and Zihao Xie and Ruijie Shi and Weize Chen and Cheng Yang and Xiaoyin Che and Ye Tian and Xuantang Xiong and Lei Han and Zhiyuan Liu and Maosong Sun},
-      journal={arXiv preprint arXiv:2505.19591},
-      url={https://arxiv.org/abs/2505.19591},
-      year={2025}
-}
+```dotenv
+AGENTHUB_RERANK_BASE_URL=https://api.deepseek.com
+AGENTHUB_RERANK_MODEL=deepseek-flash
+AGENTHUB_RERANK_API_KEY_ENV=DEEPSEEK_API_KEY
 ```
 
-## 📬 Contact
+The `*_API_KEY_ENV` values are **names of credential variables**, not keys. Startup checks the endpoint/model/vector-space configuration against [frozen calibration](evaluation/t43_live_calibration_2026-10-08.json). Changing those settings can cause `AGENTHUB_CALIBRATION_MISMATCH`; another model requires corresponding calibration, not reuse of the old threshold. Credential rotation alone does not change this fingerprint. Provider/model availability is required; the historical evaluation does not guarantee future availability.
 
-If you have any questions, feedback, or would like to get in touch, please feel free to reach out to us via email at [qianc62@gmail.com](mailto:qianc62@gmail.com)
+[compose.yml](compose.yml) loads `.env` then the checked-in, non-secret [.env.docker](.env.docker). Keep the latter's Docker network settings; avoid conflicting provider variables. Do not print or commit the expanded environment.
+
+```bash
+docker compose config --quiet
+docker compose build backend frontend
+docker compose up -d
+docker compose ps
+curl -fsS --retry 12 --retry-delay 1 --retry-connrefused http://localhost:6400/health
+```
+
+Open [Launch](http://localhost:5173/launch) or the [Registry](http://localhost:5173/agenthub/registry). These are local addresses available after startup; the default frontend/backend ports are `5173`/`6400`. See [deployment details](docs/agenthub.md) for configuration and restart checks. This is a local development deployment, not a hardened public service.
+
+## Register Agents and run a task
+
+Register the six reviewed fixtures: Research, Code, Data, Document, Planning and Review. Registration validates the [controlled manifest](yaml_instance/agenthub_manifest.json) and thin workflows, and calls the configured embedding provider to create the index.
+
+```bash
+docker compose exec -T backend python -m server.services.agenthub.demo_catalog
+curl -fsS 'http://localhost:6400/api/agenthub/agents?limit=100'
+curl -fsS http://localhost:6400/api/agenthub/metrics
+```
+
+An identical catalog preserves Agent UUID/version on repeat registration; conflicts require explicit reconciliation. The six Agents are ordinary fixtures, not hardcoded supported types. Registry lifecycle operations are documented in the [API and setup guide](docs/agenthub.md).
+
+1. At `/launch`, choose **AgentHub task** and `semantic` or, when configured, `semantic_llm`.
+2. Submit: “Given synthetic response times 10, 11, 12, 13, and 80 ms, compute the median and range and identify the value needing outlier review.”
+3. Inspect candidates, selected Agent, native output and business status. Selection/output can vary on a live rerun.
+4. Use the returned `run_id` with `GET /api/agenthub/tasks/{run_id}` to query the persisted run and trace.
+
+`POST /api/agenthub/tasks` requires a **real current WebSocket `session_id`**; the UI establishes it. HTTP 202 means accepted, not successful. Select **Manual YAML** for the original ChatDev flow; the workflow editor remains at `/workflows`.
+
+## Real benchmark and latency tradeoffs
+
+T43 uses **60 synthetic labeled cases**: 36 clear, 12 ambiguous and 12 no-match. It splits them into **30 calibration / 30 independent test** cases (18/6/6 each). Only calibration selected **K=5**, threshold **0.35727615782291194**, frozen before test execution.
+
+The following is the **2026-10-08 live routing test**, using DashScope embeddings and DeepSeek reranking. Sources: [calibration JSON](evaluation/t43_live_calibration_2026-10-08.json), [test JSON with per-case results](evaluation/t43_live_test_2026-10-08.json), [methodology and reproduction](evaluation/README.md).
+
+| Independent test metric | Semantic | Semantic + LLM Rerank |
+| --- | ---: | ---: |
+| Top-1 Routing Accuracy (matchable cases) | 11/24 (45.83%) | 18/24 (75.00%) |
+| Semantic Top-K Recall | 24/24 | 24/24 |
+| Reject Accuracy | 3/6 | 3/4 |
+| False Accept Rate | 3/6 | 1/4 |
+| Infrastructure errors | 0 | 2 |
+| Query-to-decision p50 / p95 | 368.009 / 643.426 ms | 2199.482 / 10066.879 ms |
+
+Each strategy has 30 measured routing-latency samples, including error calls. The two rerank errors were `RERANK_TRUNCATED_RESPONSE` on no-match cases; they are excluded from quality-rate denominators, explaining `/4` rather than `/6`. Reranking selected more correct Top-1 Agents on this sample, at higher latency and with provider errors.
+
+A [prior attempt](evaluation/t43_live_test_attempt1_2026-10-08.json) had seven truncated rerank outputs at a 512-token limit. The reported run reused the test split after raising that transport limit to 2048 and still had two errors; K/threshold were not retuned on test labels. This is a small held-out routing sample, not a pristine one-shot quality study, statistical-significance claim or SLA.
+
+The [10/50/100-Agent live catalog-size report](evaluation/t43_live_catalog_size_2026-10-08.json) measures latency on synthetic metadata with real provider calls under a separate K=3, threshold=-1 configuration. The [offline report](evaluation/t43_offline_catalog_size_2026-10-08.json) uses fake embeddings/local reranking and must not be presented as live performance. Neither measures concurrent-load capacity.
+
+**Routing Accuracy ≠ execution success ≠ Task Quality.** This benchmark does not execute workflows. Task Quality has not been independently evaluated; the T48 Demo's 4 success / 1 rejected record is a separate execution demonstration.
+
+## Tests and acceptance evidence
+
+- **T46 deployment:** standard backend/frontend image builds, live catalog registration, task execution and completed-run query consistency after backend restart. [Recorded acceptance and commands](docs/agenthub.md).
+- **T48 Demo:** actual UI recording and five acceptance runs with business/native state evidence. [Demo guide](demo/README.md).
+- **2026-10-10 repository audit:** Python **634 passed, 2 skipped**, excluding `tests/test_websocket_send_message_sync.py`; frontend **42 passed**; Compose validation passed. These are dated audit results, not new live-provider results from this README update. [Audit details](docs/REPOSITORY_AUDIT.md).
+
+With the host development dependencies installed, reproduce the bounded automated checks from the repository root:
+
+```bash
+env -u AGENTHUB_EMBEDDING_LIVE -u AGENTHUB_RERANK_LIVE PYTHONDONTWRITEBYTECODE=1 \
+  timeout 120s .venv/bin/python -m pytest -q \
+  --ignore=tests/test_websocket_send_message_sync.py -p no:cacheprovider
+node --test frontend/tests/*.test.js
+docker compose config --quiet
+```
+
+**Full Python suite: NOT VERIFIED.** The inherited WebSocket test fixture blocks full-suite completion; a passing subset is not a full-suite pass. The two skipped tests require explicit live-provider opt-in. The audit also records a host-owned `frontend/dist` permission issue: the same frontend build passed with a fresh temporary output directory; the existing directory's permissions were not changed.
+
+## Known limitations
+
+- P0 selects **one Agent per task**. No dynamic teams, distributed scheduling, multi-tenancy/RBAC or untrusted public Agent uploads.
+- SQLite + Exact Cosine Scan serves the current small catalog; PostgreSQL/Qdrant, production throughput and concurrency guarantees are outside verified P0 scope.
+- Persisted business runs survive restart for queries; in-flight provider/tool calls and native in-memory WebSocket sessions do not resume.
+- Provider/rerank failures are recorded as failures; P0 has no automatic secondary-Agent fallback or complex retry chain.
+- Unknown token usage remains unknown; structured execution success does not prove answer quality.
+- Task text is persisted locally and sent to the embedding provider; optional reranking sends task text and candidate metadata to the LLM. Use approved data and keep private `.env`, SQLite files and user artifacts out of Git.
+- Full Python verification and inherited documentation/build issues remain as classified in the [repository audit](docs/REPOSITORY_AUDIT.md).
+
+## Documentation
+
+- [Setup, API usage, state semantics and T46 acceptance](docs/agenthub.md)
+- [Frozen P0 design](AGENTHUB_DESIGN.md) · [T00–T49 task evidence](TASKS.md)
+- [Evaluation methodology, raw results and reproduction](evaluation/README.md)
+- [Demo scenarios, recording and reproduction](demo/README.md)
+- [P0 Release Notes](docs/RELEASE_NOTES.md)
+- [Portfolio material](docs/PORTFOLIO.md) · [Interview guide](docs/INTERVIEW_GUIDE.md)
+- [Repository audit and inherited issues](docs/REPOSITORY_AUDIT.md)
+- [ChatDev user guide: manual workflows and tools](docs/user_guide/en/index.md)
+
+## Upstream attribution and license
+
+AgentHub is based on **OpenBMB/ChatDev 2.0 (DevAll)**, using imported baseline `4fb2db0ea90375ce1059f44fe03ffbd191a7a169`. Credit for the original runtime, workflow system, frontend, tools and resources belongs to the OpenBMB/ChatDev authors and contributors. AgentHub's platform additions are described above.
+
+**Copyright 2025 OpenBMB.** The upstream copyright notice and [Apache-2.0 LICENSE](LICENSE) are retained, together with source/resource license notices. See the [official ChatDev repository](https://github.com/OpenBMB/ChatDev) for upstream history, papers, author/contributor information and citation guidance. This README has been rewritten for the AgentHub derivative project; upstream resources and Git history are preserved.
