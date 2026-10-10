@@ -8,6 +8,12 @@ Thumbs.db
 .idea/
 .vscode/
 __pycache__/
+.pytest_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.log
 .venv/
 env/
 venv/

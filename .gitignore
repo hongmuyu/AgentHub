@@ -1,6 +1,11 @@
 # Python
 __pycache__/
 *.pyc
+.pytest_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
 
 # Virtual environments
 .venv/
@@ -20,9 +25,13 @@ frontend/.vscode/
 
 # Environment
 .env
+.env.*
+!/.env.example
+!/.env.docker
 
 # Project Specific
 logs/
+*.log
 node_modules/
 data/
 temp/

@@ -1,6 +1,6 @@
 # AgentHub: verified setup and evidence
 
-AgentHub extends ChatDev 2.0 for a **trusted local/internal environment**. It registers business Agent metadata, discovers eligible capabilities, routes one natural-language task to one Agent, and starts that Agent's allowlisted thin workflow through the existing Web execution chain. The [frozen design](../AGENTHUB_DESIGN.md) defines the contracts; this guide describes the implementation and evidence available on `agenthub-dev` as of 2026-10-09. The [original ChatDev guide](../README.md) remains applicable to manual workflows.
+AgentHub extends ChatDev 2.0 for a **trusted local/internal environment**. It registers business Agent metadata, discovers eligible capabilities, routes one natural-language task to one Agent, and starts that Agent's allowlisted thin workflow through the existing Web execution chain. The [frozen design](../AGENTHUB_DESIGN.md) defines the contracts; this guide describes the implementation and evidence available on `agenthub-dev` as of 2026-10-09. The [ChatDev user guide](user_guide/en/index.md) remains applicable to manual workflows.
 
 ## Architecture and boundaries
 
