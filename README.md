@@ -193,7 +193,7 @@ docker compose config --quiet
 ## Documentation
 
 - [Setup, API usage, state semantics and T46 acceptance](docs/agenthub.md)
-- [Frozen P0 design](AGENTHUB_DESIGN.md) · [T00–T49 task evidence](TASKS.md)
+- [Frozen P0 design](AGENTHUB_DESIGN.md) · [T00–T49 Task plan](TASKS.md)
 - [Evaluation methodology, raw results and reproduction](evaluation/README.md)
 - [Demo scenarios, recording and reproduction](demo/README.md)
 - [P0 Release Notes](docs/RELEASE_NOTES.md)

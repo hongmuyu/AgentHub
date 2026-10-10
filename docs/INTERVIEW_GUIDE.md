@@ -75,7 +75,7 @@ Launch + existing WebSocket session
 13. **如何保证 completed 不误记为 success？** Dispatcher 读取目标 recorder；缺失、错 run/node 或 failed outcome 都不能成功。状态转换再验证 completed + `succeeded` 且无错误/取消，事务性提交终态。[状态门禁](../server/services/agenthub/run_transitions.py)。
 14. **用户取消与断线怎么区分？** 只有原生执行路径确认 `SessionStatus.CANCELLED` 才写业务 `cancelled`；请求发出或 WebSocket 断连本身不足以证明执行停止。[Dispatcher](../server/services/agenthub/workflow_dispatcher.py)。
 15. **重启后能恢复什么？** SQLite 中已完成的 Agent、Run、Trace、AgentRun 和 metrics 可再查；正在运行的原生 WebSocket session、provider/tool 调用不续跑。T46 验证的是前者。[部署边界](agenthub.md#verified-deployment-scope-and-limits)。
-16. **Token usage 为零吗？** T48 记录为 unknown，非零；metrics 分开保存 known_count/unknown_count，不能把未返回的 provider 用量补为 0。[指标实现](../server/services/agenthub/metrics.py)。
+16. **Token usage 为零吗？** T48 记录的 Token usage 为 unknown，不能按 0 统计。metrics 分开保存 known_count/unknown_count，不能把未返回的 provider 用量补为 0。[指标实现](../server/services/agenthub/metrics.py)。
 17. **性能数据能证明 100 Agent 的生产 SLA 吗？** 不能。合成目录每档每策略 12 条顺序请求，有预热、缓存与远端负载不受控；本次数字仅描述该机器和 provider 组合，没有并发或尾延迟 SLA 验证。
 18. **测试是否全部通过？答案是否正确？** T46 的 Python 子集为 629 passed/2 skipped、前端 42 passed；完整 Python 套件受继承 WebSocket fixture 阻塞，仍 NOT VERIFIED。T48 五条 Demo Run 的业务状态为 4 success/1 rejected，Task Quality 没有独立评测，不能说“答案准确率 100%”。
 

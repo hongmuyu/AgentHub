@@ -193,7 +193,7 @@ docker compose config --quiet
 ## 文档导航
 
 - [部署、API 用法、状态语义与 T46 验收](docs/agenthub.md)
-- [P0 冻结设计](AGENTHUB_DESIGN.md) · [T00–T49 任务证据](TASKS.md)
+- [P0 冻结设计](AGENTHUB_DESIGN.md) · [T00–T49 任务计划](TASKS.md)
 - [评测方法、原始结果与复现](evaluation/README.md)
 - [Demo 场景、录屏与复现](demo/README.md)
 - [P0 Release Notes](docs/RELEASE_NOTES.md)
