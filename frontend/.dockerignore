@@ -16,6 +16,8 @@ venv/
 .env.*
 
 node_modules/
+dist/
+dist-ssr/
 temp/
 logs
 

@@ -1,5 +1,7 @@
 # ChatDev 2.0 - DevAll
 
+> **AgentHub P0** — [部署与架构](docs/agenthub.md) · [发布说明](docs/RELEASE_NOTES.md) · [路由评测](evaluation/README.md) · [Demo 与视频](demo/README.md) · [简历材料](docs/PORTFOLIO.md) · [面试指南](docs/INTERVIEW_GUIDE.md)。AgentHub 基于下方介绍的 ChatDev Runtime 扩展，保留上游署名与许可证。
+
 <p align="center">
   <img src="frontend/public/media/logo.png" alt="DevAll Logo" width="500"/>
 </p>
@@ -280,7 +282,7 @@ if result.final_message:
 
 相关参考文档：
 *   **快速开始**：[Start Guide](./docs/user_guide/zh/index.md)
-*   **核心模块**：[Workflow Authoring](./docs/user_guide/zh/workflow_authoring.md)、[Memory](./docs/user_guide/zh/modules/memory.md) 和 [Tooling](./docs/user_guide/zh/modules/tooling/index.md)
+*   **核心模块**：[Workflow Authoring](./docs/user_guide/zh/workflow_authoring.md)、[Memory](./docs/user_guide/zh/modules/memory.md) 和 [Tooling](./docs/user_guide/zh/modules/tooling/README.md)
 
 ---
 

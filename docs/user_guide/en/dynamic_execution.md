@@ -272,5 +272,5 @@ edges:
 ## 9. Related Documentation
 
 - [Edge Configuration Guide](../edges.md)
-- [Workflow Authoring Guide](../workflow_authoring.md)
-- [Agent Node Configuration](../nodes/agent.md)
+- [Workflow Authoring Guide](workflow_authoring.md)
+- [Agent Node Configuration](nodes/agent.md)

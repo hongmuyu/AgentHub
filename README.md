@@ -1,5 +1,7 @@
 # ChatDev 2.0 - DevAll
 
+> **AgentHub P0** — [Setup and architecture](docs/agenthub.md) · [Release notes](docs/RELEASE_NOTES.md) · [Benchmarks](evaluation/README.md) · [Demo and video](demo/README.md) · [Portfolio](docs/PORTFOLIO.md) · [Interview guide](docs/INTERVIEW_GUIDE.md). AgentHub extends the ChatDev runtime documented below; upstream attribution and licenses are preserved.
+
 <p align="center">
   <img src="frontend/public/media/logo.png" alt="DevAll Logo" width="500"/>
 </p>
@@ -281,7 +283,7 @@ The project is organized into a modular structure:
 
 Relevant reference documentation:
 *   **Getting Started**: [Start Guide](./docs/user_guide/en/index.md)
-*   **Core Modules**: [Workflow Authoring](./docs/user_guide/en/workflow_authoring.md), [Memory](./docs/user_guide/en/modules/memory.md), and [Tooling](./docs/user_guide/en/modules/tooling/index.md)
+*   **Core Modules**: [Workflow Authoring](./docs/user_guide/en/workflow_authoring.md), [Memory](./docs/user_guide/en/modules/memory.md), and [Tooling](./docs/user_guide/en/modules/tooling/README.md)
 
 ---
 
