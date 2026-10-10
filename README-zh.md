@@ -22,6 +22,10 @@ ChatDev 已从一个专门的软件开发多智能体系统演变为一个全面
 - <a href="https://github.com/OpenBMB/ChatDev/tree/main">**ChatDev 2.0 (DevAll)**</a> 是一个用于“开发一切”的**零代码多智能体平台**。它通过简单的配置，赋能用户快速构建并执行定制化的多智能体系统。无需编写代码，用户即可定义智能体、工作流和任务，以编排如数据可视化、3D 生成和深度调研等复杂场景。
 - <a href="https://github.com/OpenBMB/ChatDev/tree/chatdev1.0">**ChatDev 1.0 (经典版)**</a> 以**虚拟软件公司**模式运行。它通过各种智能体（如 CEO、CTO、程序员）参与专门的功能研讨会，实现整个软件开发生命周期的自动化——包括设计、编码、测试和文档编写。它是沟通型智能体协作的基石范式。
 
+### AgentHub 扩展
+
+本仓库还提供 AgentHub：面向可信内部环境的 Agent 目录、能力路由和业务运行状态查询，执行仍复用 ChatDev 2.0 工作流运行时。标准 Docker 启动、六个示例 Agent 的登记、任务入口、接口与状态语义，以及实测路由评测见 [AgentHub 使用与复现指南](docs/agenthub.md)。原有手选 YAML Launch 和 Workflow 页面继续可用。
+
 ## 🎉 新闻
 • **2026年1月7日：🚀 我们非常高兴地宣布 ChatDev 2.0 (DevAll) 正式发布！** 该版本引入了全新的零代码多智能体编排平台。经典的 ChatDev (v1.x) 已移至 [`chatdev1.0`](https://github.com/OpenBMB/ChatDev/tree/chatdev1.0) 分支进行维护。
 

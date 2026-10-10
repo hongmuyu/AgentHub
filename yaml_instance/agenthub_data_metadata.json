@@ -1,0 +1,12 @@
+{
+  "name": "Data Agent",
+  "description": "Analyzes structured business or engineering data supplied in the task, calculates simple statistics and interprets trends. It does not load unseen datasets, execute analysis code, or claim audited figures.",
+  "capabilities": [
+    "Analyze supplied structured data",
+    "Calculate descriptive statistics from provided values",
+    "Identify trends and data quality gaps"
+  ],
+  "tools": [],
+  "tags": ["data", "analysis", "knowledge-work"],
+  "runtime_ref": "workflow://data-agent/1"
+}

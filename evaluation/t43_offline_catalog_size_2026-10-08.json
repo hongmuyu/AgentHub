@@ -1,0 +1,248 @@
+{
+  "label": "deterministic_offline_engineering_only",
+  "measured_at_utc": "2026-10-08T10:32:50.264038+00:00",
+  "hardware": {
+    "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+    "python": "3.12.13",
+    "cpu_model": "AMD Ryzen 7 8745H with Radeon 780M Graphics",
+    "logical_cpus": 16,
+    "memory_total_kib": 32146840
+  },
+  "config": {
+    "source_sha256": "f949404c14eab85916d1325b4ed7711aaafe6666027d96b0a2020fd7542004e2",
+    "catalog_version": "synthetic-v1",
+    "catalog_universe_fingerprint": "2021381247ea562d6f54c0d68ae0e87d86dcbf3d3d30bc4f5dbee6139bf84bda",
+    "seed": "agenthub-t43-offline-v1",
+    "embedding_model_key": "sha256-fake-16d-v1",
+    "dimensions": 16,
+    "catalog_sizes": [
+      10,
+      50,
+      100
+    ],
+    "top_k": 3,
+    "threshold": -1.0,
+    "threshold_source": "offline-scan-no-gate-v1",
+    "warmup_requests_per_strategy": 2,
+    "query_count": 12,
+    "repeats_per_query": 3,
+    "cache": "SQLite/OS caches warm after registration and warmup; no cache flush",
+    "catalog_construction": "one version-1 active metadata and indexed vector per Agent; controlled manifest maps all runtime_refs to one statically validated thin workflow",
+    "discovery_scope": "status, runtime_ref validation, index load, exact cosine, sort; excludes query embedding",
+    "routing_query_to_decision_scope": "starts at query embedding; excludes pre-query status/runtime_ref/index loading",
+    "routing_full_scope": "starts before Router.route; includes pre-query discovery work",
+    "reranker": "local deterministic identity transport; no LLM request"
+  },
+  "sizes": [
+    {
+      "catalog_size": 10,
+      "catalog_and_index_build_ms": 36.3428,
+      "strategies": {
+        "semantic": {
+          "catalog_size": 10,
+          "request_count": 36,
+          "errors": [],
+          "segments": {
+            "query_embedding_ms": {
+              "sample_count": 36,
+              "p50_ms": 0.01306,
+              "p95_ms": 0.018996
+            },
+            "discovery_excluding_embedding_ms": {
+              "sample_count": 36,
+              "p50_ms": 9.281008,
+              "p95_ms": 9.473348
+            },
+            "rerank_ms": {
+              "sample_count": 0,
+              "p50_ms": null,
+              "p95_ms": null
+            },
+            "routing_query_to_decision_ms": {
+              "sample_count": 36,
+              "p50_ms": 0.067675,
+              "p95_ms": 0.077174
+            },
+            "routing_full_ms": {
+              "sample_count": 36,
+              "p50_ms": 9.301192,
+              "p95_ms": 9.49472
+            }
+          }
+        },
+        "semantic_llm": {
+          "catalog_size": 10,
+          "request_count": 36,
+          "errors": [],
+          "segments": {
+            "query_embedding_ms": {
+              "sample_count": 36,
+              "p50_ms": 0.01306,
+              "p95_ms": 0.014248
+            },
+            "discovery_excluding_embedding_ms": {
+              "sample_count": 36,
+              "p50_ms": 9.399737,
+              "p95_ms": 9.772545000000001
+            },
+            "rerank_ms": {
+              "sample_count": 36,
+              "p50_ms": 0.024933,
+              "p95_ms": 0.028495
+            },
+            "routing_query_to_decision_ms": {
+              "sample_count": 36,
+              "p50_ms": 0.105669,
+              "p95_ms": 0.119916
+            },
+            "routing_full_ms": {
+              "sample_count": 36,
+              "p50_ms": 9.45554,
+              "p95_ms": 9.834284
+            }
+          }
+        }
+      }
+    },
+    {
+      "catalog_size": 50,
+      "catalog_and_index_build_ms": 181.746064,
+      "strategies": {
+        "semantic": {
+          "catalog_size": 50,
+          "request_count": 36,
+          "errors": [],
+          "segments": {
+            "query_embedding_ms": {
+              "sample_count": 36,
+              "p50_ms": 0.01306,
+              "p95_ms": 0.024933
+            },
+            "discovery_excluding_embedding_ms": {
+              "sample_count": 36,
+              "p50_ms": 44.942308,
+              "p95_ms": 46.789725999999995
+            },
+            "rerank_ms": {
+              "sample_count": 0,
+              "p50_ms": null,
+              "p95_ms": null
+            },
+            "routing_query_to_decision_ms": {
+              "sample_count": 36,
+              "p50_ms": 0.211337,
+              "p95_ms": 0.238644
+            },
+            "routing_full_ms": {
+              "sample_count": 36,
+              "p50_ms": 44.96368,
+              "p95_ms": 46.811097
+            }
+          }
+        },
+        "semantic_llm": {
+          "catalog_size": 50,
+          "request_count": 36,
+          "errors": [],
+          "segments": {
+            "query_embedding_ms": {
+              "sample_count": 36,
+              "p50_ms": 0.01306,
+              "p95_ms": 0.014247
+            },
+            "discovery_excluding_embedding_ms": {
+              "sample_count": 36,
+              "p50_ms": 44.893632999999994,
+              "p95_ms": 45.978814
+            },
+            "rerank_ms": {
+              "sample_count": 36,
+              "p50_ms": 0.027308,
+              "p95_ms": 0.042742
+            },
+            "routing_query_to_decision_ms": {
+              "sample_count": 36,
+              "p50_ms": 0.248142,
+              "p95_ms": 0.273076
+            },
+            "routing_full_ms": {
+              "sample_count": 36,
+              "p50_ms": 44.952997,
+              "p95_ms": 46.041739
+            }
+          }
+        }
+      }
+    },
+    {
+      "catalog_size": 100,
+      "catalog_and_index_build_ms": 361.028548,
+      "strategies": {
+        "semantic": {
+          "catalog_size": 100,
+          "request_count": 36,
+          "errors": [],
+          "segments": {
+            "query_embedding_ms": {
+              "sample_count": 36,
+              "p50_ms": 0.01306,
+              "p95_ms": 0.014248
+            },
+            "discovery_excluding_embedding_ms": {
+              "sample_count": 36,
+              "p50_ms": 90.234881,
+              "p95_ms": 111.689126
+            },
+            "rerank_ms": {
+              "sample_count": 0,
+              "p50_ms": null,
+              "p95_ms": null
+            },
+            "routing_query_to_decision_ms": {
+              "sample_count": 36,
+              "p50_ms": 0.397741,
+              "p95_ms": 0.42861
+            },
+            "routing_full_ms": {
+              "sample_count": 36,
+              "p50_ms": 90.25744,
+              "p95_ms": 111.711684
+            }
+          }
+        },
+        "semantic_llm": {
+          "catalog_size": 100,
+          "request_count": 36,
+          "errors": [],
+          "segments": {
+            "query_embedding_ms": {
+              "sample_count": 36,
+              "p50_ms": 0.01306,
+              "p95_ms": 0.020184
+            },
+            "discovery_excluding_embedding_ms": {
+              "sample_count": 36,
+              "p50_ms": 90.376174,
+              "p95_ms": 96.413531
+            },
+            "rerank_ms": {
+              "sample_count": 36,
+              "p50_ms": 0.028495,
+              "p95_ms": 0.036806
+            },
+            "routing_query_to_decision_ms": {
+              "sample_count": 36,
+              "p50_ms": 0.436921,
+              "p95_ms": 0.548526
+            },
+            "routing_full_ms": {
+              "sample_count": 36,
+              "p50_ms": 90.436726,
+              "p95_ms": 96.474083
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+version: 0.4.0
+vars: {}
+graph:
+  id: agenthub_research
+  description: Single-Agent technical research from a direct user task.
+  start: [research]
+  end: [research]
+  nodes:
+    - id: research
+      type: agent
+      config:
+        provider: openai
+        name: ${MODEL_NAME}
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        role: |-
+          You are a technical research assistant for internal R&D. Work from the user's task directly.
+          Use supplied materials first. When external evidence is needed and web tools are available,
+          use web_search and read_webpage_content. Compare options using source-backed facts;
+          include source links when available and separate uncertainty from evidence.
+          Never invent retrieved facts or citations. If sources are unavailable, state the gap.
+          Return concise findings, a comparison when requested, sources, and limitations.
+          Do not implement code, run experiments, or claim access to private sources.
+        tooling:
+          - type: function
+            config:
+              tools:
+                - name: web_search
+                - name: read_webpage_content
+  edges: []

@@ -361,13 +361,31 @@
         class="right-panel"
         :class="{
           'right-panel-overlay': viewMode === 'graph',
-          'right-panel-collapsed': viewMode === 'graph' && !isRightPanelOpen
+          'right-panel-collapsed': viewMode === 'graph' && !isRightPanelOpen,
+          'agenthub-right-panel': launchMode === 'agenthub'
         }"
       >
 
         <div v-show="viewMode !== 'graph' || isRightPanelOpen" class="control-section">
-          <label class="section-label">{{ $t('launch.workflow_selection') }}</label>
+          <label class="section-label">{{ $t('launch.launch_mode') }}</label>
+          <div class="view-toggle">
+            <button
+              class="toggle-button"
+              :class="{ active: launchMode === 'manual' }"
+              :disabled="isWorkflowRunning || loading || status === 'Launching...'"
+              @click="launchMode = 'manual'"
+            >{{ $t('launch.manual_mode') }}</button>
+            <button
+              class="toggle-button"
+              :class="{ active: launchMode === 'agenthub' }"
+              :disabled="isWorkflowRunning || loading || status === 'Launching...'"
+              @click="launchMode = 'agenthub'"
+            >{{ $t('launch.agenthub_mode') }}</button>
+          </div>
+
+          <label class="section-label">{{ launchMode === 'manual' ? $t('launch.workflow_selection') : $t('launch.routing_strategy') }}</label>
       <div
+        v-if="launchMode === 'manual'"
         class="select-wrapper custom-file-selector"
         ref="fileSelectorWrapperRef"
       >
@@ -412,11 +430,36 @@
           </ul>
         </Transition>
       </div>
+          <select v-else v-model="routingStrategy" class="file-selector-input routing-strategy-select" :disabled="isWorkflowRunning">
+            <option value="semantic">{{ $t('launch.semantic_strategy') }}</option>
+            <option value="semantic_llm">{{ $t('launch.semantic_llm_strategy') }}</option>
+          </select>
 
-          <label class="section-label">{{ $t('launch.status') }}</label>
+          <label class="section-label">{{ launchMode === 'agenthub' ? $t('launch.workflow_status') : $t('launch.status') }}</label>
           <div class="status-display" :class="{ 'status-active': status === 'Running...' }">
             {{ getTranslatedStatus(status) }}
           </div>
+          <div v-if="launchMode === 'agenthub' && agentHubRunId" class="status-display">
+            {{ $t('launch.agenthub_run_id') }}: {{ agentHubRunId }}
+          </div>
+          <AgentHubRunStatus
+            v-if="launchMode === 'agenthub' && agentHubRunId"
+            :run="agentHubBusinessRun"
+            :query-error="agentHubQueryError"
+            :cancel-requested="agentHubCancelRequested"
+            :recovered="agentHubRecovered"
+          />
+          <AgentHubRoutingSummary
+            v-if="launchMode === 'agenthub' && agentHubRouting"
+            :summary="agentHubRouting"
+          />
+          <AgentHubMetrics
+            v-if="launchMode === 'agenthub'"
+            :metrics="agentHubMetrics"
+            :error="agentHubMetricsError"
+            :loading="agentHubMetricsLoading"
+            @refresh="loadAgentHubMetrics"
+          />
 
           <label class="section-label">{{ $t('launch.view') }}</label>
           <div class="view-toggle">
@@ -428,6 +471,7 @@
               {{ $t('launch.chat') }}
             </button>
             <button
+              v-if="launchMode === 'manual'"
               class="toggle-button"
               :class="{ active: viewMode === 'graph' }"
               @click="switchToGraph"
@@ -442,13 +486,13 @@
               class="launch-button"
               :class="{ glow: shouldGlow, 'is-sending': isWorkflowRunning }"
               @click="handleButtonClick"
-              :disabled="loading || (isWorkflowRunning && !taskPrompt.trim()) || (!isWorkflowRunning && status !== 'Completed' && status !== 'Cancelled' && !isConnectionReady)">
+              :disabled="loading || (isWorkflowRunning && !taskPrompt.trim()) || (launchMode === 'agenthub' && (status === 'Launching...' || (isWorkflowRunning && status !== 'Waiting for input...'))) || (!isWorkflowRunning && status !== 'Completed' && status !== 'Cancelled' && !isConnectionReady)">
               {{ buttonLabel }}
             </button>
 
             <button
               class="cancel-button"
-              :disabled="status !== 'Running...'"
+              :disabled="status !== 'Running...' && !(launchMode === 'agenthub' && isWorkflowRunning && ['Request accepted', 'Waiting for input...'].includes(status))"
               @click="cancelWorkflow"
             >
               {{ $t('common.cancel') }}
@@ -493,12 +537,16 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { fetchWorkflowsWithDesc, fetchLogsZip, fetchWorkflowYAML, postFile, getAttachment, fetchVueGraph } from '../utils/apiFunctions.js'
+import { fetchWorkflowsWithDesc, fetchLogsZip, fetchWorkflowYAML, postFile, getAttachment, fetchVueGraph, submitLaunchRequest, fetchAgentHubRun, fetchAgentHubMetrics } from '../utils/apiFunctions.js'
+import { isTerminalAgentHubRun, projectAgentHubRun } from '../utils/agentHubRunState.js'
 import { configStore } from '../utils/configStore.js'
 import { spriteFetcher } from '../utils/spriteFetcher.js'
 import yaml from 'js-yaml'
 import MarkdownIt from 'markdown-it'
 import SettingsModal from '../components/SettingsModal.vue'
+import AgentHubRoutingSummary from '../components/AgentHubRoutingSummary.vue'
+import AgentHubRunStatus from '../components/AgentHubRunStatus.vue'
+import AgentHubMetrics from '../components/AgentHubMetrics.vue'
 const md = new MarkdownIt({
   html: false,
   linkify: true,
@@ -532,6 +580,9 @@ const { fromObject, fitView, onPaneReady, onNodesInitialized, setNodes, setEdges
 
 const getTranslatedStatus = (statusText) => {
   if (!statusText) return ''
+  if (launchMode.value === 'agenthub' && statusText === 'Completed') {
+    return t('launch.agenthub_workflow_completed')
+  }
   const statusMap = {
     'Waiting for workflow selection...': t('launch.status_waiting_workflow'),
     'Connecting...': t('launch.status_connecting'),
@@ -548,11 +599,33 @@ const getTranslatedStatus = (statusText) => {
     'Pending workflow selection': t('launch.status_waiting_workflow'),
     'Pending file selection': t('launch.status_waiting_file')
   }
+  if (statusText === 'Request accepted') return t('launch.agenthub_request_accepted')
+  if (statusText === 'Cancellation requested') return t('launch.agenthub_cancel_requested')
+  if (statusText === 'Rejected') return t('launch.agenthub_rejected')
   return statusMap[statusText] || statusText
 }
 
 // Task input state
 const taskPrompt = ref('')
+const launchMode = ref(route.query?.mode === 'agenthub' ? 'agenthub' : 'manual')
+const routingStrategy = ref('semantic')
+const agentHubRunId = ref(
+  launchMode.value === 'agenthub' && typeof route.query?.run === 'string'
+    ? route.query.run : null
+)
+const agentHubRouting = ref(null)
+const agentHubBusinessRun = ref(null)
+const agentHubQueryError = ref(null)
+const agentHubCancelRequested = ref(false)
+const agentHubRecovered = ref(false)
+const agentHubMetrics = ref(null)
+const agentHubMetricsError = ref(null)
+const agentHubMetricsLoading = ref(false)
+let agentHubMetricsRequestId = 0
+let agentHubExpectedSessionId = null
+let agentHubQueryTimer = null
+let agentHubQueryInFlight = false
+let agentHubQueryGeneration = 0
 
 // File selector state
 const workflowFiles = ref([])
@@ -804,6 +877,113 @@ const resetConnectionState = ({ closeSocket = true, keepSession = false } = {}) 
   if (attachmentHoverTimeout) {
     clearTimeout(attachmentHoverTimeout)
     attachmentHoverTimeout = null
+  }
+}
+
+const stopAgentHubRunQuery = () => {
+  clearTimeout(agentHubQueryTimer)
+  agentHubQueryTimer = null
+  agentHubQueryGeneration += 1
+  agentHubQueryInFlight = false
+}
+
+const refreshAgentHubRun = async () => {
+  if (launchMode.value !== 'agenthub' || !agentHubRunId.value ||
+      agentHubQueryInFlight || isTerminalAgentHubRun(agentHubBusinessRun.value)) return
+
+  clearTimeout(agentHubQueryTimer)
+  agentHubQueryTimer = null
+  const runId = agentHubRunId.value
+  const generation = agentHubQueryGeneration
+  agentHubQueryInFlight = true
+  let retry = true
+  try {
+    const response = await fetchAgentHubRun(runId)
+    if (generation !== agentHubQueryGeneration || runId !== agentHubRunId.value) return
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}))
+      if (generation !== agentHubQueryGeneration || runId !== agentHubRunId.value) return
+      const code = body?.detail?.code
+      agentHubQueryError.value = typeof code === 'string' && /^[A-Z][A-Z0-9_]{0,63}$/.test(code)
+        ? code : 'RUN_QUERY_FAILED'
+      retry = response.status >= 500
+      return
+    }
+    const incoming = await response.json()
+    if (generation !== agentHubQueryGeneration || runId !== agentHubRunId.value) return
+    const projected = projectAgentHubRun(agentHubBusinessRun.value, incoming, runId, agentHubExpectedSessionId)
+    if (projected === agentHubBusinessRun.value) {
+      agentHubQueryError.value = 'RUN_DATA_INVALID'
+      retry = false
+    } else {
+      agentHubBusinessRun.value = projected
+      agentHubQueryError.value = null
+    }
+  } catch (_error) {
+    if (generation === agentHubQueryGeneration && runId === agentHubRunId.value) {
+      agentHubQueryError.value = 'RUN_QUERY_FAILED'
+    }
+  } finally {
+    if (generation === agentHubQueryGeneration && runId === agentHubRunId.value) {
+      agentHubQueryInFlight = false
+      if (retry && !isTerminalAgentHubRun(agentHubBusinessRun.value)) {
+        agentHubQueryTimer = setTimeout(() => { void refreshAgentHubRun() }, 1000)
+      }
+    }
+  }
+}
+
+const beginAgentHubRun = (runId, expectedSessionId, initialRun = null, recovered = false) => {
+  stopAgentHubRunQuery()
+  agentHubRunId.value = runId
+  agentHubExpectedSessionId = expectedSessionId
+  agentHubBusinessRun.value = projectAgentHubRun(null, initialRun, runId, expectedSessionId)
+  agentHubQueryError.value = null
+  agentHubCancelRequested.value = false
+  agentHubRecovered.value = recovered
+  void refreshAgentHubRun()
+}
+
+const clearAgentHubRun = () => {
+  stopAgentHubRunQuery()
+  agentHubRunId.value = null
+  agentHubExpectedSessionId = null
+  agentHubBusinessRun.value = null
+  agentHubQueryError.value = null
+  agentHubCancelRequested.value = false
+  agentHubRecovered.value = false
+}
+
+const loadAgentHubMetrics = async () => {
+  if (launchMode.value !== 'agenthub') return
+  const requestId = ++agentHubMetricsRequestId
+  agentHubMetricsLoading.value = true
+  agentHubMetricsError.value = null
+  try {
+    const response = await fetchAgentHubMetrics()
+    const data = await response.json()
+    if (requestId !== agentHubMetricsRequestId || launchMode.value !== 'agenthub') return
+    if (!response.ok) {
+      const code = data?.detail?.code
+      agentHubMetrics.value = null
+      agentHubMetricsError.value = typeof code === 'string' && /^[A-Z][A-Z0-9_]{0,63}$/.test(code)
+        ? code : 'METRICS_READ_FAILED'
+    } else if (data && Number.isInteger(data.total_runs) && data.run_status_counts &&
+        data.execution_success_rate && data.execution_failure_rate && data.rejected_rate &&
+        data.average_routing_latency_ms && data.average_execution_latency_ms &&
+        data.token_usage && Array.isArray(data.agent_usage) && data.routing_distribution) {
+      agentHubMetrics.value = data
+    } else {
+      agentHubMetrics.value = null
+      agentHubMetricsError.value = 'METRICS_DATA_INVALID'
+    }
+  } catch (_error) {
+    if (requestId === agentHubMetricsRequestId && launchMode.value === 'agenthub') {
+      agentHubMetrics.value = null
+      agentHubMetricsError.value = 'METRICS_READ_FAILED'
+    }
+  } finally {
+    if (requestId === agentHubMetricsRequestId) agentHubMetricsLoading.value = false
   }
 }
 
@@ -1250,7 +1430,7 @@ const handleKeydown = (event) => {
 const handleEnterKey = (e) => {
   if (e.metaKey || e.ctrlKey) {
     // Check disabled state logically similar to button
-    if (loading.value || (isWorkflowRunning.value && !taskPrompt.value.trim()) || (!isWorkflowRunning.value && status.value !== 'Completed' && status.value !== 'Cancelled' && !isConnectionReady.value)) {
+    if (loading.value || (isWorkflowRunning.value && !taskPrompt.value.trim()) || (launchMode.value === 'agenthub' && (status.value === 'Launching...' || (isWorkflowRunning.value && status.value !== 'Waiting for input...'))) || (!isWorkflowRunning.value && status.value !== 'Completed' && status.value !== 'Cancelled' && !isConnectionReady.value)) {
        return
     }
     handleButtonClick()
@@ -1394,12 +1574,22 @@ const handleYAMLSelection = async (fileName) => {
 // Handle button clicks
 const handleButtonClick = () => {
   if (isWorkflowRunning.value) {
+    if (launchMode.value === 'agenthub' && status.value !== 'Waiting for input...') return
     // If Send, send user input
     sendHumanInput()
 
     status.value = "Running..."
     shouldGlow.value = false
   } else if (status.value === 'Completed' || status.value === 'Cancelled') {
+    if (launchMode.value === 'agenthub') {
+      clearAgentHubRun()
+      agentHubRouting.value = null
+      router.replace({ query: { ...route.query, session: undefined, run: undefined } })
+      resetConnectionState()
+      status.value = 'Connecting...'
+      establishWebSocketConnection({ fresh: true })
+      return
+    }
     // If Relaunch, restart the same workflow and re-enter Launch state
     if (!selectedFile.value) {
       alert(t('launch.alert_choose_workflow'))
@@ -1460,10 +1650,10 @@ const sendHumanInput = () => {
 
 // Establish a WebSocket connection
 const establishWebSocketConnection = (options = {}) => {
-  let { sessionId: reconnectSid } = options
+  let { sessionId: reconnectSid, fresh = false } = options
 
   // If no explicit sessionId, check URL for an existing session
-  if (!reconnectSid) {
+  if (!reconnectSid && !fresh) {
     const urlSession = route.query?.session
     if (urlSession && typeof urlSession === 'string' && urlSession.trim()) {
       reconnectSid = urlSession.trim()
@@ -1478,7 +1668,7 @@ const establishWebSocketConnection = (options = {}) => {
     status.value = 'Connecting...'
   } else {
     resetConnectionState()
-    if (!selectedFile.value) {
+    if (!selectedFile.value && launchMode.value !== 'agenthub') {
       return
     }
   }
@@ -1570,6 +1760,7 @@ const establishWebSocketConnection = (options = {}) => {
 
 // Watch for file selection changes
 watch(selectedFile, (newFile) => {
+  if (launchMode.value === 'agenthub') return
   // When reconnecting, selectedFile is set by session_resumed; skip the normal flow
   if (isReconnecting.value) {
     return
@@ -1592,6 +1783,33 @@ watch(selectedFile, (newFile) => {
   establishWebSocketConnection()
 })
 
+watch(launchMode, (mode) => {
+  clearAgentHubRun()
+  agentHubRouting.value = null
+  agentHubMetricsRequestId += 1
+  agentHubMetrics.value = null
+  agentHubMetricsError.value = null
+  agentHubMetricsLoading.value = false
+  if (mode === 'agenthub') void loadAgentHubMetrics()
+  viewMode.value = 'chat'
+  router.replace({
+    query: {
+      ...route.query,
+      mode: mode === 'agenthub' ? 'agenthub' : undefined,
+      workflow: mode === 'manual' ? selectedFile.value || undefined : undefined,
+      run: undefined,
+      session: undefined
+    }
+  })
+  if (mode === 'agenthub' || selectedFile.value) {
+    status.value = 'Connecting...'
+    establishWebSocketConnection({ fresh: true })
+  } else {
+    resetConnectionState()
+    status.value = 'Waiting for file selection...'
+  }
+})
+
 watch(
   () => uploadedAttachments.value.length,
   (length) => {
@@ -1608,21 +1826,50 @@ watch(
   }
 )
 
+watch(
+  () => route.query?.run,
+  (run) => {
+    if (launchMode.value !== 'agenthub' || run === agentHubRunId.value) return
+    agentHubRouting.value = null
+    if (typeof run === 'string' && run) {
+      const expectedSessionId = typeof route.query?.session === 'string' ? route.query.session : null
+      beginAgentHubRun(run, expectedSessionId, null, true)
+      status.value = 'Connecting...'
+      establishWebSocketConnection(expectedSessionId ? { sessionId: expectedSessionId } : { fresh: true })
+    } else {
+      clearAgentHubRun()
+    }
+  }
+)
+
+watch(agentHubBusinessRun, (run) => {
+  if (launchMode.value === 'agenthub' && isTerminalAgentHubRun(run)) void loadAgentHubMetrics()
+})
+
 onMounted(async () => {
   document.addEventListener('click', handleClickOutside)
   document.addEventListener('keydown', handleKeydown)
+  if (launchMode.value === 'agenthub') void loadAgentHubMetrics()
+  if (launchMode.value === 'agenthub' && agentHubRunId.value) {
+    const expectedSessionId = typeof route.query?.session === 'string' ? route.query.session : null
+    beginAgentHubRun(agentHubRunId.value, expectedSessionId, null, true)
+  }
   await loadWorkflows()
   // If URL contains a session id, the watch on selectedFile (triggered by
   // applyWorkflowFromRoute inside loadWorkflows) will call establishWebSocketConnection,
   // which auto-detects the session param and reconnects.
   // Fallback: if session is present but no workflow was in URL, connect directly.
   const sessionParam = route.query?.session
-  if (sessionParam && typeof sessionParam === 'string' && sessionParam.trim() && !selectedFile.value) {
+  if (sessionParam && typeof sessionParam === 'string' && sessionParam.trim() && (launchMode.value === 'agenthub' || !selectedFile.value)) {
     establishWebSocketConnection({ sessionId: sessionParam.trim() })
+  } else if (launchMode.value === 'agenthub' && !sessionParam) {
+    establishWebSocketConnection({ fresh: true })
   }
 })
 
 onUnmounted(() => {
+  stopAgentHubRunQuery()
+  agentHubMetricsRequestId += 1
   document.removeEventListener('click', handleClickOutside)
   document.removeEventListener('keydown', handleKeydown)
   unlockBodyScroll()
@@ -1835,6 +2082,10 @@ const switchToGraph = async () => {
 }
 
 const launchWorkflow = async () => {
+  if (launchMode.value === 'agenthub') {
+    await launchAgentHubTask()
+    return
+  }
   if (!selectedFile.value) {
     alert(t('launch.alert_choose_workflow'))
     return
@@ -1864,15 +2115,10 @@ const launchWorkflow = async () => {
   status.value = 'Launching...'
 
   try {
-    const response = await fetch('/api/workflow/execute', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        yaml_file: selectedFile.value,
-        task_prompt: trimmedPrompt,
-        session_id: sessionId,
-        attachments: attachmentIds
-      })
+    const response = await submitLaunchRequest({
+      mode: 'manual', socket: ws, isConnectionReady: isConnectionReady.value,
+      sessionId, yamlFile: selectedFile.value, taskPrompt: trimmedPrompt,
+      attachmentIds
     })
 
     if (response.ok) {
@@ -1895,8 +2141,12 @@ const launchWorkflow = async () => {
 
       taskPrompt.value = ''
 
-      status.value = 'Running...'
-      isWorkflowRunning.value = true
+      if (status.value === 'Launching...') {
+        status.value = 'Running...'
+      }
+      if (!['Completed', 'Cancelled', 'Error'].includes(status.value)) {
+        isWorkflowRunning.value = true
+      }
 
       // Persist session id in URL for reconnection after refresh
       router.push({
@@ -1924,6 +2174,72 @@ const launchWorkflow = async () => {
     if (isConnectionReady.value) {
       status.value = 'Waiting for launch...'
     }
+  }
+}
+
+const launchAgentHubTask = async () => {
+  const trimmedPrompt = taskPrompt.value.trim()
+  const attachmentIds = uploadedAttachments.value.map((attachment) => attachment.attachmentId)
+  if (!trimmedPrompt) {
+    alert(t('launch.agenthub_task_required'))
+    return
+  }
+  if (!ws || !isConnectionReady.value || !sessionId) {
+    alert(t('launch.alert_ws_not_ready'))
+    return
+  }
+
+  shouldGlow.value = false
+  agentHubRouting.value = null
+  status.value = 'Launching...'
+  try {
+    const response = await submitLaunchRequest({
+      mode: 'agenthub', socket: ws, isConnectionReady: isConnectionReady.value,
+      sessionId, taskPrompt: trimmedPrompt, attachmentIds,
+      routingStrategy: routingStrategy.value
+    })
+    if (!response?.ok) {
+      const error = response ? await response.json().catch(() => ({})) : {}
+      alert(`${t('launch.agenthub_submit_failed')}: ${error?.detail?.code || t('launch.unknown_error')}`)
+      status.value = 'Waiting for launch...'
+      shouldGlow.value = true
+      return
+    }
+
+    const result = await response.json()
+    if (
+      typeof result.run_id !== 'string' || !result.run_id ||
+      result.session_id !== sessionId ||
+      !['running', 'rejected', 'failed'].includes(result.status)
+    ) {
+      throw new Error(t('launch.agenthub_invalid_response'))
+    }
+    beginAgentHubRun(result.run_id, result.session_id, result)
+    agentHubRouting.value = result
+    clearUploadedAttachments()
+    addDialogue('User', trimmedPrompt)
+    taskPrompt.value = ''
+    router.push({
+      query: {
+        ...route.query, mode: 'agenthub', workflow: undefined,
+        session: result.session_id, run: result.run_id
+      }
+    })
+    if (result.status === 'running') {
+      if (!['Completed', 'Cancelled', 'Error'].includes(status.value)) {
+        status.value = 'Request accepted'
+        isWorkflowRunning.value = true
+      }
+    } else {
+      status.value = 'Connected'
+      isWorkflowRunning.value = false
+      shouldGlow.value = true
+    }
+  } catch (error) {
+    console.error('Failed to submit AgentHub task:', error)
+    alert(t('launch.agenthub_submit_failed'))
+    status.value = 'Waiting for launch...'
+    shouldGlow.value = true
   }
 }
 
@@ -2154,6 +2470,7 @@ const processMessage = async (msg) => {
 
     isConnectionReady.value = true
     addChatNotification(t('launch.reconnected'))
+    if (launchMode.value === 'agenthub') void refreshAgentHubRun()
     return
   }
 
@@ -2332,6 +2649,9 @@ const processMessage = async (msg) => {
     isWorkflowRunning.value = false
     sessionIdToDownload = sessionId
   }
+  if (launchMode.value === 'agenthub' && ['workflow_completed', 'workflow_cancelled', 'error'].includes(msg.type)) {
+    void refreshAgentHubRun()
+  }
 }
 
 // Cancel the currently running workflow
@@ -2345,6 +2665,14 @@ const cancelWorkflow = () => {
     ws.send(JSON.stringify({ type: 'cancel' }))
   } catch (sendError) {
     console.warn('Failed to send cancel message:', sendError)
+    if (launchMode.value === 'agenthub') return
+  }
+
+  if (launchMode.value === 'agenthub') {
+    agentHubCancelRequested.value = true
+    addChatNotification(t('launch.agenthub_cancel_requested'))
+    status.value = 'Cancellation requested'
+    return
   }
 
   addChatNotification(t('launch.workflow_cancelled'))
@@ -3245,6 +3573,15 @@ watch(
   min-width: 250px;
 }
 
+.agenthub-right-panel {
+  min-height: 0;
+}
+
+.agenthub-right-panel .control-section {
+  min-height: 0;
+  overflow-y: auto;
+}
+
 /* Right Panel — overlay mode (graph view) */
 .right-panel-overlay {
   position: absolute;
@@ -3346,6 +3683,11 @@ watch(
 
 .file-selector-input {
   cursor: text;
+}
+
+.routing-strategy-select {
+  cursor: pointer;
+  background-color: #252730;
 }
 
 .file-selector:hover:not(:disabled),

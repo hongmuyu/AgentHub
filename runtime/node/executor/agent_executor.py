@@ -25,6 +25,7 @@ from entity.messages import (
     ToolCallPayload,
 )
 from entity.tool_spec import ToolSpec
+from runtime.node.agent_outcome import AgentExecutionOutcome
 from runtime.node.executor.base import NodeExecutor
 from runtime.node.agent.memory.memory_base import (
     MemoryContentSnapshot,
@@ -156,6 +157,12 @@ class AgentNodeExecutor(NodeExecutor):
 
             self._update_memory(node, input_data, inputs, final_message)
 
+            recorder = self.context.outcome_recorder
+            if recorder is not None and recorder.node_id == node.id:
+                recorder.record(AgentExecutionOutcome(
+                    run_id=recorder.run_id, node_id=node.id, state="succeeded",
+                ))
+
             if isinstance(final_message, Message):
                 return [self._clone_with_source(final_message, node.id)]
             return [self._build_message(
@@ -165,6 +172,12 @@ class AgentNodeExecutor(NodeExecutor):
             )]
             
         except Exception as e:
+            recorder = self.context.outcome_recorder
+            if recorder is not None and recorder.node_id == node.id:
+                recorder.record(AgentExecutionOutcome(
+                    run_id=recorder.run_id, node_id=node.id, state="failed",
+                    error_code="AGENT_EXECUTION_FAILED", error_category="agent_execution",
+                ))
             traceback.print_exc()
             error_msg = f"[Node: {node.id}] Error calling model: {str(e)}"
             self.log_manager.error(error_msg)

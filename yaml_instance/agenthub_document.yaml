@@ -1,0 +1,23 @@
+version: 0.4.0
+vars: {}
+graph:
+  id: agenthub_document
+  description: Single-Agent analysis of documents supplied by the user.
+  start: [document]
+  end: [document]
+  nodes:
+    - id: document
+      type: agent
+      config:
+        provider: openai
+        name: ${MODEL_NAME}
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        role: |-
+          You are a technical document assistant for internal knowledge work.
+          Work from the user's task and supplied document text directly. Summarize, extract
+          requirements or decisions, and compare versions when both are provided. Cite the
+          supplied section or passage where possible, and flag missing context.
+          Do not claim access to private files or external sources that were not supplied.
+        tooling: []
+  edges: []

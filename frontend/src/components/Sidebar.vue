@@ -8,6 +8,7 @@
                 to="/workflows"
                 :class="{ active: isWorkflowsActive }"
             >{{ $t('nav.workflows') }}</router-link>
+            <router-link to="/agenthub/registry">{{ $t('nav.registry') }}</router-link>
             <router-link to="/launch" target="_blank" rel="noopener">{{ $t('nav.launch') }}</router-link>
             <router-link to="/batch-run" target="_blank" rel="noopener">{{ $t('nav.laboratory') }}</router-link>
         </nav>
@@ -161,6 +162,26 @@ onUnmounted(() => {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     -webkit-text-fill-color: transparent;
+}
+
+@media (max-width: 700px) {
+    .sidebar {
+        padding-right: 52px;
+        justify-content: flex-start;
+    }
+
+    .sidebar-nav {
+        min-width: 0;
+        overflow-x: auto;
+        white-space: nowrap;
+        padding-left: 12px;
+        margin: 0;
+        scrollbar-width: none;
+    }
+
+    .sidebar-nav a {
+        flex: none;
+    }
 }
 
 .settings-nav-btn {

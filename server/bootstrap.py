@@ -26,6 +26,10 @@ def init_app(app: FastAPI) -> None:
 
     state.init_state()
 
+    from server.services.agenthub.app_setup import configure_agenthub
+
+    configure_agenthub(app, state.get_websocket_manager())
+
     for router in ALL_ROUTERS:
         app.include_router(router)
 

@@ -1,0 +1,261 @@
+{
+  "label": "live_provider_synthetic_catalog_latency_only",
+  "measured_at_utc": "2026-10-08T10:27:10.075542+00:00",
+  "hardware": {
+    "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.35",
+    "python": "3.12.13",
+    "cpu_model": "AMD Ryzen 7 8745H with Radeon 780M Graphics",
+    "logical_cpus": 16,
+    "memory_total_kib": 32146840
+  },
+  "config": {
+    "source_sha256": "5195b6ad04df8004c1e269d179bfd2ac2d40684730119ee8e3ee6bd9abf8375f",
+    "shared_measurement_source_sha256": "f949404c14eab85916d1325b4ed7711aaafe6666027d96b0a2020fd7542004e2",
+    "embedding_provider": "DashScope",
+    "embedding_model_key": "qwen-text-embedding-v4-1024",
+    "embedding_dimensions": 1024,
+    "rerank_provider": "DeepSeek",
+    "rerank_model_key": "deepseek-flash",
+    "catalog_sizes": [
+      10,
+      50,
+      100
+    ],
+    "catalog_construction": "synthetic version-1 active metadata, real indexed embeddings, allowlisted thin workflow; no workflow execution",
+    "top_k": 3,
+    "threshold": -1.0,
+    "threshold_source": "scale-scan-no-gate-v1",
+    "warmup_requests_per_strategy": 1,
+    "query_count": 12,
+    "repeats_per_query": 1,
+    "cache": "new temporary SQLite catalog per size; OS/provider caches uncontrolled; one local warmup per strategy",
+    "timing_scope": "shared with deterministic catalog-size benchmark; rerank segment includes live DeepSeek request",
+    "quality_scope": "synthetic catalog/tasks; no routing accuracy or quality claims"
+  },
+  "sizes": [
+    {
+      "catalog_size": 10,
+      "catalog_and_index_build_ms": 3902.657197,
+      "strategies": {
+        "semantic": {
+          "catalog_size": 10,
+          "request_count": 12,
+          "errors": [],
+          "segments": {
+            "query_embedding_ms": {
+              "sample_count": 12,
+              "p50_ms": 303.13046,
+              "p95_ms": 601.339703
+            },
+            "discovery_excluding_embedding_ms": {
+              "sample_count": 12,
+              "p50_ms": 16.240617000000043,
+              "p95_ms": 18.296960000000013
+            },
+            "rerank_ms": {
+              "sample_count": 0,
+              "p50_ms": null,
+              "p95_ms": null
+            },
+            "routing_query_to_decision_ms": {
+              "sample_count": 12,
+              "p50_ms": 304.498191,
+              "p95_ms": 602.699123
+            },
+            "routing_full_ms": {
+              "sample_count": 12,
+              "p50_ms": 318.951971,
+              "p95_ms": 617.734663
+            }
+          }
+        },
+        "semantic_llm": {
+          "catalog_size": 10,
+          "request_count": 12,
+          "errors": [],
+          "segments": {
+            "query_embedding_ms": {
+              "sample_count": 12,
+              "p50_ms": 243.990646,
+              "p95_ms": 474.662273
+            },
+            "discovery_excluding_embedding_ms": {
+              "sample_count": 12,
+              "p50_ms": 15.810834999999997,
+              "p95_ms": 17.816142999999983
+            },
+            "rerank_ms": {
+              "sample_count": 12,
+              "p50_ms": 1917.319984,
+              "p95_ms": 3514.593423
+            },
+            "routing_query_to_decision_ms": {
+              "sample_count": 12,
+              "p50_ms": 2162.692609,
+              "p95_ms": 3959.066592
+            },
+            "routing_full_ms": {
+              "sample_count": 12,
+              "p50_ms": 2178.087909,
+              "p95_ms": 3974.994993
+            }
+          }
+        }
+      }
+    },
+    {
+      "catalog_size": 50,
+      "catalog_and_index_build_ms": 18904.270613,
+      "strategies": {
+        "semantic": {
+          "catalog_size": 50,
+          "request_count": 12,
+          "errors": [],
+          "segments": {
+            "query_embedding_ms": {
+              "sample_count": 12,
+              "p50_ms": 372.245038,
+              "p95_ms": 417.335164
+            },
+            "discovery_excluding_embedding_ms": {
+              "sample_count": 12,
+              "p50_ms": 67.50346400000001,
+              "p95_ms": 69.17752999999999
+            },
+            "rerank_ms": {
+              "sample_count": 0,
+              "p50_ms": null,
+              "p95_ms": null
+            },
+            "routing_query_to_decision_ms": {
+              "sample_count": 12,
+              "p50_ms": 377.352712,
+              "p95_ms": 422.966389
+            },
+            "routing_full_ms": {
+              "sample_count": 12,
+              "p50_ms": 439.838683,
+              "p95_ms": 484.851689
+            }
+          }
+        },
+        "semantic_llm": {
+          "catalog_size": 50,
+          "request_count": 12,
+          "errors": [
+            {
+              "sample": 1,
+              "code": "RERANK_TRUNCATED_RESPONSE"
+            }
+          ],
+          "segments": {
+            "query_embedding_ms": {
+              "sample_count": 12,
+              "p50_ms": 377.345378,
+              "p95_ms": 826.630101
+            },
+            "discovery_excluding_embedding_ms": {
+              "sample_count": 12,
+              "p50_ms": 68.962806,
+              "p95_ms": 73.22616799999997
+            },
+            "rerank_ms": {
+              "sample_count": 12,
+              "p50_ms": 2446.415303,
+              "p95_ms": 9883.575554
+            },
+            "routing_query_to_decision_ms": {
+              "sample_count": 12,
+              "p50_ms": 3160.638691,
+              "p95_ms": 10233.067972
+            },
+            "routing_full_ms": {
+              "sample_count": 12,
+              "p50_ms": 3224.426147,
+              "p95_ms": 10302.801187
+            }
+          }
+        }
+      }
+    },
+    {
+      "catalog_size": 100,
+      "catalog_and_index_build_ms": 36551.787081,
+      "strategies": {
+        "semantic": {
+          "catalog_size": 100,
+          "request_count": 12,
+          "errors": [],
+          "segments": {
+            "query_embedding_ms": {
+              "sample_count": 12,
+              "p50_ms": 306.658158,
+              "p95_ms": 461.63333
+            },
+            "discovery_excluding_embedding_ms": {
+              "sample_count": 12,
+              "p50_ms": 131.137089,
+              "p95_ms": 135.46828700000003
+            },
+            "rerank_ms": {
+              "sample_count": 0,
+              "p50_ms": null,
+              "p95_ms": null
+            },
+            "routing_query_to_decision_ms": {
+              "sample_count": 12,
+              "p50_ms": 316.328527,
+              "p95_ms": 468.752241
+            },
+            "routing_full_ms": {
+              "sample_count": 12,
+              "p50_ms": 439.293631,
+              "p95_ms": 589.728601
+            }
+          }
+        },
+        "semantic_llm": {
+          "catalog_size": 100,
+          "request_count": 12,
+          "errors": [
+            {
+              "sample": 6,
+              "code": "RERANK_TRUNCATED_RESPONSE"
+            },
+            {
+              "sample": 7,
+              "code": "RERANK_TRUNCATED_RESPONSE"
+            }
+          ],
+          "segments": {
+            "query_embedding_ms": {
+              "sample_count": 12,
+              "p50_ms": 330.643285,
+              "p95_ms": 1593.711357
+            },
+            "discovery_excluding_embedding_ms": {
+              "sample_count": 12,
+              "p50_ms": 135.81392199999993,
+              "p95_ms": 209.48696900000002
+            },
+            "rerank_ms": {
+              "sample_count": 12,
+              "p50_ms": 2824.551303,
+              "p95_ms": 10334.756303
+            },
+            "routing_query_to_decision_ms": {
+              "sample_count": 12,
+              "p50_ms": 3077.606349,
+              "p95_ms": 10651.002481
+            },
+            "routing_full_ms": {
+              "sample_count": 12,
+              "p50_ms": 3202.536391,
+              "p95_ms": 10776.190432
+            }
+          }
+        }
+      }
+    }
+  ]
+}

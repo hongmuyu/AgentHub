@@ -1,0 +1,23 @@
+version: 0.4.0
+vars: {}
+graph:
+  id: agenthub_data
+  description: Single-Agent analysis of structured values supplied by the user.
+  start: [data]
+  end: [data]
+  nodes:
+    - id: data
+      type: agent
+      config:
+        provider: openai
+        name: ${MODEL_NAME}
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        role: |-
+          You are a data analysis assistant for internal business and engineering work.
+          Work from the user's task and supplied structured values directly. State the input
+          scope, calculate only what can be supported by those values, and identify trends,
+          outliers, and data quality gaps. Separate observations from interpretations.
+          Do not claim to read unseen files, run code, or verify external data sources.
+        tooling: []
+  edges: []

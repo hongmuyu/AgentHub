@@ -1,0 +1,71 @@
+{
+  "dataset_version": "routing-v1",
+  "groups": [
+    {
+      "runtime_ref": "workflow://research-agent/1",
+      "cases": [
+        {"case_id": "clear-research-01", "split": "calibration", "task_text": "Find official public documentation for PostgreSQL logical replication and cite the sections that explain publications and subscriptions.", "annotation_reason": "Requires finding and citing public technical sources, which is Research's external-information capability."},
+        {"case_id": "clear-research-02", "split": "calibration", "task_text": "Gather public OpenTelemetry specification pages on trace-context propagation and summarize the traceparent fields with source links.", "annotation_reason": "Public specification lookup plus a cited technical summary fits Research rather than supplied-document extraction."},
+        {"case_id": "clear-research-03", "split": "calibration", "task_text": "Compare Kafka and RabbitMQ delivery guarantees using their published technical documentation, with citations for each claim.", "annotation_reason": "The task asks for an evidence-backed comparison of external technologies from public sources."},
+        {"case_id": "clear-research-04", "split": "test", "task_text": "Locate public WebAuthn guidance on passkey sign-in and summarize the documented user-verification options with links.", "annotation_reason": "Finding and synthesizing cited public guidance is the Research Agent's stated scope."},
+        {"case_id": "clear-research-05", "split": "test", "task_text": "From public Python 3.12 release notes, identify the documented typing changes and provide links to the relevant sections.", "annotation_reason": "This needs external release-note retrieval and source-linked factual synthesis, not code modification."},
+        {"case_id": "clear-research-06", "split": "test", "task_text": "Investigate publicly documented HNSW and IVF index tradeoffs for approximate vector search and cite the technical sources used.", "annotation_reason": "The request is for public-source technical research and comparison, not a local experiment."}
+      ]
+    },
+    {
+      "runtime_ref": "workflow://code-agent/1",
+      "cases": [
+        {"case_id": "clear-code-01", "split": "calibration", "task_text": "Explain why this supplied Python loop raises IndexError and suggest the smallest fix: for i in range(len(items) + 1): total += items[i].", "annotation_reason": "Analyzing a provided code snippet and its off-by-one behavior is Code's debugging capability."},
+        {"case_id": "clear-code-02", "split": "calibration", "task_text": "Given fetch(url).then(r => r.json()) in a supplied JavaScript snippet, explain why an HTTP 500 still enters the next handler and show a minimal status check.", "annotation_reason": "The task asks for implementation behavior and a local code correction based on supplied code."},
+        {"case_id": "clear-code-03", "split": "calibration", "task_text": "Analyze the supplied cache expression return cache.get(key) or load(key); explain what happens when a cached value is zero and propose a safe condition.", "annotation_reason": "Reasoning about falsey-value control flow in a given function fits Code's implementation analysis."},
+        {"case_id": "clear-code-04", "split": "test", "task_text": "Explain why a supplied SQL LEFT JOIN loses rows when the WHERE clause requires child.status = 'active', and show where to place that predicate.", "annotation_reason": "This is analysis of query implementation semantics, not interpretation of a dataset."},
+        {"case_id": "clear-code-05", "split": "test", "task_text": "Explain why this supplied async Python function blocks: async def fetch_data(url): return requests.get(url).json(). Suggest a minimal async-compatible approach.", "annotation_reason": "The user asks to explain and repair behavior in provided code without running it."},
+        {"case_id": "clear-code-06", "split": "test", "task_text": "Given the supplied TypeScript line const value = lookup[id]!, explain its failure mode when id is absent and suggest an explicit guard.", "annotation_reason": "The request targets TypeScript implementation behavior and defensive code structure."}
+      ]
+    },
+    {
+      "runtime_ref": "workflow://data-agent/1",
+      "cases": [
+        {"case_id": "clear-data-01", "split": "calibration", "task_text": "For synthetic request latencies of 120, 180, 150, and 210 ms, calculate the mean and range and explain what each says about the sample.", "annotation_reason": "Calculating descriptive statistics from supplied structured values is Data's stated capability."},
+        {"case_id": "clear-data-02", "split": "calibration", "task_text": "Weekly synthetic defect counts are 12, 9, 7, and 5. Calculate the first-to-last percentage change and describe the trend without forecasting.", "annotation_reason": "The task is numeric trend analysis on values provided directly in the prompt."},
+        {"case_id": "clear-data-03", "split": "calibration", "task_text": "Inspect these supplied order rows for data-quality gaps and count distinct IDs: (A1, east), (A2, blank), (A2, west), (A3, north).", "annotation_reason": "Finding missing fields and duplicate identifiers in a small structured table fits Data."},
+        {"case_id": "clear-data-04", "split": "test", "task_text": "Given synthetic response times 10, 11, 12, 13, and 80 ms, compute the median and range and identify the value needing outlier review.", "annotation_reason": "This is a statistical summary and anomaly check over supplied measurements."},
+        {"case_id": "clear-data-05", "split": "test", "task_text": "A supplied table shows paid ads with 40 clicks from 1000 impressions and organic with 75 clicks from 1500 impressions. Compute each click-through rate and compare them.", "annotation_reason": "Computing and comparing rates from explicit tabular counts is Data's quantitative work."},
+        {"case_id": "clear-data-06", "split": "test", "task_text": "For supplied inventory counts, sensors rise from 20 to 32 while cables fall from 50 to 44. Calculate each absolute change and identify the larger movement.", "annotation_reason": "The task requires arithmetic and trend extraction from a small structured dataset."}
+      ]
+    },
+    {
+      "runtime_ref": "workflow://document-agent/1",
+      "cases": [
+        {"case_id": "clear-document-01", "split": "calibration", "task_text": "Summarize this supplied runbook excerpt: before deployment, back up the database; after deployment, verify health checks; if checks fail, restore the backup.", "annotation_reason": "Summarizing facts from text supplied in the task is Document's bounded scope."},
+        {"case_id": "clear-document-02", "split": "calibration", "task_text": "Extract the mandatory and optional requirements from this supplied specification: the API must log request IDs and should include a retry-after header on rate limits.", "annotation_reason": "The task is factual requirement extraction from a provided technical document excerpt."},
+        {"case_id": "clear-document-03", "split": "calibration", "task_text": "Compare these supplied policy versions: version A retains logs for 30 days; version B retains logs for 14 days and adds weekly access review. List the textual changes.", "annotation_reason": "Comparing two supplied document versions without external verification fits Document."},
+        {"case_id": "clear-document-04", "split": "test", "task_text": "Organize the decisions and open questions in this supplied meeting note: use object storage for exports; encryption settings remain undecided; revisit cost next week.", "annotation_reason": "Extracting and organizing stated decisions from provided prose is Document work."},
+        {"case_id": "clear-document-05", "split": "test", "task_text": "List the migration prerequisites from this supplied checklist excerpt: confirm schema compatibility, take a snapshot, notify support, then enable the new endpoint.", "annotation_reason": "The request asks for information extraction from a given checklist, not execution planning."},
+        {"case_id": "clear-document-06", "split": "test", "task_text": "Compare these supplied API guide excerpts: the old guide sets a 5-second timeout with no retry; the new guide sets 8 seconds and one retry. State the documented differences.", "annotation_reason": "The task is a factual comparison of supplied documentation versions."}
+      ]
+    },
+    {
+      "runtime_ref": "workflow://planning-agent/1",
+      "cases": [
+        {"case_id": "clear-planning-01", "split": "calibration", "task_text": "Break an internal REST API version migration into milestones and dependencies, given a two-week window and a requirement to avoid downtime.", "annotation_reason": "Decomposing a future goal into staged work under supplied constraints is Planning's role."},
+        {"case_id": "clear-planning-02", "split": "calibration", "task_text": "Create a pilot plan for an internal search feature using existing documentation only; identify preparation, trial, and evaluation milestones.", "annotation_reason": "The user needs an execution plan and milestone sequence, not document summary."},
+        {"case_id": "clear-planning-03", "split": "calibration", "task_text": "Prioritize a supplied backlog containing a production login outage, missing trace IDs, and a cosmetic icon issue; explain the ordering and assumptions.", "annotation_reason": "Ranking future work against impact and constraints fits Planning's prioritization capability."},
+        {"case_id": "clear-planning-04", "split": "test", "task_text": "Map dependencies for a warehouse ingestion rollout: schema definition, sample validation, pipeline deployment, and dashboard checks.", "annotation_reason": "The task asks for dependency ordering across project steps rather than data analysis."},
+        {"case_id": "clear-planning-05", "split": "test", "task_text": "Plan phased accessibility improvements for an internal form library, prioritizing keyboard access and labels while avoiding a full redesign.", "annotation_reason": "Breaking a scoped improvement goal into phases and priorities is Planning work."},
+        {"case_id": "clear-planning-06", "split": "test", "task_text": "Define milestones for onboarding a knowledge base of 20 approved articles, including import checks, a small trial, and handoff criteria; do not assign people or dates.", "annotation_reason": "This is milestone and completion-criteria planning from stated project constraints."}
+      ]
+    },
+    {
+      "runtime_ref": "workflow://review-agent/1",
+      "cases": [
+        {"case_id": "clear-review-01", "split": "calibration", "task_text": "Review this supplied API design sketch for quality risks: it names a success response but no error responses or input limits. Give actionable feedback.", "annotation_reason": "Assessing a supplied design for omissions and improvements is Review's quality role."},
+        {"case_id": "clear-review-02", "split": "calibration", "task_text": "Critique a supplied test plan that covers only successful submissions and omits invalid input, cancellation, and provider failure; identify coverage gaps.", "annotation_reason": "Review evaluates the completeness of an existing work product, here a test plan."},
+        {"case_id": "clear-review-03", "split": "calibration", "task_text": "Review a supplied architecture proposal with one shared worker and no timeout policy; list reliability risks and concrete revisions.", "annotation_reason": "The task asks for quality and risk assessment of a current design, not a new plan."},
+        {"case_id": "clear-review-04", "split": "test", "task_text": "Check a generated project summary against these supplied notes: pilot had five users and no production rollout. Flag unsupported claims and suggest corrections.", "annotation_reason": "Comparing generated output against source facts for errors is Review's evaluation capability."},
+        {"case_id": "clear-review-05", "split": "test", "task_text": "Review a supplied incident report draft that asserts a database cause but includes only an application timeout log; identify unsupported conclusions and missing evidence.", "annotation_reason": "This is quality review of a draft's reasoning and evidence, not external investigation."},
+        {"case_id": "clear-review-06", "split": "test", "task_text": "Assess a supplied release checklist containing build and deploy steps but no rollback or post-deploy verification; propose specific quality improvements.", "annotation_reason": "Review identifies omissions and actionable corrections in a supplied checklist."}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+version: 0.4.0
+vars: {}
+graph:
+  id: agenthub_review
+  description: Single-Agent quality review of supplied work products.
+  start: [review]
+  end: [review]
+  nodes:
+    - id: review
+      type: agent
+      config:
+        provider: openai
+        name: ${MODEL_NAME}
+        base_url: ${BASE_URL}
+        api_key: ${API_KEY}
+        role: |-
+          You are a quality reviewer for internal R&D deliverables.
+          Work from the user's task and supplied design, code, or generated output directly.
+          Identify concrete errors and unsupported claims first, then explain material risks
+          and practical improvements. Distinguish verified findings from review hypotheses.
+          Do not claim to run tests, certify correctness, or inspect missing artifacts.
+        tooling: []
+  edges: []

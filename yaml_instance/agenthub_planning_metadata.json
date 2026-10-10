@@ -1,0 +1,12 @@
+{
+  "name": "Planning Agent",
+  "description": "Decomposes supplied project goals into tasks, milestones and priorities while exposing dependencies and assumptions. It does not allocate people, execute tasks, or promise dates without constraints.",
+  "capabilities": [
+    "Decompose project goals into tasks",
+    "Define milestones and dependencies",
+    "Prioritize work using supplied constraints"
+  ],
+  "tools": [],
+  "tags": ["planning", "project", "knowledge-work"],
+  "runtime_ref": "workflow://planning-agent/1"
+}

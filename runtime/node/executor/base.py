@@ -9,6 +9,7 @@ from typing import Any, Dict, Optional, List
 
 from entity.configs import Node
 from entity.messages import Message, MessageContent, MessageRole, serialize_messages
+from runtime.node.agent_outcome import AgentOutcomeRecorder
 from runtime.node.agent import MemoryManager
 from runtime.node.agent import ThinkingManagerBase
 from runtime.node.agent import ToolManager
@@ -42,6 +43,7 @@ class ExecutionContext:
     workspace_hook: Optional[Any] = None
     human_prompt_service: Optional[HumanPromptService] = None
     cancel_event: Optional[Any] = None
+    outcome_recorder: Optional[AgentOutcomeRecorder] = None
     
     def get_memory_manager(self, node_id: str) -> Optional[MemoryManager]:
         """Return the memory manager for a given node."""

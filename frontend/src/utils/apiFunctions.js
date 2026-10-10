@@ -519,3 +519,64 @@ export async function postFile(sessionId, file) {
     }
   }
 }
+
+export async function submitLaunchRequest({
+  mode, socket, isConnectionReady, sessionId, yamlFile, taskPrompt,
+  attachmentIds, routingStrategy = 'semantic'
+}) {
+  if (!socket || !isConnectionReady || !sessionId) {
+    return null
+  }
+
+  const agentHub = mode === 'agenthub'
+  return fetch(apiUrl(agentHub ? '/api/agenthub/tasks' : '/api/workflow/execute'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(agentHub ? {
+      task: taskPrompt,
+      session_id: sessionId,
+      attachments: attachmentIds,
+      routing_strategy: routingStrategy
+    } : {
+      yaml_file: yamlFile,
+      task_prompt: taskPrompt,
+      session_id: sessionId,
+      attachments: attachmentIds
+    })
+  })
+}
+
+export async function fetchAgentHubRun(runId) {
+  return fetch(apiUrl(`/api/agenthub/tasks/${encodeURIComponent(runId)}`))
+}
+
+export async function fetchAgentHubMetrics() {
+  return fetch(apiUrl('/api/agenthub/metrics'))
+}
+
+export async function fetchAgentHubAgents(offset = 0) {
+  return fetch(apiUrl(`/api/agenthub/agents?include_disabled=true&limit=100&offset=${offset}`))
+}
+
+export async function registerAgentHubAgent(metadata) {
+  return fetch(apiUrl('/api/agenthub/agents'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(metadata)
+  })
+}
+
+export async function updateAgentHubAgent(agentId, metadata) {
+  return fetch(apiUrl(`/api/agenthub/agents/${encodeURIComponent(agentId)}`), {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(metadata)
+  })
+}
+
+export async function setAgentHubAgentEnabled(agentId, enabled) {
+  return fetch(apiUrl(`/api/agenthub/agents/${encodeURIComponent(agentId)}/${enabled ? 'enable' : 'disable'}`), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
+  })
+}

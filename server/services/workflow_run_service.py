@@ -8,6 +8,7 @@ from check.check import load_config
 from entity.graph_config import GraphConfig
 from entity.messages import Message
 from entity.enums import LogLevel
+from runtime.node.agent_outcome import AgentOutcomeRecorder
 from utils.exceptions import ValidationError, WorkflowCancelledError
 from utils.structured_logger import get_server_logger, LogType
 from utils.task_input import TaskInputBuilder
@@ -62,6 +63,7 @@ class WorkflowRunService:
         *,
         attachments: Optional[List[str]] = None,
         log_level: Optional[LogLevel] = None,
+        outcome_recorder: AgentOutcomeRecorder | None = None,
     ) -> None:
         normalized_yaml_name = (yaml_file or "").strip()
         try:
@@ -92,6 +94,9 @@ class WorkflowRunService:
                 },
             )
 
+            outcome_kwargs = (
+                {"outcome_recorder": outcome_recorder} if outcome_recorder is not None else {}
+            )
             await self._execute_workflow_async(
                 session_id,
                 yaml_path,
@@ -99,6 +104,7 @@ class WorkflowRunService:
                 websocket_manager,
                 attachments,
                 log_level,
+                **outcome_kwargs,
             )
         except ValidationError as exc:
             self.logger.error(str(exc))
@@ -141,6 +147,7 @@ class WorkflowRunService:
         websocket_manager,
         attachments: List[str],
         log_level: LogLevel,
+        outcome_recorder: AgentOutcomeRecorder | None = None,
     ) -> None:
         session = self.session_store.get_session(session_id)
         cancel_event = session.cancel_event if session else None
@@ -158,6 +165,9 @@ class WorkflowRunService:
                 graph_config.definition.log_level = log_level
             graph_context = GraphContext(config=graph_config)
 
+            outcome_kwargs = (
+                {"outcome_recorder": outcome_recorder} if outcome_recorder is not None else {}
+            )
             executor = WebSocketGraphExecutor(
                 graph_context,
                 session_id,
@@ -166,6 +176,7 @@ class WorkflowRunService:
                 websocket_manager,
                 self.session_store,
                 cancel_event=cancel_event,
+                **outcome_kwargs,
             )
 
             if session:

@@ -1,0 +1,209 @@
+{
+  "dataset_version": "routing-v1",
+  "cases": [
+    {
+      "case_id": "ambiguous-research-document-01",
+      "category": "ambiguous",
+      "should_reject": false,
+      "split": "calibration",
+      "task_text": "Compare these supplied research abstracts: study A reports faster indexing but higher memory use; study B reports slower indexing and lower memory use. Summarize the tradeoff using only these excerpts.",
+      "expected_runtime_refs": ["workflow://research-agent/1", "workflow://document-agent/1"],
+      "annotation_reason": "Research can synthesize technical findings from supplied material; Document can compare the claims in supplied text. No external lookup is requested."
+    },
+    {
+      "case_id": "ambiguous-research-document-02",
+      "category": "ambiguous",
+      "should_reject": false,
+      "split": "test",
+      "task_text": "Using only these supplied public API notes, compare option A's 100-request limit with option B's 200-request limit and summarize the documented difference for a technical reader.",
+      "expected_runtime_refs": ["workflow://research-agent/1", "workflow://document-agent/1"],
+      "annotation_reason": "Research can compare supplied technical information and Document can extract and compare the two supplied notes; neither needs an external source for this task."
+    },
+    {
+      "case_id": "ambiguous-code-review-01",
+      "category": "ambiguous",
+      "should_reject": false,
+      "split": "calibration",
+      "task_text": "Inspect this supplied Python helper for a correctness issue and suggest a fix: def average(xs): return sum(xs) / len(xs). Consider an empty list.",
+      "expected_runtime_refs": ["workflow://code-agent/1", "workflow://review-agent/1"],
+      "annotation_reason": "Code can debug the supplied implementation; Review can identify the missing empty-input handling as a quality defect and recommend a correction."
+    },
+    {
+      "case_id": "ambiguous-code-review-02",
+      "category": "ambiguous",
+      "should_reject": false,
+      "split": "test",
+      "task_text": "Assess this supplied handler and propose a concrete correction: function getUser(id) { return users[id].name; }. What happens when the ID is absent?",
+      "expected_runtime_refs": ["workflow://code-agent/1", "workflow://review-agent/1"],
+      "annotation_reason": "Code can explain the missing-ID failure and correction; Review can flag the same unhandled input as a defect in the supplied work product."
+    },
+    {
+      "case_id": "ambiguous-data-document-01",
+      "category": "ambiguous",
+      "should_reject": false,
+      "split": "calibration",
+      "task_text": "A supplied report says January had 12 support tickets and February had 9. Extract the figures and state whether the report shows an increase or decrease.",
+      "expected_runtime_refs": ["workflow://data-agent/1", "workflow://document-agent/1"],
+      "annotation_reason": "Data can compare the supplied numeric values; Document can extract and compare the stated figures in the supplied report."
+    },
+    {
+      "case_id": "ambiguous-data-document-02",
+      "category": "ambiguous",
+      "should_reject": false,
+      "split": "test",
+      "task_text": "From this supplied operations note, compare the stated error counts: Monday 8 and Tuesday 5. Identify which day has the larger count.",
+      "expected_runtime_refs": ["workflow://data-agent/1", "workflow://document-agent/1"],
+      "annotation_reason": "Data can compare the two structured counts; Document can extract and compare the explicit figures in the supplied note."
+    },
+    {
+      "case_id": "ambiguous-planning-review-01",
+      "category": "ambiguous",
+      "should_reject": false,
+      "split": "calibration",
+      "task_text": "Assess this supplied rollout plan and recommend a safer order: deploy the API, write rollback steps, then test a sample request.",
+      "expected_runtime_refs": ["workflow://planning-agent/1", "workflow://review-agent/1"],
+      "annotation_reason": "Planning can reorder future work and dependencies; Review can critique the existing plan's deployment-before-validation risk and propose corrections."
+    },
+    {
+      "case_id": "ambiguous-planning-review-02",
+      "category": "ambiguous",
+      "should_reject": false,
+      "split": "test",
+      "task_text": "Evaluate this supplied migration checklist and suggest a better sequence: switch all clients, check compatibility, then prepare a fallback.",
+      "expected_runtime_refs": ["workflow://planning-agent/1", "workflow://review-agent/1"],
+      "annotation_reason": "Planning can order the listed future steps by dependency; Review can identify the checklist's premature switch and missing preparation."
+    },
+    {
+      "case_id": "ambiguous-document-review-01",
+      "category": "ambiguous",
+      "should_reject": false,
+      "split": "calibration",
+      "task_text": "Compare these supplied specification drafts and flag a conflict: draft A requires 30-day log retention; draft B requires 14-day retention for the same logs.",
+      "expected_runtime_refs": ["workflow://document-agent/1", "workflow://review-agent/1"],
+      "annotation_reason": "Document can compare the two supplied requirements; Review can identify their inconsistency as a draft-quality issue."
+    },
+    {
+      "case_id": "ambiguous-document-review-02",
+      "category": "ambiguous",
+      "should_reject": false,
+      "split": "test",
+      "task_text": "Read these supplied API guide excerpts and identify a contradiction: one says requests must include X-Trace-ID; the other says the header is optional.",
+      "expected_runtime_refs": ["workflow://document-agent/1", "workflow://review-agent/1"],
+      "annotation_reason": "Document can compare the supplied guide statements; Review can flag the contradictory requirement and recommend clarification."
+    },
+    {
+      "case_id": "ambiguous-data-review-01",
+      "category": "ambiguous",
+      "should_reject": false,
+      "split": "calibration",
+      "task_text": "Check this generated metric summary against supplied counts: 20 successes in 25 runs, described as a 90% success rate. State the correct rate and the error.",
+      "expected_runtime_refs": ["workflow://data-agent/1", "workflow://review-agent/1"],
+      "annotation_reason": "Data can recompute the rate from structured counts; Review can detect the unsupported percentage in generated output."
+    },
+    {
+      "case_id": "ambiguous-data-review-02",
+      "category": "ambiguous",
+      "should_reject": false,
+      "split": "test",
+      "task_text": "Verify a supplied dashboard note: it calls a change from 40 to 50 requests a 50% increase. Calculate the actual increase and flag the claim if wrong.",
+      "expected_runtime_refs": ["workflow://data-agent/1", "workflow://review-agent/1"],
+      "annotation_reason": "Data can calculate the percentage change; Review can critique the inaccurate claim in a supplied work product."
+    },
+    {
+      "case_id": "no-match-calendar-01",
+      "category": "no_match",
+      "should_reject": true,
+      "split": "calibration",
+      "task_text": "Book the company meeting room for tomorrow in the calendar system.",
+      "annotation_reason": "No registered Agent has calendar access or a room-booking action capability; this is outside the six-Agent catalog."
+    },
+    {
+      "case_id": "no-match-email-02",
+      "category": "no_match",
+      "should_reject": true,
+      "split": "test",
+      "task_text": "Send an announcement email to all employees now.",
+      "annotation_reason": "No registered Agent has email delivery access or an outbound messaging capability; composing advice would not perform the request."
+    },
+    {
+      "case_id": "no-match-sso-03",
+      "category": "no_match",
+      "should_reject": true,
+      "split": "calibration",
+      "task_text": "Reset my company SSO password in the identity portal.",
+      "annotation_reason": "None of the catalog Agents can operate the identity portal or change account credentials."
+    },
+    {
+      "case_id": "no-match-deploy-04",
+      "category": "no_match",
+      "should_reject": true,
+      "split": "test",
+      "task_text": "Deploy this release to the production Kubernetes cluster now.",
+      "annotation_reason": "The catalog has no production deployment access or cluster-operation capability; planning deployment is a different task."
+    },
+    {
+      "case_id": "no-match-finance-05",
+      "category": "no_match",
+      "should_reject": true,
+      "split": "calibration",
+      "task_text": "Approve and pay an expense reimbursement in the finance system.",
+      "annotation_reason": "No registered Agent can approve or execute finance-system payments."
+    },
+    {
+      "case_id": "no-match-hr-06",
+      "category": "no_match",
+      "should_reject": true,
+      "split": "test",
+      "task_text": "Create a new employee account in the HR system.",
+      "annotation_reason": "The six-Agent catalog has no HR-system provisioning or account-creation capability."
+    },
+    {
+      "case_id": "no-match-crm-07",
+      "category": "no_match",
+      "should_reject": true,
+      "split": "calibration",
+      "task_text": "Update a customer record in the private CRM database.",
+      "annotation_reason": "No catalog Agent has private CRM access or permission to mutate customer records."
+    },
+    {
+      "case_id": "no-match-procurement-08",
+      "category": "no_match",
+      "should_reject": true,
+      "split": "test",
+      "task_text": "Order a replacement laptop through the procurement portal.",
+      "annotation_reason": "No registered Agent has procurement-portal access or purchasing capability."
+    },
+    {
+      "case_id": "no-match-facility-09",
+      "category": "no_match",
+      "should_reject": true,
+      "split": "calibration",
+      "task_text": "Set the office thermostat to 22 degrees using the building controls.",
+      "annotation_reason": "The catalog has no building-control integration or physical-device action capability."
+    },
+    {
+      "case_id": "no-match-image-10",
+      "category": "no_match",
+      "should_reject": true,
+      "split": "test",
+      "task_text": "Create a finished PNG logo image file for the product and attach it to the reply.",
+      "annotation_reason": "None of the six registered Agents has image-generation or image-file attachment capability."
+    },
+    {
+      "case_id": "no-match-audio-11",
+      "category": "no_match",
+      "should_reject": true,
+      "split": "calibration",
+      "task_text": "Transcribe spoken audio from a meeting recording into a timestamped transcript.",
+      "annotation_reason": "The catalog has no audio transcription capability; Document handles supplied text, not audio processing."
+    },
+    {
+      "case_id": "no-match-scan-12",
+      "category": "no_match",
+      "should_reject": true,
+      "split": "test",
+      "task_text": "Run an active vulnerability scan against an internal server and return the live findings.",
+      "annotation_reason": "No registered Agent has internal-network scanning access or an active security-scan tool."
+    }
+  ]
+}

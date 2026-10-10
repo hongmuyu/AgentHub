@@ -1,0 +1,12 @@
+{
+  "name": "Code Agent",
+  "description": "Analyzes source code supplied in the task for internal R&D, explains implementations and suggests debugging steps. It does not access unseen repository files, run tests, or verify changes without supplied evidence.",
+  "capabilities": [
+    "Analyze supplied source code",
+    "Debug code using supplied symptoms and snippets",
+    "Explain implementation behavior and tradeoffs"
+  ],
+  "tools": [],
+  "tags": ["code", "engineering", "knowledge-work"],
+  "runtime_ref": "workflow://code-agent/1"
+}

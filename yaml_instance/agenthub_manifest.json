@@ -1,0 +1,8 @@
+{
+  "workflow://research-agent/1": "agenthub_research.yaml",
+  "workflow://code-agent/1": "agenthub_code.yaml",
+  "workflow://data-agent/1": "agenthub_data.yaml",
+  "workflow://document-agent/1": "agenthub_document.yaml",
+  "workflow://planning-agent/1": "agenthub_planning.yaml",
+  "workflow://review-agent/1": "agenthub_review.yaml"
+}
