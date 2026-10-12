@@ -1,6 +1,6 @@
 # Memory 模块指南
 
-本文档解释 DevAll 的 Memory 体系：memory 列表配置、内置存储实现、Agent 节点如何引用记忆，以及排障建议。代码主要位于 `entity/configs/memory.py`、`node/agent/memory/*.py`。
+本文档解释上游 ChatDev 的 Memory 体系：memory 列表配置、内置存储实现、Agent 节点如何引用记忆，以及排障建议。代码主要位于 `entity/configs/node/memory.py`、`runtime/node/agent/memory/*.py`。
 
 ## 1. 体系结构
 1. **Memory Store**：在 YAML `memory[]` 中声明，包含 `name`、`type` 和 `config`。`type` 由 `register_memory_store()` 注册，并映射到具体实现。
@@ -45,10 +45,10 @@ memory:
 ## 3. 内置 Memory Store 对比
 | 类型 | 路径 | 特点 | 适用场景 |
 | --- | --- | --- | --- |
-| `simple` | `node/agent/memory/simple_memory.py` | 运行结束后可选择落盘（JSON）；使用向量搜索（FAISS）+语义重打分；支持读写 | 小规模对话记忆、快速原型 |
-| `file` | `node/agent/memory/file_memory.py` | 将指定文件/目录切片为向量索引，只读；自动检测文件变更并更新索引 | 知识库、文档问答 |
-| `blackboard` | `node/agent/memory/blackboard_memory.py` | 轻量附加日志，按时间/条数裁剪；不依赖向量检索 | 简易广播板、流水线调试 |
-| `mem0` | `node/agent/memory/mem0_memory.py` | 由 Mem0 云端托管；支持语义搜索 + 图关系；无需本地 embedding 或持久化。需安装 `mem0ai` 包。 | 生产级记忆、跨会话持久化、多 Agent 记忆共享 |
+| `simple` | `runtime/node/agent/memory/simple_memory.py` | 运行结束后可选择落盘（JSON）；使用向量搜索（FAISS）+语义重打分；支持读写 | 小规模对话记忆、快速原型 |
+| `file` | `runtime/node/agent/memory/file_memory.py` | 将指定文件/目录切片为向量索引，只读；自动检测文件变更并更新索引 | 知识库、文档问答 |
+| `blackboard` | `runtime/node/agent/memory/blackboard_memory.py` | 轻量附加日志，按时间/条数裁剪；不依赖向量检索 | 简易广播板、流水线调试 |
+| `mem0` | `runtime/node/agent/memory/mem0_memory.py` | 由 Mem0 云端托管；支持语义搜索 + 图关系；无需本地 embedding 或持久化。需安装 `mem0ai` 包。 | 生产级记忆、跨会话持久化、多 Agent 记忆共享 |
 
 > 所有内置 store 都会在 `register_memory_store()` 中注册，摘要可通过 `MemoryStoreConfig.field_specs()` 在 UI 中展示。
 
@@ -68,8 +68,8 @@ nodes:
     type: agent
     config:
       provider: openai
-      model: gpt-4o-mini
-      prompt_template: answer_user
+      name: gpt-4o-mini
+      role: 结合相关记忆回答用户问题。
       memories:
         - name: convo_cache
           retrieve_stage: ["gen"]
@@ -136,6 +136,6 @@ nodes:
 
 ## 8. 扩展自定义 Memory
 1. 新建 Config + Store（继承 `MemoryBase`）。
-2. 在 `node/agent/memory/registry.py` 中调用 `register_memory_store("my_store", config_cls=..., factory=..., summary="用途")`。
+2. 在 `runtime/node/agent/memory/registry.py` 中调用 `register_memory_store("my_store", config_cls=..., factory=..., summary="用途")`。
 3. 补充 `FIELD_SPECS`，运行 `python -m tools.export_design_template ...` 以让前端获取新枚举。
 4. 更新本指南或附带 README，说明新 store 的配置项与边界条件。

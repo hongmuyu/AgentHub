@@ -1,6 +1,6 @@
 # Function Tooling 配置指南
 
-`FunctionToolConfig` 允许 Agent 节点调用仓库中的 Python 函数。相关代码位于 `entity/configs/tooling.py`、`utils/function_catalog.py` 以及 `functions/function_calling/`。
+`FunctionToolConfig` 允许 Agent 节点调用仓库中的 Python 函数。相关代码位于 `entity/configs/node/tooling.py`、`utils/function_catalog.py` 以及 `functions/function_calling/`。
 
 ## 1. 配置字段
 | 字段 | 说明 |
@@ -60,12 +60,14 @@ nodes:
   - id: summarize
     type: agent
     config:
+      provider: openai
+      name: gpt-4o-mini
       tooling:
-        type: function
-        config:
-          tools:
-            - name: describe_available_files
-            - name: read_text_file
+        - type: function
+          config:
+            tools:
+              - name: describe_available_files
+              - name: read_text_file_snippet
 ```
 
 ## 5. 扩展流程

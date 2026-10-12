@@ -1,14 +1,14 @@
 # Workflow Authoring Guide
 
-This guide covers YAML structure, node types, provider configuration, edge conditions, and design template export so you can build and debug DevAll DAGs efficiently. Content mirrors `docs/user_guide/workflow_authoring.md` with English copy for global contributors.
+This guide covers YAML structure, node types, provider configuration, edge conditions, and design template export so you can build and debug ChatDev workflows. The Chinese version is [here](../zh/workflow_authoring.md).
 
 ## 1. Prerequisites
 - Know the layout of `yaml_instance/` and `yaml_template/`.
-- Understand the core node types (`model`, `python`, `agent`, `human`, `subgraph`, `passthrough`, `literal`).
+- Understand the registered node types (`agent`, `python`, `human`, `subgraph`, `passthrough`, `literal`, `loop_counter`, `loop_timer`).
 - Review `FIELD_SPECS` (see [field_specs.md](field_specs.md)) and the Schema API contract ([config_schema_contract.md](config_schema_contract.md)) if you rely on dynamic forms in the frontend/IDE.
 
 ## 2. YAML Top-level Structure
-Every workflow file follows the `DesignConfig` root with only three keys: `version`, `vars`, and `graph`. The snippet below is adapted from `yaml_instance/net_example.yaml` and can run as-is:
+Workflow files use the `DesignConfig` root with `version`, `vars`, and `graph`. The following is an illustrative excerpt; for a complete checked-in workflow use [net_example.yaml](../../../yaml_instance/net_example.yaml) with its required provider configuration:
 ```yaml
 version: 0.4.0
 vars:
@@ -76,19 +76,19 @@ The system automatically loads the `.env` file from the project root (if present
 > If a placeholder references a variable that is not defined in any of the three sources above, a `ConfigError` will be raised during configuration parsing with the exact path indicated.
 - `graph`: required block that maps to the `GraphDefinition` dataclass:
   - **Metadata**: `id` (required), `description`, `log_level` (default `DEBUG`), `is_majority_voting`, `initial_instruction`, and optional `organization`.
-  - **Execution controls**: `start`/`end` entry lists (the system executes nodes listed in `start` at the beginning), plus `nodes` and `edges`. Provider/model/tooling settings now live inside each `node.config`; the legacy top-level `providers` table is deprecated. In the example the `keyword` condition on `Human Reviewer -> Article Writer` keeps looping unless the reviewer types `ACCEPT`.
+  - **Execution controls**: `start`/`end` entry lists (the system executes nodes listed in `start` at the beginning), plus `nodes` and `edges`. Provider/model/tooling settings live inside each `node.config`. In the example the `keyword` condition on `Human Reviewer -> Article Writer` keeps looping unless the reviewer types `ACCEPT`.
   - **Shared resources**: `memory` defines stores available to `node.config.memories`. The validator ensures every attachment points to a declared store.
   - **Schema references**: `yaml_template/design.yaml` mirrors the latest `GraphDefinition` shape. After editing configs run `python -m tools.export_design_template` or hit the Schema API to validate.
 
-Further reading: `docs/user_guide/en/field_specs.md` (field catalog), `docs/user_guide/en/runtime_ops.md` (runtime observability), and `yaml_template/design.yaml` (generated baseline template).
+Further reading: [field_specs.md](field_specs.md) (field catalog), [AgentHub runtime and observability](../../agenthub.md), and [yaml_template/design.yaml](../../../yaml_template/design.yaml) (generated baseline template).
 
 ## 3. Node Type Cheatsheet
 | Type | Description                                                                                                                                                                  | Key fields | Detailed Docs |
 | --- |------------------------------------------------------------------------------------------------------------------------------------------------------------------------------| --- | --- |
-| `agent` | Runs an LLM-backed agent with optional tools, memories, and thinking phases.                                                                                                 | `provider`, `model`, `prompt_template`, `tooling`, `thinking`, `memories` | [agent.md](nodes/agent.md) |
-| `python` | Executes Python scripts/commands sharing the `code_workspace/`.                                                                                                              | `entry_script`, `inline_code`, `timeout`, `env` | [python.md](nodes/python.md) |
-| `human` | Pauses in the Web UI awaiting human input.                                                                                                                                   | `prompt`, `timeout`, `attachments` | [human.md](nodes/human.md) |
-| `subgraph` | Embeds a child DAG to reuse complex flows.                                                                                                                                   | `graph_path` or inline `graph` | [subgraph.md](nodes/subgraph.md) |
+| `agent` | Runs an LLM-backed agent with optional tools, memories, and thinking phases.                                                                                                 | `provider`, `name`, `role`, `tooling`, `thinking`, `memories` | [agent.md](nodes/agent.md) |
+| `python` | Executes Python scripts/commands sharing the `code_workspace/`.                                                                                                              | `interpreter`, `args`, `timeout_seconds`, `env` | [python.md](nodes/python.md) |
+| `human` | Pauses in the Web UI awaiting human input.                                                                                                                                   | `description` | [human.md](nodes/human.md) |
+| `subgraph` | Embeds a child DAG to reuse complex flows.                                                                                                                                   | source `type` and `config` | [subgraph.md](nodes/subgraph.md) |
 | `passthrough` | Pass-through node that forwards only the last message by default and can be configured to forward all messages; used for context filtering and graph structure optimization. | `only_last_message` | [passthrough.md](nodes/passthrough.md) |
 | `literal` | Emits a fixed text payload whenever triggered and discards inputs.                                                                                                           | `content`, `role` (`user`/`assistant`) | [literal.md](nodes/literal.md) |
 | `loop_counter` | Guard node that limits loop iterations before releasing downstream edges.                                                                                                    | `max_iterations`, `reset_on_emit`, `message` | [loop_counter.md](nodes/loop_counter.md) |
@@ -97,13 +97,14 @@ Further reading: `docs/user_guide/en/field_specs.md` (field catalog), `docs/user
 Fetch the full schema via `POST /api/config/schema` or inspect the dataclasses inside `entity/configs/`.
 
 ## 4. Providers & Agent Settings
-- When a node omits `provider`, the engine uses `globals.default_provider` (e.g., `openai`).
-- Fields such as `model`, `api_key`, and `base_url` accept `${VAR}` placeholders for environment portability.
-- When combining multiple providers, define `globals` in the workflow root (`{ default_provider: ..., retry: {...} }`) if supported by the dataclass.
+- Set `provider` and model `name` in each `agent` node's `config`; both are required by `AgentConfig`.
+- Fields such as `name`, `api_key`, and `base_url` accept `${VAR}` placeholders for environment portability.
+- Different Agent nodes may specify different providers; retry options belong to each Agent's `config.retry`.
 
 ### 4.1 Gemini Provider Config Example
+Inside an `agent` node's `config`:
 ```yaml
-model:
+config:
   provider: gemini
   base_url: https://generativelanguage.googleapis.com
   api_key: ${GEMINI_API_KEY}
@@ -154,54 +155,12 @@ The Gemini Provider supports multi-modal input (images/video/audio are automatic
   ```
 
 ## 6. Agent Node Advanced Features
-- **Tooling**: Configure `AgentConfig.tooling`; see the [Tooling module](modules/tooling/README.md) (Chinese for now).
-- **Thinking**: Enable staged reasoning via `AgentConfig.thinking` (e.g., chain-of-thought, reflection). Reference `entity/configs/thinking.py` for parameters.
+- **Tooling**: Configure `AgentConfig.tooling`; see the [Tooling module](modules/tooling/overview.md) (Chinese for now).
+- **Thinking**: Enable staged reasoning via `AgentConfig.thinking` (e.g., chain-of-thought, reflection). Reference `entity/configs/node/thinking.py` for parameters.
 - **Memories**: Attach `MemoryAttachmentConfig` through `AgentConfig.memories`; details live in the [Memory module](modules/memory.md).
 
 ## 7. Dynamic Execution (Map-Reduce/Tree)
-Nodes support a sibling field `dynamic` to enable parallel processing or Map-Reduce patterns.
-
-### 7.1 Core Concepts
-- **Map Mode** (`type: map`): Fan-out. Splits list inputs into multiple units for parallel execution, outputting `List[Message]` (flattened results).
-- **Tree Mode** (`type: tree`): Fan-out & Reduce. Splits inputs for parallel execution, then recursively reduces results in groups of `group_size` until a single result remains (e.g., "summary of summaries").
-- **Split Strategy**: Defines how to partition the output of the previous node or current input into parallel units.
-
-### 7.2 Configuration Structure
-```yaml
-nodes:
-  - id: Research Agents
-    type: agent
-    # Standard config (behaves as template for parallel units)
-    config:
-      provider: openai
-      model: gpt-4o
-      prompt_template: "Research this topic: {{content}}"
-    # Dynamic execution config
-    dynamic:
-      type: map
-      # Split strategy (first layer only)
-      split:
-        type: message             # Options: message, regex, json_path
-        # pattern: "..."          # Required for regex mode
-        # json_path: "$.items[*]" # Required for json_path mode
-      # Mode-specific config
-      config:
-        max_parallel: 5           # Concurrency limit
-```
-
-### 7.3 Tree Mode Example
-Ideal for chunked summarization of long texts:
-```yaml
-dynamic:
-  type: tree
-  split:
-    type: regex
-    pattern: "(?s).{1,2000}(?:\\s|$)"  # Split every ~2000 chars
-  config:
-    group_size: 3   # Reduce every 3 results into 1
-    max_parallel: 10
-```
-This mode automatically builds a multi-level execution tree until the result count is reduced to 1. Split config is the same as map mode.
+`dynamic` belongs to an **edge** and expands its target node. See the [Dynamic Execution guide](dynamic_execution.md) for the Map/Tree config, split strategies, and a checked-in edge example.
 
 ## 8. Design Template Export
 After editing configs or `FIELD_SPECS`, regenerate templates:
@@ -215,8 +174,8 @@ python -m tools.export_design_template \
 
 ## 9. CLI / API Execution Paths
 - **Web UI**: Choose a YAML file, fill run parameters, start execution, and monitor in the dashboard. *Recommended path.*
-- **HTTP**: `POST /api/workflow/execute` with `session_name`, `graph_path` or `graph_content`, `task_prompt`, optional `attachments`, and `log_level` (defaults to `INFO`, supports `INFO` or `DEBUG`).
-- **CLI**: `python run.py --path yaml_instance/demo.yaml --name test_run`. Provide `TASK_PROMPT` via env var or respond to the CLI prompt.
+- **HTTP**: Establish a WebSocket `/ws` session first, then `POST /api/workflow/execute` with `yaml_file`, `task_prompt`, its current `session_id`, optional `attachments`, and `log_level` (`INFO` or `DEBUG`).
+- **CLI**: `python run.py --path yaml_instance/net_example.yaml --name test_run`. Respond to the CLI prompt for the task text.
 
 ## 10. Debugging Tips
 - Use the Web UI context snapshots or `WareHouse/<session>/context.json` to inspect node I/O. Note that all node outputs are now standardized as `List[Message]`.

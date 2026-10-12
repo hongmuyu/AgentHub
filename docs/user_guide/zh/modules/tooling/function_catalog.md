@@ -38,7 +38,7 @@ tooling:
 | `move_path` | 移动文件或目录 |
 | `search_in_files` | 在工作区文件中搜索文本或正则模式 |
 
-**示例 YAML**：[ChatDev_v1.yaml](../../../../../yaml_instance/ChatDev_v1.yaml)、[file_tool_use_case.yaml](../../../../../yaml_instance/file_tool_use_case.yaml)
+**示例 YAML**：[ChatDev_v1.yaml](../../../../../yaml_instance/ChatDev_v1.yaml)
 
 ---
 

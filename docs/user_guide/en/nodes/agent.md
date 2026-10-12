@@ -6,13 +6,13 @@ The Agent node is the most fundamental node type in the DevAll platform, used to
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `provider` | string | Yes | `openai` | Model provider name, e.g., `openai`, `gemini` |
+| `provider` | string | Yes | - | Model provider name, e.g., `openai`, `gemini` |
 | `name` | string | Yes | - | Model name, e.g., `gpt-4o`, `gemini-2.0-flash-001` |
 | `role` | text | No | - | System prompt |
 | `base_url` | string | No | Provider default | API endpoint URL, supports `${VAR}` placeholders |
 | `api_key` | string | No | - | API key, recommend using environment variable `${API_KEY}` |
 | `params` | dict | No | `{}` | Model call parameters (temperature, top_p, etc.) |
-| `tooling` | object | No | - | Tool calling configuration, see [Tooling Module](../modules/tooling/README.md) |
+| `tooling` | list | No | `[]` | Tool calling configurations, see [Tooling Module](../modules/tooling/overview.md) |
 | `thinking` | object | No | - | Chain-of-thought configuration, e.g., chain-of-thought, reflection |
 | `memories` | list | No | `[]` | Memory binding configuration, see [Memory Module](../modules/memory.md) |
 | `skills` | object | No | - | Agent Skills discovery and built-in skill activation/file-read tools |
@@ -83,12 +83,12 @@ nodes:
       name: gpt-4o
       api_key: ${API_KEY}
       tooling:
-        type: function  # Tool type: function, mcp_remote, mcp_local
-        config:
-          tools:  # List of function tools from functions/function_calling/ directory
-            - name: describe_available_files
-            - name: load_file
-          timeout: 20  # Optional: execution timeout (seconds)
+        - type: function  # Tool type: function, mcp_remote, mcp_local
+          config:
+            tools:  # List of function tools from functions/function_calling/ directory
+              - name: describe_available_files
+              - name: load_file
+            timeout: 20  # Optional: execution timeout (seconds)
 ```
 
 ### Configuring MCP Tools (Remote HTTP)
@@ -102,12 +102,12 @@ nodes:
       name: gpt-4o
       api_key: ${API_KEY}
       tooling:
-        type: mcp_remote
-        config:
-          server: http://localhost:8080/mcp  # MCP server endpoint
-          headers:  # Optional: custom request headers
-            Authorization: Bearer ${MCP_TOKEN}
-          timeout: 30  # Optional: request timeout (seconds)
+        - type: mcp_remote
+          config:
+            server: http://localhost:8080/mcp  # MCP server endpoint
+            headers:  # Optional: custom request headers
+              Authorization: Bearer ${MCP_TOKEN}
+            timeout: 30  # Optional: request timeout (seconds)
 ```
 
 ### Configuring MCP Tools (Local stdio)
@@ -121,14 +121,14 @@ nodes:
       name: gpt-4o
       api_key: ${API_KEY}
       tooling:
-        type: mcp_local
-        config:
-          command: uvx  # Launch command
-          args: ["mcp-server-sqlite", "--db-path", "data.db"]
-          cwd: ${WORKSPACE}  # Optional, usually not needed
-          env:  # Optional, usually not needed
-            DEBUG: "true"
-          startup_timeout: 10  # Optional: startup timeout (seconds)
+        - type: mcp_local
+          config:
+            command: uvx  # Launch command
+            args: ["mcp-server-sqlite", "--db-path", "data.db"]
+            cwd: ${WORKSPACE}  # Optional, usually not needed
+            env:  # Optional, usually not needed
+              DEBUG: "true"
+            startup_timeout: 10  # Optional: startup timeout (seconds)
 ```
 
 ### Gemini Multimodal Configuration
@@ -181,6 +181,6 @@ nodes:
 
 ## Related Documentation
 
-- [Tooling Module Configuration](../modules/tooling/README.md)
+- [Tooling Module Configuration](../modules/tooling/overview.md)
 - [Memory Module Configuration](../modules/memory.md)
 - [Workflow Authoring Guide](../workflow_authoring.md)

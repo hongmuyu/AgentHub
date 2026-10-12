@@ -11,20 +11,20 @@ nodes:
     type: agent
     config:
       provider: openai
-      model: gpt-4o-mini
-      prompt_template: solver
+      name: gpt-4o-mini
+      role: Solve the user's request using approved tools when needed.
       tooling:
-        type: function
-        config:
-          tools:
-            - name: describe_available_files
-            - name: load_file
-          auto_load: true
-          timeout: 20
+        - type: function
+          config:
+            tools:
+              - name: describe_available_files
+              - name: load_file
+            auto_load: true
+            timeout: 20
 ```
 
 ## 1. Lifecycle
-1. **Parse** – `ToolingConfig` selects `FunctionToolConfig`, `McpRemoteConfig`, or `McpLocalConfig` based on `type`. Field definitions live in `entity/configs/tooling.py`.
+1. **Parse** – `ToolingConfig` selects `FunctionToolConfig`, `McpRemoteConfig`, or `McpLocalConfig` based on `type`. Field definitions live in `entity/configs/node/tooling.py`.
 2. **Runtime** – When the LLM chooses a tool, the executor injects `_context` (attachment store, workspace paths, etc.) for Function tools or forwards the request through MCP.
 3. **Completion** – Tool outputs are appended to the agent message stream and, when relevant, registered as attachments (e.g., `load_file`).
 

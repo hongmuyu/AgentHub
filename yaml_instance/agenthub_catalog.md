@@ -3,11 +3,11 @@
 The six entries in `agenthub_*_metadata.json` are ordinary Registry metadata. Each
 `runtime_ref` resolves through `agenthub_manifest.json` to a complete, single-Agent
 workflow. The workflow receives the user's task directly; no upstream team output is
-required. The registration command is explicit and uses the separately configured
-AgentHub embedding endpoint:
+required. After completing the [standard Docker setup](../docs/agenthub.md#standard-docker-setup),
+the registration command uses the separately configured AgentHub embedding endpoint:
 
 ```bash
-python -m server.services.agenthub.demo_catalog
+docker compose exec -T backend python -m server.services.agenthub.demo_catalog
 ```
 
 It prints the actual `agent_id` and version for each runtime reference. Repeating

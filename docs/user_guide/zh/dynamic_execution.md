@@ -155,7 +155,7 @@ flowchart TB
 nodes:
   - id: Task Generator
     type: passthrough
-    config: ...
+    config: {}
   - id: Extra Requirement
     type: literal
     config:
@@ -163,6 +163,7 @@ nodes:
   - id: Processor
     type: agent
     config:
+      provider: openai
       name: gpt-4o
       role: 处理任务
 
@@ -189,6 +190,7 @@ edges:
 
 ```yaml
 graph:
+  id: travel_planning
   nodes:
     - id: Eat Planner
       type: literal
@@ -212,11 +214,13 @@ graph:
     - id: Travel Executor
       type: agent
       config:
+        provider: openai
         name: gpt-4o
         role: 你是旅行规划师，请按照用户请求进行规划
     - id: Final Aggregator
       type: agent
       config:
+        provider: openai
         name: gpt-4o
         role: 请将输入的内容整合成一份完整的旅行计划
 
@@ -271,6 +275,5 @@ edges:
 
 ## 9. 相关文档
 
-- [边配置指南](../edges.md)
 - [工作流编排指南](workflow_authoring.md)
 - [Agent 节点配置](nodes/agent.md)

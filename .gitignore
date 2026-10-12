@@ -37,3 +37,12 @@ data/
 temp/
 WareHouse/
 
+# Local-only development records (retained outside the public Git tree)
+/AGENTS.md
+/TASKS.md
+/ARCHITECTURE_RECON.md
+/DEVELOPMENT_BASELINE.md
+/AGENTHUB_DESIGN.md
+/docs/REPOSITORY_AUDIT.md
+/docs/PORTFOLIO.md
+/docs/INTERVIEW_GUIDE.md

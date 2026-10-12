@@ -38,7 +38,7 @@ Tools for file and directory management within `code_workspace/`.
 | `move_path` | Move a file or directory |
 | `search_in_files` | Search for text or regex patterns in workspace files |
 
-**Example YAML**: [ChatDev_v1.yaml](../../../../../yaml_instance/ChatDev_v1.yaml), [file_tool_use_case.yaml](../../../../../yaml_instance/file_tool_use_case.yaml)
+**Example YAML**: [ChatDev_v1.yaml](../../../../../yaml_instance/ChatDev_v1.yaml)
 
 ---
 

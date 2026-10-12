@@ -103,7 +103,7 @@ Graph 本身不承担具体任务的执行，而是负责对各节点的运行�
 * 其可以传递文本和多模态信息。
 * 一个节点的输入和输出都可能是多条信息（Message）。
 * 用户的初始输入是一条信息。
-* 在未配置边的 **[Dynamic 执行模式](#dynamic-执行模式)**（此处可暂时忽略）时，除了 **[Passthrough Node](#passthrough-node)** 和 **[Subgraph Node](#subgraph-node)**（当其以 Passthrough Node 结束时）外的其他节点类型的输出都是一条信息。本教程中的所有配置，均只会产生单条 Message 输出。
+* 在未配置边的 **[Dynamic 执行模式](#dynamic-执行模式)**（此处可暂时忽略）时，除了 **[Passthrough Node](#passthrough-节点)** 和 **[Subgraph Node](#subgraph-节点)**（当其以 Passthrough Node 结束时）外的其他节点类型的输出都是一条信息。本教程中的所有配置，均只会产生单条 Message 输出。
 
 ### 什么是边（Edge）？
 

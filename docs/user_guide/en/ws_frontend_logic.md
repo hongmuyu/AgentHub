@@ -1,5 +1,11 @@
 # WebSocket Connection Lifecycle Analysis
 
+> Historical ChatDev frontend analysis: the line numbers and component state below
+> describe an earlier Launch implementation. For current AgentHub behavior, use
+> the [current Launch source](../../../frontend/src/pages/LaunchView.vue) and
+> [deployment guide](../../agenthub.md#standard-docker-setup). Direct
+> `server_main.py` defaults to port 8000; standard Compose explicitly uses 6400.
+
 ## Scenario: Workflow Completed/Cancelled → File Change/Relaunch → Launch
 
 ### Initial State (Workflow Completed/Cancelled)
@@ -210,4 +216,3 @@ else if (status.value === 'Completed' || status.value === 'Cancelled')
 4. **Connection Ready Check:** `launchWorkflow()` verifies `ws`, `isConnectionReady.value`, and `sessionId` before allowing launch.
 
 5. **Automatic Reconnection:** Both file change and relaunch automatically establish a new WebSocket connection - no manual reconnection needed.
-

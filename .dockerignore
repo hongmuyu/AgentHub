@@ -31,3 +31,13 @@ logs
 README*
 compose.yml
 Dockerfile
+
+# Local-only development records must stay out of backend build contexts.
+AGENTS.md
+TASKS.md
+ARCHITECTURE_RECON.md
+DEVELOPMENT_BASELINE.md
+AGENTHUB_DESIGN.md
+docs/REPOSITORY_AUDIT.md
+docs/PORTFOLIO.md
+docs/INTERVIEW_GUIDE.md

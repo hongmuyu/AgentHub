@@ -1,4 +1,4 @@
-# T48 business demo and resume evidence
+# AgentHub T48 business demo and evidence
 
 This is a four-scenario demonstration of the existing AgentHub platform. The
 [recorded video](agenthub_t48_demo.mp4) is a **225-second, 1280×720 H.264 screen recording**, not
@@ -22,10 +22,13 @@ providers and creates five TaskRuns in the existing SQLite database.
 ```bash
 docker compose up -d --build
 docker compose exec -T backend python -m server.services.agenthub.demo_catalog
-.venv/bin/python demo/t48_reproduce.py --output /tmp/agenthub-t48-reproduction.json
+docker compose exec -T backend python demo/t48_reproduce.py --output /tmp/agenthub-t48-reproduction.json
+docker compose cp backend:/tmp/agenthub-t48-reproduction.json /tmp/agenthub-t48-reproduction.json
 ```
 
-The runner uses `http://localhost:6400` and `ws://localhost:6400/ws`, requires
+The runner uses `http://localhost:6400` and `ws://localhost:6400/ws` inside the
+backend container; the final command copies its report to the host's `/tmp`.
+It requires
 the six-Agent catalog to start active, and restores Data Agent in a `finally`
 block after scenario 4. If a provider call or the restoration fails, stop and
 inspect the Registry before retrying. The output stores synthetic task text,
@@ -78,7 +81,7 @@ the old native WebSocket session and in-flight provider/tool calls do not
 recover. Registry change is verified by both the real run records and the
 controlled fake-embedding/temporary-SQLite integration regression.
 
-## Claims supported for a resume
+## Evidence scope and limits
 
 - Built an enterprise internal Agent Registry and capability-based semantic
   discovery/routing extension around the existing ChatDev workflow runtime;
@@ -88,7 +91,7 @@ controlled fake-embedding/temporary-SQLite integration regression.
   traces and aggregate metrics. In a 30-case independent **live** routing test,
   semantic Top-1 was 11/24; semantic+DeepSeek rerank was 18/24, with two
   truncated-output infrastructure errors excluded from reject denominators.
-  See [T43 calibration/test provenance](../evaluation/README.md).
+  See [T43 calibration/test provenance](../evaluation/guide.md).
 - Demonstrated Registry-controlled routing change without Router branches:
   the same task selected Data before disable and Document afterward, with
   native outputs and business success recorded for both.

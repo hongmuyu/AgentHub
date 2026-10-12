@@ -4,11 +4,11 @@
 
 ## 1. 必备背景
 - 熟悉 `yaml_instance/` 与 `yaml_template/` 的目录结构。
-- 了解基本节点类型（`model`、`python`、`agent`、`human`、`subgraph`、`passthrough`、`literal`）。
+- 了解已注册节点类型（`agent`、`python`、`human`、`subgraph`、`passthrough`、`literal`、`loop_counter`、`loop_timer`）。
 - 理解 `FIELD_SPECS`（见 [field_specs.md](field_specs.md)）与 Schema API（见 [config_schema_contract.md](config_schema_contract.md)）可被前端/IDE 用于动态表单。
 
 ## 2. YAML 顶层结构
-所有工作流文件都遵循 `DesignConfig` 根结构，仅包含 `version`、`vars`、`graph` 三个键。下面示例节选自 `yaml_instance/net_example.yaml`，可以直接运行：
+工作流文件采用 `DesignConfig` 根结构，包含 `version`、`vars`、`graph`。下方为说明性节选；完整可用的工作流见 [net_example.yaml](../../../yaml_instance/net_example.yaml)，运行前需配置其 Provider：
 ```yaml
 version: 0.4.0
 vars:
@@ -76,34 +76,36 @@ graph:
 > 若占位符引用的变量在上述三个来源中均未定义，配置解析时将抛出 `ConfigError` 并指明出错路径。
 - `graph`：唯一必填段落，映射到 `GraphDefinition` dataclass。它包含：
   - **基础元信息**：`id`（必填）、`description`、`log_level`（默认 `DEBUG`）、`is_majority_voting`、`initial_instruction`、可选 `organization`。
-  - **执行控制**：`start`/`end`（入口出口列表；系统会在启动时执行 `start` 中的节点）、`nodes`、`edges`。`nodes` 与 `edges` 同步 `entity/configs/node/*.py` 与 `entity/configs/edge.py`，所有 Provider、模型、Tooling 配置都挂在 `node.config` 内，不再在顶层维护 `providers` 表。上例通过 `keyword` 条件在 `Human Reviewer -> Article Writer` 边上避免输入 `ACCEPT` 时继续循环。
-  - **共享资源**：`memory`（定义 Memory store 列表，供模型节点的 `config.memories` 引用）。调度器会校验节点引用是否在 `graph.memory` 中声明。
+  - **执行控制**：`start`/`end`（入口出口列表；系统会在启动时执行 `start` 中的节点）、`nodes`、`edges`。配置实现在 `entity/configs/node/` 与 `entity/configs/edge/` 中，Provider、模型、Tooling 配置位于 `node.config`。上例通过 `keyword` 条件在 `Human Reviewer -> Article Writer` 边上避免输入 `ACCEPT` 时继续循环。
+  - **共享资源**：`memory`（定义 Memory store 列表，供 Agent 节点的 `config.memories` 引用）。调度器会校验节点引用是否在 `graph.memory` 中声明。
   - **Schema 参考**：`yaml_template/design.yaml` 会实时反映 `GraphDefinition` 字段，建议在修改后运行 `python -m tools.export_design_template` 或调用 Schema API 校验。
 
-进一步阅读：`docs/user_guide/zh/field_specs.md`（字段精细描述）、`docs/user_guide/zh/runtime_ops.md`（运行期可观测性）、以及 `yaml_template/design.yaml`（自动生成的基准模板）。
+进一步阅读：[field_specs.md](field_specs.md)（字段说明）、[AgentHub 运行与可观测性](../../agenthub.md)、[yaml_template/design.yaml](../../../yaml_template/design.yaml)（生成的模板）。
 
 ## 3. 节点类型速览
 | 类型 | 描述                                       | 关键字段 | 详细文档 |
 | --- |------------------------------------------| --- | --- |
-| `agent` | 调用 LLM，支持工具、记忆、thinking                  | `provider`, `model`, `prompt_template`, `tooling`, `thinking`, `memories` | [agent.md](nodes/agent.md) |
-| `python` | 执行 Python 代码（脚本或指令），共享 `code_workspace/` | `entry_script`, `inline_code`, `timeout`, `env` | [python.md](nodes/python.md) |
-| `human` | 在 Web UI 阻塞等待人工输入                        | `prompt`, `timeout`, `attachments` | [human.md](nodes/human.md) |
-| `subgraph` | 嵌入子 DAG，复用复杂流程                           | `graph_path` 或内联 `graph` | [subgraph.md](nodes/subgraph.md) |
+| `agent` | 调用 LLM，支持工具、记忆、thinking                  | `provider`, `name`, `role`, `tooling`, `thinking`, `memories` | [agent.md](nodes/agent.md) |
+| `python` | 执行 Python 代码（脚本或指令），共享 `code_workspace/` | `interpreter`, `args`, `timeout_seconds`, `env` | [python.md](nodes/python.md) |
+| `human` | 在 Web UI 阻塞等待人工输入                        | `description` | [human.md](nodes/human.md) |
+| `subgraph` | 嵌入子 DAG，复用复杂流程                           | 来源 `type` 与 `config` | [subgraph.md](nodes/subgraph.md) |
 | `passthrough` | 透传节点，默认只传递最后一条消息，可传递所有信息；用于上下文过滤和图结构优化   | `only_last_message` | [passthrough.md](nodes/passthrough.md) |
 | `literal` | 被触发时输出固定文本消息，忽略输入                        | `content`, `role`（`user`/`assistant`） | [literal.md](nodes/literal.md) |
 | `loop_counter` | 限制环路执行次数的控制节点                            | `max_iterations`, `reset_on_emit`, `message` | [loop_counter.md](nodes/loop_counter.md) |
+| `loop_timer` | 限制环路执行时长的控制节点 | `max_duration`, `duration_unit`, `reset_on_emit`, `message` | [loop_timer.md（英文）](../en/nodes/loop_timer.md) |
 
 详细字段可在前端使用 Schema API (`POST /api/config/schema`) 动态查询，也可参照 `entity/configs/` 中同名 dataclass。
 
 
 ## 4. Provider 与 Agent 设置
-- `provider` 字段缺省时，使用 `globals.default_provider`（如 `openai`）。
-- `model`、`api_key`、`base_url` 等字段支持 `${VAR}` 占位，便于跨环境复用。
-- 对接多个 Provider 时，可在 workflow 层设置 `globals`: `{ default_provider: ..., retry: {...} }`（若 dataclass 支持）。
+- 每个 `agent` 节点的 `config` 都要指定 `provider` 和模型 `name`；`AgentConfig` 将其作为必填字段。
+- `name`、`api_key`、`base_url` 等字段支持 `${VAR}` 占位，便于跨环境复用。
+- 不同 Agent 节点可分别指定 Provider；重试选项位于每个 Agent 的 `config.retry`。
 
 ### 4.1 Gemini Provider 配置示例
+以下内容位于 `agent` 节点的 `config` 下：
 ```yaml
-model:
+config:
   provider: gemini
   base_url: https://generativelanguage.googleapis.com
   api_key: ${GEMINI_API_KEY}
@@ -176,55 +178,13 @@ edges:
           default_value: "0"
   ```
 
-## 6. 模型节点高级特性
-- **Tooling**：在 `AgentConfig.tooling` 中配置，具体见 [Tooling 模块](modules/tooling/README.md)。
-- **Thinking**：在 `AgentConfig.thinking` 中开启，如 `chain-of-thought`、`reflection`（详见 `entity/configs/thinking.py`）。
+## 6. Agent 节点高级特性
+- **Tooling**：在 `AgentConfig.tooling` 中配置，具体见 [Tooling 模块](modules/tooling/overview.md)。
+- **Thinking**：在 `AgentConfig.thinking` 中开启，如 `chain-of-thought`、`reflection`（详见 `entity/configs/node/thinking.py`）。
 - **Memories**：`AgentConfig.memories` 绑定 `MemoryAttachmentConfig`，详见 [Memory 模块](modules/memory.md)。
 
 ## 7. 动态执行 (Map-Reduce/Tree)
-节点配置新增同级字段 `dynamic`，用于启用并行处理或 Map-Reduce 模式。
-
-### 7.1 核心概念
-- **Map 模式** (`type: map`)：扇出（Fan-out）。将 List 输入拆分为多个单元并行执行，输出 `List[Message]`（结果打平）。
-- **Tree 模式** (`type: tree`)：扇出与归约（Fan-out & Reduce）。将输入拆分并行执行后，按 `group_size` 分组递归归约，最终输出单个结果（如“总结的总结”）。
-- **Split 策略**：定义如何将上一节点的输出或当前输入拆分为并行单元。
-
-### 7.2 配置结构
-```yaml
-nodes:
-  - id: Research Agents
-    type: agent
-    # 常规配置（作为并行单元的模板）
-    config:
-      provider: openai
-      model: gpt-4o
-      prompt_template: "Research this topic: {{content}}"
-    # 动态执行配置
-    dynamic:
-      type: map
-      # 拆分策略 (仅首层有效)
-      split:
-        type: message             # 可选: message, regex, json_path
-        # pattern: "..."          # regex 模式下必填
-        # json_path: "$.items[*]" # json_path 模式下必填
-      # 模式专属配置
-      config:
-        max_parallel: 5           # 控制并发度
-```
-
-### 7.3 Tree 模式示例
-适用于长文本分段摘要等场景：
-```yaml
-dynamic:
-  type: tree
-  split:
-    type: regex
-    pattern: "(?s).{1,2000}(?:\\s|$)"  # 每 2000 字符切分
-  config:
-    group_size: 3   # 每 3 个结果归约为 1 个
-    max_parallel: 10
-```
-该模式会自动构建多层级执行树，直到结果数量归约为 1。split 配置与 map 模式一致，
+`dynamic` 配置属于**边**，用于扩展目标节点。Map/Tree 配置、拆分策略和仓库内的边示例见 [Dynamic 执行指南](dynamic_execution.md)。
 
 ## 8. 设计模板导出
 任意修改 Config/FIELD_SPECS 后，运行：
@@ -238,8 +198,8 @@ python -m tools.export_design_template \
 
 ## 9. CLI / API 运行
 - **Web UI**：访问前端页面 → 选择 YAML → 填写运行参数 → 启动 → 在面板监控。**我们建议您采用此方式运行。**
-- **HTTP**：`POST /api/workflow/execute`，payload 包含 `session_name`, `graph_path` 或 `graph_content`, `task_prompt`、可选的 `attachments`，以及 `log_level`（默认 `INFO`，支持 `INFO` 或 `DEBUG`）。
-- **CLI**：`python run.py --path yaml_instance/demo.yaml --name test_run`（执行前可设置 `TASK_PROMPT` 环境变量或在 CLI 提示中输入）。
+- **HTTP**：先建立 `/ws` WebSocket 会话，再向 `POST /api/workflow/execute` 提交 `yaml_file`、`task_prompt`、当前 `session_id`、可选 `attachments` 和 `log_level`（`INFO` 或 `DEBUG`）。
+- **CLI**：`python run.py --path yaml_instance/net_example.yaml --name test_run`，并在 CLI 提示中输入任务文本。
 
 ## 10. 调试建议
 - 使用 Web UI 的上下文快照或 WareHouse 中的 `context.json` 检查节点输入输出。注意所有节点输出现已统一为 `List[Message]` 结构。

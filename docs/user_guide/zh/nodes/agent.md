@@ -6,13 +6,13 @@ Agent 节点是 DevAll 平台中最核心的节点类型，用于调用大语言
 
 | 字段 | 类型 | 必填 | 默认值 | 说明 |
 |------|------|------|--------|------|
-| `provider` | string | 是 | `openai` | 模型提供商名称，如 `openai`、`gemini` |
+| `provider` | string | 是 | - | 模型提供商名称，如 `openai`、`gemini` |
 | `name` | string | 是 | - | 模型名称，如 `gpt-4o`、`gemini-2.0-flash-001` |
 | `role` | text | 否 | - | 系统提示词 (System Prompt) |
 | `base_url` | string | 否 | 提供商默认 | API 端点 URL，支持 `${VAR}` 占位符 |
 | `api_key` | string | 否 | - | API 密钥，建议使用环境变量 `${API_KEY}` |
 | `params` | dict | 否 | `{}` | 模型调用参数（temperature、top_p 等） |
-| `tooling` | object | 否 | - | 工具调用配置，详见 [Tooling 模块](../modules/tooling/README.md) |
+| `tooling` | list | 否 | `[]` | 工具调用配置列表，详见 [Tooling 模块](../modules/tooling/overview.md) |
 | `thinking` | object | 否 | - | 思维链配置，如 chain-of-thought、reflection |
 | `memories` | list | 否 | `[]` | 记忆绑定配置，详见 [Memory 模块](../modules/memory.md) |
 | `skills` | object | 否 | - | Agent Skills 发现配置，以及内置的技能激活/文件读取工具 |
@@ -83,12 +83,12 @@ nodes:
       name: gpt-4o
       api_key: ${API_KEY}
       tooling:
-        type: function  # 工具类型：function, mcp_remote, mcp_local
-        config:
-          tools:  # 函数工具列表，来自 functions/function_calling/ 目录
-            - name: describe_available_files
-            - name: load_file
-          timeout: 20  # 可选：执行超时（秒）
+        - type: function  # 工具类型：function, mcp_remote, mcp_local
+          config:
+            tools:  # 函数工具列表，来自 functions/function_calling/ 目录
+              - name: describe_available_files
+              - name: load_file
+            timeout: 20  # 可选：执行超时（秒）
 ```
 
 ### 配置 MCP 工具（Remote HTTP）
@@ -102,12 +102,12 @@ nodes:
       name: gpt-4o
       api_key: ${API_KEY}
       tooling:
-        type: mcp_remote
-        config:
-          server: http://localhost:8080/mcp  # MCP 服务器端点
-          headers:  # 可选：自定义请求头
-            Authorization: Bearer ${MCP_TOKEN}
-          timeout: 30  # 可选：请求超时（秒）
+        - type: mcp_remote
+          config:
+            server: http://localhost:8080/mcp  # MCP 服务器端点
+            headers:  # 可选：自定义请求头
+              Authorization: Bearer ${MCP_TOKEN}
+            timeout: 30  # 可选：请求超时（秒）
 ```
 
 ### 配置 MCP 工具（Local stdio）
@@ -121,14 +121,14 @@ nodes:
       name: gpt-4o
       api_key: ${API_KEY}
       tooling:
-        type: mcp_local
-        config:
-          command: uvx  # 启动命令
-          args: ["mcp-server-sqlite", "--db-path", "data.db"]
-          cwd: ${WORKSPACE}  # 可选，一般不需要配置
-          env:  # 可选，一般不需要配置
-            DEBUG: "true"
-          startup_timeout: 10  # 可选：启动超时（秒）
+        - type: mcp_local
+          config:
+            command: uvx  # 启动命令
+            args: ["mcp-server-sqlite", "--db-path", "data.db"]
+            cwd: ${WORKSPACE}  # 可选，一般不需要配置
+            env:  # 可选，一般不需要配置
+              DEBUG: "true"
+            startup_timeout: 10  # 可选：启动超时（秒）
 ```
 
 ### Gemini 多模态配置
@@ -181,6 +181,6 @@ nodes:
 
 ## 相关文档
 
-- [Tooling 模块配置](../modules/tooling/README.md)
+- [Tooling 模块配置](../modules/tooling/overview.md)
 - [Memory 模块配置](../modules/memory.md)
 - [工作流编排指南](../workflow_authoring.md)

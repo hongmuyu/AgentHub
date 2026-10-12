@@ -1,6 +1,7 @@
 # Frontend Web UI Quick Start Guide
 
 This guide helps users quickly get started with the DevAll Web UI, covering main functional pages and operation workflows.
+The Launch steps below describe the original Manual YAML mode. AgentHub task routing and Registry operations are documented in the [AgentHub guide](../../agenthub.md).
 
 ## 1. System Entry
 
@@ -88,8 +89,8 @@ When workflow contains `human` nodes:
 
 | Issue | Solution |
 |-------|----------|
-| Page won't load | Confirm frontend `npm run dev` is running |
-| Cannot connect to backend | Confirm backend `uv run python server_main.py` is running |
+| Page won't load | In standard Docker setup, check `docker compose ps frontend`; for direct host development, run `npm run dev` from `frontend/` |
+| Cannot connect to backend | Check `curl -fsS http://localhost:6400/health` in standard Docker setup; for direct host development with the default Vite proxy, run `uv run python server_main.py --port 6400` |
 | Empty workflow list | Check `yaml_instance/` directory for YAML files |
 | Execution unresponsive | Check browser DevTools Network/Console logs |
 | WebSocket disconnected | Refresh page to re-establish connection |

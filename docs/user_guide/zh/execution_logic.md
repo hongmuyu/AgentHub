@@ -180,6 +180,7 @@ nodes:
   - id: Writer
     type: agent
     config:
+      provider: openai
       name: gpt-4o
       role: 你是一位专业的技术作家
   - id: Reviewer
