@@ -1,6 +1,6 @@
 # AgentHub
 
-**AgentHub 根据自然语言任务发现并运行合适的 Agent。** 项目基于 [OpenBMB/ChatDev 2.0](https://github.com/OpenBMB/ChatDev)，新增 Agent 登记、能力发现、动态路由和可观测的业务运行记录；复用 ChatDev 的 Workflow Runtime、WebSocket 执行链、工具和前端。P0 面向可信本地/内部环境，已发布 `v1.0.0`。
+**AgentHub 根据自然语言任务发现并运行合适的 Agent。** 项目基于 [OpenBMB/ChatDev 2.0](https://github.com/OpenBMB/ChatDev)，新增 Agent 登记、能力发现、动态路由和可观测的业务运行记录；复用 ChatDev 的 Workflow Runtime、WebSocket 执行链、工具和前端。P0 面向可信本地/内部环境；`v1.0.0` 是冻结的功能发布快照，后续文档更新不改变该标签。
 
 [观看 225 秒 T48 Demo](demo/agenthub_t48_demo.mp4) · [Demo 说明](demo/README.md) · [五条 Run 原始记录](demo/t48_evidence_2026-10-09.json)
 
@@ -65,10 +65,15 @@ docker compose exec -T backend python -m server.services.agenthub.demo_catalog
 
 ```mermaid
 flowchart TD
-    U[User Task] --> D[Agent Registry / Discovery]
+    U[User Task] --> T[TaskRun pending]
+    T --> D[Agent Registry / Discovery]
     D --> R[Semantic Router / optional LLM Rerank]
-    R --> W[ChatDev Workflow Runtime]
-    W --> O[TaskRun / Trace / Metrics]
+    R --> Q[RoutingTrace / decision]
+    R -->|selected Agent| A[AgentRun]
+    A --> W[ChatDev Workflow Runtime]
+    T --> M[Metrics]
+    Q --> M
+    A --> M
 ```
 
 AgentHub 每个任务选择一个已登记的 Agent。图示为主路径；无合适 Agent 的任务会在执行前被拒绝。数据契约和实现细节见[实现与部署指南](docs/agenthub.md)及[评测方法](evaluation/README.md)。

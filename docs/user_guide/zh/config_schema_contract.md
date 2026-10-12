@@ -13,33 +13,18 @@
 {
   "breadcrumbs": [
     {"node": "DesignConfig", "field": "graph"},
-    {"node": "GraphConfig", "field": "nodes"},
-    {"node": "NodeConfig", "value": "model"}
+    {"node": "GraphDefinition", "field": "nodes"},
+    {"node": "Node", "field": "config", "value": "agent"}
   ]
 }
 ```
-- `node`（必填）：当前所处的类名（如 `DesignConfig`、`GraphConfig`、`NodeConfig`）。
+- `node`（必填）：当前所处的配置类名（如 `DesignConfig`、`GraphDefinition`、`Node`）。
 - `field`（可选）：要下钻的子字段名；缺省表示仅断言仍在该 `node`。
 - `value`（可选）：当子类由判别字段决定时填写（如节点 `type`）。值与 YAML 中保持一致。
 - `index`（可选 int）：预留用于列表遍历，当前以 `field`/`value` 为主。
 
 ### 1.2 `/schema` 响应示例
-```json
-{
-  "schemaVersion": "0.1.0",
-  "node": "NodeConfig",
-  "fields": [
-    {"name": "id", "typeHint": "str", "required": true, "description": "Unique node identifier"},
-    {"name": "type", "typeHint": "str", "required": true,
-     "enum": ["model","python","agent"],
-     "enumOptions": [{"value":"model","label":"LLM Node","description":"Runs provider-backed models"}]
-    }
-  ],
-  "constraints": [...],
-  "breadcrumbs": [...],
-  "cacheKey": "f90d..."
-}
-```
+上述请求返回的 `node` 为 `AgentConfig`。如需查询节点类型，在 `GraphDefinition` breadcrumb 后停止；响应的 `node` 为 `Node`，含 `id` 与 `type` 等字段，`type.enum` 包含 `agent`、`human`、`subgraph`、`python`、`passthrough`、`literal`、`loop_counter`、`loop_timer`。字段使用 `type`，而非 `typeHint`。响应还包含 `schemaVersion`、`constraints`、`breadcrumbs` 和计算得到的 `cacheKey`。
 - `fields`：序列化的 `ConfigFieldSpec`；若有子配置，会包含 `childRoutes`。
 - `constraints`：由 `collect_schema()` 生成的互斥/组合约束。
 - `cacheKey`：基于 `{node, breadcrumbs}` 的 SHA-1，可用于客户端缓存。
@@ -52,18 +37,18 @@
   "document": "name: demo\nversion: 0.4.0\nworkflow:\n  nodes: []\n  edges: []\n"
 }
 ```
-响应：
+这个示例有意使用无效文档：加载器要求 `graph` 配置。响应：
 - 通过：`{ "valid": true, "schema": { ... } }`
 - 配置错误：
   ```json
   {
     "valid": false,
-    "error": "field 'nodes' must not be empty",
-    "path": ["workflow","nodes"],
-    "schema": { ... }
+    "error": "root.graph: graph section is required",
+    "path": "root.graph"
   }
   ```
-- YAML 解析失败：HTTP 400，payload `{ "message": "invalid_yaml", "error": "..." }`
+  完整响应还包含 `schema`，其值取决于请求的 breadcrumbs。
+- YAML 解析失败：HTTP 400，响应 `detail: { "message": "invalid_yaml", "error": "..." }`。
 
 ## 2. Breadcrumb 使用提示
 - 起点：`{ "node": "DesignConfig" }`。
@@ -87,9 +72,9 @@ python run.py --inspect-schema --schema-breadcrumbs '[{"node":"DesignConfig","fi
 ## 5. 错误参考
 | HTTP | 场景 | Payload |
 | --- | --- | --- |
-| 400 | YAML 解析失败 | `{ "message": "invalid_yaml", "error": "..." }` |
-| 422 | Breadcrumb 解析失败 | `{ "message": "breadcrumb node 'X'..." }` |
-| 200 + `valid=false` | 后端 `ConfigError` | `{ "error": "...", "path": ["workflow", ...] }` |
+| 400 | YAML 解析失败 | `detail: { "message": "invalid_yaml", "error": "..." }` |
+| 422 | Breadcrumb 解析失败 | `detail: { "message": "breadcrumb node 'X'..." }` |
+| 200 + `valid=false` | 后端 `ConfigError` | 上例返回 `{ "error": "...", "path": "root.graph" }` |
 | 200 + `valid=true` | 文档有效 | 返回所请求的 Schema，便于表单渲染。 |
 
 搭配 `FIELD_SPECS` 使用，可在前端/IDE 构建无需硬编码的配置体验。

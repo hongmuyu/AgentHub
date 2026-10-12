@@ -1,6 +1,6 @@
 # Memory Module Guide
 
-This document explains DevAll's memory system: memory list config, built-in store implementations, how agent nodes attach memories, and troubleshooting tips. Core code lives in `entity/configs/memory.py` and `node/agent/memory/*.py`.
+This document explains ChatDev's memory system: memory list config, built-in store implementations, how agent nodes attach memories, and troubleshooting tips. Core code lives in `entity/configs/node/memory.py` and `runtime/node/agent/memory/*.py`.
 
 ## 1. Architecture
 1. **Memory Store** – Declared under `memory[]` in YAML with `name`, `type`, and `config`. Types are registered via `register_memory_store()` and point to concrete implementations.
@@ -45,10 +45,10 @@ memory:
 ## 3. Built-in Store Comparison
 | Type | Path | Highlights | Best for |
 | --- | --- | --- | --- |
-| `simple` | `node/agent/memory/simple_memory.py` | Optional disk persistence (JSON) after runs; FAISS + semantic rerank; read/write capable. | Small conversation history, prototypes. |
-| `file` | `node/agent/memory/file_memory.py` | Chunks files/dirs into a vector index, read-only, auto rebuilds when files change. | Knowledge bases, doc QA. |
-| `blackboard` | `node/agent/memory/blackboard_memory.py` | Lightweight append-only log trimmed by time/count; no vector search. | Broadcast boards, pipeline debugging. |
-| `mem0` | `node/agent/memory/mem0_memory.py` | Cloud-managed by Mem0; semantic search + graph relationships; no local embeddings or persistence needed. Requires `mem0ai` package. | Production memory, cross-session persistence, multi-agent memory sharing. |
+| `simple` | `runtime/node/agent/memory/simple_memory.py` | Optional disk persistence (JSON) after runs; FAISS + semantic rerank; read/write capable. | Small conversation history, prototypes. |
+| `file` | `runtime/node/agent/memory/file_memory.py` | Chunks files/dirs into a vector index, read-only, auto rebuilds when files change. | Knowledge bases, doc QA. |
+| `blackboard` | `runtime/node/agent/memory/blackboard_memory.py` | Lightweight append-only log trimmed by time/count; no vector search. | Broadcast boards, pipeline debugging. |
+| `mem0` | `runtime/node/agent/memory/mem0_memory.py` | Cloud-managed by Mem0; semantic search + graph relationships; no local embeddings or persistence needed. Requires `mem0ai` package. | Production memory, cross-session persistence, multi-agent memory sharing. |
 
 All stores register through `register_memory_store()` so summaries show up in UI via `MemoryStoreConfig.field_specs()`.
 
@@ -68,8 +68,8 @@ nodes:
     type: agent
     config:
       provider: openai
-      model: gpt-4o-mini
-      prompt_template: answer_user
+      name: gpt-4o-mini
+      role: Answer the user's question using relevant memory.
       memories:
         - name: convo_cache
           retrieve_stage: ["gen"]
@@ -131,6 +131,6 @@ This schema lets multimodal outputs flow into Memory/Thinking modules without ex
 
 ## 8. Extending Memory
 1. Implement a Config + Store (subclass `MemoryBase`).
-2. Register via `register_memory_store("my_store", config_cls=..., factory=..., summary="...")` in `node/agent/memory/registry.py`.
+2. Register via `register_memory_store("my_store", config_cls=..., factory=..., summary="...")` in `runtime/node/agent/memory/registry.py`.
 3. Add `FIELD_SPECS`, then run `python -m tools.export_design_template ...` so the frontend picks up the enum.
 4. Update this guide or ship a README detailing configuration knobs and boundaries.

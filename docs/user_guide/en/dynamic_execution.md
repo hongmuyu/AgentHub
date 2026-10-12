@@ -155,7 +155,7 @@ When a target node has both dynamic and static incoming edges:
 nodes:
   - id: Task Generator
     type: passthrough
-    config: ...
+    config: {}
   - id: Extra Requirement
     type: literal
     config:
@@ -163,6 +163,7 @@ nodes:
   - id: Processor
     type: agent
     config:
+      provider: openai
       name: gpt-4o
       role: Process task
 
@@ -189,6 +190,7 @@ edges:
 
 ```yaml
 graph:
+  id: travel_planning
   nodes:
     - id: Eat Planner
       type: literal
@@ -212,11 +214,13 @@ graph:
     - id: Travel Executor
       type: agent
       config:
+        provider: openai
         name: gpt-4o
         role: You are a travel planner. Please plan according to user requests.
     - id: Final Aggregator
       type: agent
       config:
+        provider: openai
         name: gpt-4o
         role: Please integrate the inputs into a complete travel plan.
 

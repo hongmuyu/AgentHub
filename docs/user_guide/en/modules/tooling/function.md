@@ -1,6 +1,6 @@
 # Function Tooling Configuration Guide
 
-`FunctionToolConfig` lets agent nodes call Python functions defined in the repo. Implementation lives in `entity/configs/tooling.py`, `utils/function_catalog.py`, and `functions/function_calling/`.
+`FunctionToolConfig` lets agent nodes call Python functions defined in the repo. Implementation lives in `entity/configs/node/tooling.py`, `utils/function_catalog.py`, and `functions/function_calling/`.
 
 ## 1. Config Fields
 | Field | Description |
@@ -57,12 +57,14 @@ nodes:
   - id: summarize
     type: agent
     config:
+      provider: openai
+      name: gpt-4o-mini
       tooling:
-        type: function
-        config:
-          tools:
-            - name: describe_available_files
-            - name: read_text_file
+        - type: function
+          config:
+            tools:
+              - name: describe_available_files
+              - name: read_text_file_snippet
 ```
 
 ## 5. Extension Flow

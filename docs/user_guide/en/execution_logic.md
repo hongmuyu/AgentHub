@@ -181,6 +181,7 @@ nodes:
   - id: Writer
     type: agent
     config:
+      provider: openai
       name: gpt-4o
       role: You are a professional technical writer
   - id: Reviewer

@@ -1,6 +1,7 @@
 # 前端 Web UI 快速入门指南
 
 本指南帮助用户快速上手 DevAll Web UI，涵盖主要功能页面和操作流程。
+下文 Launch 操作描述原有 Manual YAML 模式；AgentHub 任务路由与 Registry 操作见 [AgentHub 指南](../../agenthub.md)。
 
 ## 1. 系统入口
 
@@ -88,8 +89,8 @@
 
 | 问题 | 解决方案 |
 |------|----------|
-| 页面无法加载 | 确认前端服务 `npm run dev` 正常运行 |
-| 无法连接后端 | 确认后端服务 `uv run python server_main.py` 正常运行 |
+| 页面无法加载 | 标准 Docker 部署检查 `docker compose ps frontend`；宿主机开发需在 `frontend/` 目录运行 `npm run dev` |
+| 无法连接后端 | 标准 Docker 部署检查 `curl -fsS http://localhost:6400/health`；宿主机开发需按默认 Vite 代理端口运行 `uv run python server_main.py --port 6400` |
 | 工作流列表为空 | 检查 `yaml_instance/` 目录是否有 YAML 文件 |
 | 执行无响应 | 检查浏览器开发者工具的 Network/Console 日志 |
 | WebSocket 断开 | 刷新页面重新建立连接 |

@@ -21,13 +21,15 @@ nodes:
   - id: remote_mcp
     type: agent
     config:
+      provider: openai
+      name: gpt-4o-mini
       tooling:
-        type: mcp_remote
-        config:
-          server: https://mcp.mycompany.com/mcp
-          headers:
-            Authorization: Bearer ${MY_MCP_TOKEN}
-          timeout: 15
+        - type: mcp_remote
+          config:
+            server: https://mcp.mycompany.com/mcp
+            headers:
+              Authorization: Bearer ${MY_MCP_TOKEN}
+            timeout: 15
 ```
 DevAll connects to the URL for each list/call request and passes `headers`. If the server is unreachable, an error is raised immediately—there is no local fallback.
 
@@ -45,15 +47,17 @@ nodes:
   - id: local_mcp
     type: agent
     config:
+      provider: openai
+      name: gpt-4o-mini
       tooling:
-        type: mcp_local
-        config:
-          command: uvx
-          args:
-            - blender-mcp
-          cwd: ${REPO_ROOT}
-          wait_for_log: "MCP ready"
-          startup_timeout: 8
+        - type: mcp_local
+          config:
+            command: uvx
+            args:
+              - blender-mcp
+            cwd: ${REPO_ROOT}
+            wait_for_log: "MCP ready"
+            startup_timeout: 8
 ```
 DevAll keeps the process alive and relays MCP frames over stdio.
 

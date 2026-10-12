@@ -1,6 +1,6 @@
 # AgentHub P0 v1.0.0 Release Notes
 
-发布日期：2026-10-10。版本基线为 annotated tag [`v1.0.0`](https://github.com/hongmuyu/AgentHub/tree/v1.0.0)，指向 `main` 的 M4 合并提交 `847f973185807f6e074092199c692cd43ea1a804`。本文是发布后的说明文档，单独提交到 `agenthub-dev`，不属于该标签的文件快照。
+发布日期：2026-10-10。版本基线为 annotated tag [`v1.0.0`](https://github.com/hongmuyu/AgentHub/tree/v1.0.0)，指向 M4 合并提交 `847f973185807f6e074092199c692cd43ea1a804`。本文在标签发布后补充，已随文档合并进入 `main`，不属于该标签的文件快照；后续开发分支的文档改动也不会改变冻结标签。
 
 ## 功能与架构
 

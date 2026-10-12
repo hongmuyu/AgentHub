@@ -32,23 +32,23 @@ Key attributes:
 - `default`: scalar or JSON-serializable default value.
 - `description`: helper text/tooltips in forms and docs.
 - `enum`: array of allowed values (strings).
-- `enumOptions`: richer metadata per enum entry (label, description). Use it alongside `enum` for user-friendly dropdowns.
+- `enum_options`: richer metadata per enum entry (label, description); serialized as `enumOptions` in the API response.
 - `child`: reference to another `BaseConfig` subclass for nested structures.
 
 ## 3. Authoring flow
-1. **Validate in `from_dict`** – ensure YAML parsing enforces types and emits clear `ConfigError`s (see `entity/configs/python_runner.py`).
+1. **Validate in `from_dict`** – ensure YAML parsing enforces types and emits clear `ConfigError`s (see `entity/configs/node/python_runner.py`).
 2. **Define `FIELD_SPECS`** – cover all public fields with type, description, default, etc.
 3. **Handle dynamic fields** – when options depend on registries or filesystem scans, override `field_specs()` and use `replace()` to inject real-time `enum`/`description` (e.g., `FunctionToolEntryConfig.field_specs()` lists functions on disk).
 4. **Export templates** – after edits run:
    ```bash
-   python -m tools.export_design_template --output yaml_template/design.yaml --mirror frontend/public/design.yaml
+   python -m tools.export_design_template --output yaml_template/design.yaml --mirror frontend/public/design_0.4.0.yaml
    ```
    The command uses the latest `FIELD_SPECS` to regenerate YAML templates and the frontend mirror—no manual edits needed.
 
 ## 4. Common patterns
-- **Scalar fields**: see `entity/configs/python_runner.py` for `timeout_seconds` (integer default + validation).
-- **Nested lists**: `entity/configs/memory.py` uses `child=FileSourceConfig` for `file_sources`, enabling repeatable subforms.
-- **Dynamic enums**: `Node.field_specs()` (around `entity/configs/node.py:304`) pulls node types from the registry and supplies `enumOptions`; `FunctionToolEntryConfig.field_specs()` builds enumerations from the function catalog.
+- **Scalar fields**: see `entity/configs/node/python_runner.py` for `timeout_seconds` (integer default + validation).
+- **Nested lists**: `entity/configs/node/memory.py` uses `child=FileSourceConfig` for `file_sources`, enabling repeatable subforms.
+- **Dynamic enums**: `Node.field_specs()` in `entity/configs/node/node.py` pulls node types from the registry and supplies `enumOptions`; `FunctionToolEntryConfig.field_specs()` builds enumerations from the function catalog.
 - **Registry-driven descriptions**: when calling `register_node_type` / `register_memory_store` / `register_thinking_mode` / `register_tooling_type`, always provide `summary`/`description`. Those strings populate `enumOptions` and keep dropdowns self-explanatory.
 - **Optional blocks**: combine `required=False` with sensible `default` values and make sure `from_dict` honors the same defaults.
 
@@ -58,4 +58,4 @@ Key attributes:
 - For nested configs, provide concise examples or cross-links so UI users understand the structure.
 - After changing `FIELD_SPECS`, re-run the export command and commit the updated templates/mirror files.
 
-For more examples inspect `entity/configs/model.py`, `entity/configs/tooling.py`, or other existing node/Memory/Thinking configs.
+For more examples inspect `entity/configs/node/agent.py`, `entity/configs/node/tooling.py`, or other existing node/Memory/Thinking configs.

@@ -13,43 +13,18 @@ This reference explains how `/api/config/schema` and `/api/config/schema/validat
 {
   "breadcrumbs": [
     {"node": "DesignConfig", "field": "graph"},
-    {"node": "GraphConfig", "field": "nodes"},
-    {"node": "NodeConfig", "value": "model"}
+    {"node": "GraphDefinition", "field": "nodes"},
+    {"node": "Node", "field": "config", "value": "agent"}
   ]
 }
 ```
-- `node` (required): class name (`DesignConfig`, `GraphConfig`, `NodeConfig`, etc.) that must match the class reached so far.
+- `node` (required): config class name (`DesignConfig`, `GraphDefinition`, `Node`, etc.) that must match the class reached so far.
 - `field` (optional): child field to traverse. When omitted, the breadcrumb only asserts you remain on `node`.
 - `value` (optional): use when the child class depends on a discriminator (e.g., node `type`). Supply the value as it would appear in YAML.
 - `index` (optional int): reserved for list traversal; current configs rely on `value`/`field` for navigation.
 
 ### 1.2 `/schema` response
-```json
-{
-  "schemaVersion": "0.1.0",
-  "node": "NodeConfig",
-  "fields": [
-    {
-      "name": "id",
-      "typeHint": "str",
-      "required": true,
-      "description": "Unique node identifier"
-    },
-    {
-      "name": "type",
-      "typeHint": "str",
-      "required": true,
-      "enum": ["model", "python", "agent"],
-      "enumOptions": [
-        {"value": "model", "label": "LLM Node", "description": "Runs provider-backed models"}
-      ]
-    }
-  ],
-  "constraints": [...],
-  "breadcrumbs": [...],
-  "cacheKey": "f90d..."
-}
-```
+For the request above, `node` is `AgentConfig`. To inspect node types instead, stop after the `GraphDefinition` breadcrumb; the response has `node: "Node"`, fields including `id` and `type`, and `type.enum` values `agent`, `human`, `subgraph`, `python`, `passthrough`, `literal`, `loop_counter`, and `loop_timer`. Field entries use `type`, not `typeHint`. The response also includes `schemaVersion`, `constraints`, `breadcrumbs`, and a computed `cacheKey`.
 - `fields`: serialized `ConfigFieldSpec` entries; nested targets include `childRoutes`.
 - `constraints`: emitted from `collect_schema()` (mutual exclusivity, required combos, etc.).
 - `cacheKey`: SHA-1 hash of `{node, breadcrumbs}` so clients can memoize responses.
@@ -59,27 +34,22 @@ Add `document` alongside breadcrumbs:
 ```json
 {
   "breadcrumbs": [{"node": "DesignConfig"}],
-  "document": """
-name: demo
-version: 0.4.0
-workflow:
-  nodes: []
-  edges: []
-"""
+  "document": "name: demo\nversion: 0.4.0\nworkflow:\n  nodes: []\n  edges: []\n"
 }
 ```
+This document is deliberately invalid: the loader requires a `graph` section.
 Responses:
 - Valid document: `{ "valid": true, "schema": { ... } }`
 - Config error:
   ```json
   {
     "valid": false,
-    "error": "field 'nodes' must not be empty",
-    "path": ["workflow", "nodes"],
-    "schema": { ... }
+    "error": "root.graph: graph section is required",
+    "path": "root.graph"
   }
   ```
-- Malformed YAML: HTTP 400 with `{ "message": "invalid_yaml", "error": "..." }`.
+  The full response also contains `schema`; its value depends on the requested breadcrumbs.
+- Malformed YAML: HTTP 400 with `detail: { "message": "invalid_yaml", "error": "..." }`.
 
 ## 2. Breadcrumb Tips
 - Begin with `{ "node": "DesignConfig" }`.
@@ -103,9 +73,9 @@ The CLI prints the same JSON as `/schema`, which is useful while editing `FIELD_
 ## 5. Error Reference
 | HTTP Code | Situation | Detail payload |
 | --- | --- | --- |
-| 400 | YAML parse failure | `{ "message": "invalid_yaml", "error": "..." }` |
-| 422 | Breadcrumb resolution failure | `{ "message": "breadcrumb node 'X'..." }` |
-| 200 + `valid=false` | Backend `ConfigError` | `{ "error": "...", "path": ["workflow", ...] }` |
+| 400 | YAML parse failure | `detail: { "message": "invalid_yaml", "error": "..." }` |
+| 422 | Breadcrumb resolution failure | `detail: { "message": "breadcrumb node 'X'..." }` |
+| 200 + `valid=false` | Backend `ConfigError` | `{ "error": "...", "path": "root.graph" }` for the example above |
 | 200 + `valid=true` | Document OK | Schema echoed back for the requested breadcrumbs. |
 
 Pair this contract with `FIELD_SPECS` to build schema-aware experiences without hardcoding config structures.

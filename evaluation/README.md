@@ -176,11 +176,12 @@ The selected `FrozenRoutingConfig` stores the winning calibration `config_id`;
 independent test split. A small fake fixture verifies the boundary. Its labels
 and timing are engineering checks, not 60-case quality measurements.
 
-The [measured offline catalog-size report](t43_offline_catalog_size_2026-10-08.json)
-was produced by:
+The checked-in [measured offline catalog-size report](t43_offline_catalog_size_2026-10-08.json)
+was produced by the offline runner. For a new run, write outside the archived evidence:
 
 ```bash
-.venv/bin/python -m evaluation.catalog_size_benchmark --output evaluation/t43_offline_catalog_size_2026-10-08.json
+mkdir -p /tmp/agenthub-t43-reproduction
+.venv/bin/python -m evaluation.catalog_size_benchmark --output /tmp/agenthub-t43-reproduction/offline_catalog_size.json
 ```
 
 It uses a fixed SHA-256 seed, 16-dimensional fake vectors, one active indexed
@@ -233,7 +234,8 @@ use validation-only placeholders; no workflow is executed.
 Run the 60-case quality evaluation explicitly:
 
 ```bash
-.venv/bin/python -m evaluation.live_routing_benchmark --output-dir evaluation
+mkdir -p /tmp/agenthub-t43-reproduction
+.venv/bin/python -m evaluation.live_routing_benchmark --output-dir /tmp/agenthub-t43-reproduction
 ```
 
 The [calibration artifact](t43_live_calibration_2026-10-08.json) contains all
@@ -281,7 +283,8 @@ Ryzen 7 8745H; caches and remote provider load were uncontrolled.
 Run the separate synthetic catalog-size live latency benchmark explicitly:
 
 ```bash
-.venv/bin/python -m evaluation.live_catalog_size_benchmark --output evaluation/t43_live_catalog_size_2026-10-08.json
+mkdir -p /tmp/agenthub-t43-reproduction
+.venv/bin/python -m evaluation.live_catalog_size_benchmark --output /tmp/agenthub-t43-reproduction/live_catalog_size.json
 ```
 
 The [live scale artifact](t43_live_catalog_size_2026-10-08.json) uses real
