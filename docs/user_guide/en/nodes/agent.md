@@ -12,7 +12,7 @@ The Agent node is the most fundamental node type in the DevAll platform, used to
 | `base_url` | string | No | Provider default | API endpoint URL, supports `${VAR}` placeholders |
 | `api_key` | string | No | - | API key, recommend using environment variable `${API_KEY}` |
 | `params` | dict | No | `{}` | Model call parameters (temperature, top_p, etc.) |
-| `tooling` | list | No | `[]` | Tool calling configurations, see [Tooling Module](../modules/tooling/README.md) |
+| `tooling` | list | No | `[]` | Tool calling configurations, see [Tooling Module](../modules/tooling/overview.md) |
 | `thinking` | object | No | - | Chain-of-thought configuration, e.g., chain-of-thought, reflection |
 | `memories` | list | No | `[]` | Memory binding configuration, see [Memory Module](../modules/memory.md) |
 | `skills` | object | No | - | Agent Skills discovery and built-in skill activation/file-read tools |
@@ -181,6 +181,6 @@ nodes:
 
 ## Related Documentation
 
-- [Tooling Module Configuration](../modules/tooling/README.md)
+- [Tooling Module Configuration](../modules/tooling/overview.md)
 - [Memory Module Configuration](../modules/memory.md)
 - [Workflow Authoring Guide](../workflow_authoring.md)

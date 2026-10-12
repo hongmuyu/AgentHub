@@ -91,7 +91,7 @@ controlled fake-embedding/temporary-SQLite integration regression.
   traces and aggregate metrics. In a 30-case independent **live** routing test,
   semantic Top-1 was 11/24; semantic+DeepSeek rerank was 18/24, with two
   truncated-output infrastructure errors excluded from reject denominators.
-  See [T43 calibration/test provenance](../evaluation/README.md).
+  See [T43 calibration/test provenance](../evaluation/guide.md).
 - Demonstrated Registry-controlled routing change without Router branches:
   the same task selected Data before disable and Document afterward, with
   native outputs and business success recorded for both.

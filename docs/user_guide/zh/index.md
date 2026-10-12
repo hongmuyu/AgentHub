@@ -12,7 +12,7 @@
 | [Dynamic 并行执行](dynamic_execution.md) | Map/Tree 模式、Split 拆分策略、并行处理与层级归约                          |
 | [Memory 模块](modules/memory.md) | Memory 列表架构、内置 `simple`/`file`/`blackboard` 行为、嵌入配置、排障 |
 | [Thinking 模块](modules/thinking.md) | 思考增强机制、自我反思模式、扩展自定义思考模式 |
-| [Tooling 模块](modules/tooling/README.md) | Function / MCP 模式、上下文注入、内置函数清单、MCP 启动方式                   |
+| [Tooling 模块](modules/tooling/overview.md) | Function / MCP 模式、上下文注入、内置函数清单、MCP 启动方式                   |
 | [节点类型详解](nodes/) | Agent、Python、Human、Subgraph、Passthrough、Literal、Loop Counter 等节点配置 |
 | [附件与工件 API](attachments.md) | 上传/列举/下载接口、manifest 结构、清理策略、安全限制                          |
 | [FIELD_SPECS 规范](field_specs.md) | UI 表单与模板导出的字段元数据标准（如果您希望自定义模块，请务必阅读此文档）                   |
@@ -33,7 +33,7 @@
 
 ## 4. 角色导航
 - **解决方案工程师/Prompt 工程师**：从 [工作流编排](workflow_authoring.md) 入手，若需要上下文记忆或工具扩展，分别阅读 Memory 与 Tooling 模块文档。
-- **扩展开发者**：结合 [FIELD_SPECS](field_specs.md) 与 [Tooling 模块](modules/tooling/README.md) 了解注册流程，必要时参照 [配置 Schema API 契约](config_schema_contract.md) 调试 UI 交互（英文版见 [English API contract](../en/config_schema_contract.md)）。
+- **扩展开发者**：结合 [FIELD_SPECS](field_specs.md) 与 [Tooling 模块](modules/tooling/overview.md) 了解注册流程，必要时参照 [配置 Schema API 契约](config_schema_contract.md) 调试 UI 交互（英文版见 [English API contract](../en/config_schema_contract.md)）。
 
 ## 5. 常用术语
 - **Session**：贯穿 Web UI、后端和 `WareHouse/` 的运行 ID；新建 WebSocket Session 默认使用 UUID，也可传入指定 ID。

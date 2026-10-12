@@ -12,7 +12,7 @@ Agent 节点是 DevAll 平台中最核心的节点类型，用于调用大语言
 | `base_url` | string | 否 | 提供商默认 | API 端点 URL，支持 `${VAR}` 占位符 |
 | `api_key` | string | 否 | - | API 密钥，建议使用环境变量 `${API_KEY}` |
 | `params` | dict | 否 | `{}` | 模型调用参数（temperature、top_p 等） |
-| `tooling` | list | 否 | `[]` | 工具调用配置列表，详见 [Tooling 模块](../modules/tooling/README.md) |
+| `tooling` | list | 否 | `[]` | 工具调用配置列表，详见 [Tooling 模块](../modules/tooling/overview.md) |
 | `thinking` | object | 否 | - | 思维链配置，如 chain-of-thought、reflection |
 | `memories` | list | 否 | `[]` | 记忆绑定配置，详见 [Memory 模块](../modules/memory.md) |
 | `skills` | object | 否 | - | Agent Skills 发现配置，以及内置的技能激活/文件读取工具 |
@@ -181,6 +181,6 @@ nodes:
 
 ## 相关文档
 
-- [Tooling 模块配置](../modules/tooling/README.md)
+- [Tooling 模块配置](../modules/tooling/overview.md)
 - [Memory 模块配置](../modules/memory.md)
 - [工作流编排指南](../workflow_authoring.md)

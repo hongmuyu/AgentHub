@@ -2,7 +2,7 @@
 
 **AgentHub 根据自然语言任务发现并运行合适的 Agent。** 项目基于 [OpenBMB/ChatDev 2.0](https://github.com/OpenBMB/ChatDev)，新增 Agent 登记、能力发现、动态路由和可观测的业务运行记录；复用 ChatDev 的 Workflow Runtime、WebSocket 执行链、工具和前端。P0 面向可信本地/内部环境；`v1.0.0` 是冻结的功能发布快照，后续文档更新不改变该标签。
 
-[观看 225 秒 T48 Demo](demo/agenthub_t48_demo.mp4) · [Demo 说明](demo/README.md) · [五条 Run 原始记录](demo/t48_evidence_2026-10-09.json)
+[观看 225 秒 T48 Demo](demo/agenthub_t48_demo.mp4) · [Demo 说明](demo/guide.md) · [五条 Run 原始记录](demo/t48_evidence_2026-10-09.json)
 
 录屏包含一次新的 UI 提交、已完成真实 Provider Run 的回放、Registry 操作和证据看板。五条合成任务验收 Run 为 **4 success、1 rejected**；它们不是生产流量或答案质量得分。
 
@@ -25,7 +25,7 @@
 
 原有 Manual YAML 工作流入口仍可使用。[实现指南](docs/agenthub.md)说明上游 Runtime 和 AgentHub 增量的边界。
 
-## Quick Start
+## 快速开始
 
 需要 Docker Engine 与 Compose，以及可用的聊天和 Embedding Provider。依次执行；如果已克隆仓库，可跳过前两行：
 
@@ -46,7 +46,7 @@ docker compose exec -T backend python -m server.services.agenthub.demo_catalog
 
 服务启动后，打开 [Launch](http://localhost:5173/launch) 或 [Registry](http://localhost:5173/agenthub/registry)。后端默认端口 `6400`，前端默认端口 `5173`。目录命令会校验并登记六个已审阅的示例 Agent。
 
-## How to Use · 使用方法
+## 使用方法
 
 1. **管理 Registry**：打开 `/agenthub/registry`，查看六个示例 Agent 的能力与启用状态。
    <!-- TODO(owner): 在此插入已核实的 Registry 截图或 GIF。 -->
@@ -59,9 +59,9 @@ docker compose exec -T backend python -m server.services.agenthub.demo_catalog
 5. **演示拒绝与启停**：提交无匹配任务，再在 Registry 中禁用并恢复 Agent，比较后续路由结果。
    <!-- TODO(owner): 在此插入已核实的拒绝与 Agent 状态素材。 -->
 
-可跟随[现有 Demo 视频与场景说明](demo/README.md)操作。业务 `success` 需要目标 Agent 的有效 Outcome 和 Workflow 正常完成，不代表答案质量经过评测。
+可跟随[现有 Demo 视频与场景说明](demo/guide.md)操作。业务 `success` 需要目标 Agent 的有效 Outcome 和 Workflow 正常完成，不代表答案质量经过评测。
 
-## Architecture · 系统架构
+## 系统架构
 
 ```mermaid
 flowchart TD
@@ -76,9 +76,9 @@ flowchart TD
     A --> M
 ```
 
-AgentHub 每个任务选择一个已登记的 Agent。图示为主路径；无合适 Agent 的任务会在执行前被拒绝。数据契约和实现细节见[实现与部署指南](docs/agenthub.md)及[评测方法](evaluation/README.md)。
+AgentHub 每个任务选择一个已登记的 Agent。图示为主路径；无合适 Agent 的任务会在执行前被拒绝。数据契约和实现细节见[实现与部署指南](docs/agenthub.md)及[评测方法](evaluation/guide.md)。
 
-## Benchmark · 核心结果
+## 基准测试与核心结果
 
 [T43 真实路由测试](evaluation/t43_live_test_2026-10-08.json)使用 DashScope Embedding 与 DeepSeek Rerank。60 条合成标注样例分为 30 条 calibration 和 30 条 independent test；测试集中 24 条任务有可匹配 Agent。
 
@@ -87,11 +87,11 @@ AgentHub 每个任务选择一个已登记的 Agent。图示为主路径；无�
 | Semantic | 11/24 | 368 / 643 ms | 0 |
 | Semantic + LLM Rerank | 18/24 | 2199 / 10067 ms | 2 |
 
-两次重排错误为响应截断，延迟仍包含这些调用。调整 Rerank 输出上限后复用了测试集，但 K 和置信度阈值保持冻结。这组小样本路由比较**不**衡量 Workflow 成功率、Task Quality、生产负载或 SLA。精确数值、分母、前次尝试及独立的 live/offline 目录规模结果见[原始记录与方法](evaluation/README.md)。
+两次重排错误为响应截断，延迟仍包含这些调用。调整 Rerank 输出上限后复用了测试集，但 K 和置信度阈值保持冻结。这组小样本路由比较**不**衡量 Workflow 成功率、Task Quality、生产负载或 SLA。精确数值、分母、前次尝试及独立的 live/offline 目录规模结果见[原始记录与方法](evaluation/guide.md)。
 
 ## 技术文档与限制
 
-[架构、部署与操作](docs/agenthub.md) · [上游 Workflow 使用文档](docs/user_guide/zh/index.md) · [评测证据](evaluation/README.md) · [Demo](demo/README.md) · [发布说明](docs/RELEASE_NOTES.md)
+[架构、部署与操作](docs/agenthub.md) · [上游 Workflow 使用文档](docs/user_guide/zh/index.md) · [评测证据](evaluation/guide.md) · [Demo](demo/guide.md) · [发布说明](docs/RELEASE_NOTES.md)
 
 P0 在可信本地/内部环境中每个任务运行一个 Agent，不提供公开多租户或未审阅 Agent 上传。已完成的业务记录在重启后仍可查询；进行中的 WebSocket/Provider 工作不能续跑。Task Quality 未经独立评测，未知 Token 用量保持未知。完整 Python 套件因继承 WebSocket 测试夹具阻塞仍为 **NOT VERIFIED**；限定范围的通过结果及其他限制见[部署与验证指南](docs/agenthub.md#verified-deployment-scope-and-limits)。
 

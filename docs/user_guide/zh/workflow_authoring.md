@@ -179,7 +179,7 @@ edges:
   ```
 
 ## 6. Agent 节点高级特性
-- **Tooling**：在 `AgentConfig.tooling` 中配置，具体见 [Tooling 模块](modules/tooling/README.md)。
+- **Tooling**：在 `AgentConfig.tooling` 中配置，具体见 [Tooling 模块](modules/tooling/overview.md)。
 - **Thinking**：在 `AgentConfig.thinking` 中开启，如 `chain-of-thought`、`reflection`（详见 `entity/configs/node/thinking.py`）。
 - **Memories**：`AgentConfig.memories` 绑定 `MemoryAttachmentConfig`，详见 [Memory 模块](modules/memory.md)。
 

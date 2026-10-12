@@ -12,7 +12,7 @@ This inherited ChatDev (DevAll) guide covers its workflow backend. AgentHub-spec
 | [Dynamic Parallel Execution](dynamic_execution.md) | Map/Tree modes, split strategies, parallel processing and hierarchical reduction. |
 | [Memory Module](modules/memory.md) | Memory list architecture, built-in `simple`/`file`/`blackboard` behaviors, embedding config, troubleshooting. |
 | [Thinking Module](modules/thinking.md) | Reasoning enhancement, self-reflection mode, extending custom thinking modes. |
-| [Tooling Module](modules/tooling/README.md) | Function/MCP modes, context injection, built-in function catalog, MCP launch patterns. |
+| [Tooling Module](modules/tooling/overview.md) | Function/MCP modes, context injection, built-in function catalog, MCP launch patterns. |
 | [Node Types Reference](nodes/) | Agent, Python, Human, Subgraph, Passthrough, Literal, Loop Counter node configurations. |
 | [Attachment & Artifact APIs](attachments.md) | Upload/list/download endpoints, manifest schema, cleanup strategies, security constraints. |
 | [`FIELD_SPECS` Standard](field_specs.md) | Field metadata contract that powers UI forms and template export—required reading before customizing modules. |
@@ -33,7 +33,7 @@ This inherited ChatDev (DevAll) guide covers its workflow backend. AgentHub-spec
 
 ## 4. Role-based Navigation
 - **Solutions/Prompt Engineers**: Begin with [Workflow Authoring](workflow_authoring.md); read the Memory and Tooling module docs when you need context memories or custom tools.
-- **Extension Developers**: Combine [`FIELD_SPECS`](field_specs.md) with the [Tooling module guide](modules/tooling/README.md) to register new components; reference [config_schema_contract.md](config_schema_contract.md) if you need to debug schema-driven UI.
+- **Extension Developers**: Combine [`FIELD_SPECS`](field_specs.md) with the [Tooling module guide](modules/tooling/overview.md) to register new components; reference [config_schema_contract.md](config_schema_contract.md) if you need to debug schema-driven UI.
 
 ## 5. Glossary
 - **Session**: Unique run ID used across the Web UI, backend, and `WareHouse/`; a new WebSocket session receives a UUID unless an ID is supplied.

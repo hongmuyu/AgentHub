@@ -155,7 +155,7 @@ The Gemini Provider supports multi-modal input (images/video/audio are automatic
   ```
 
 ## 6. Agent Node Advanced Features
-- **Tooling**: Configure `AgentConfig.tooling`; see the [Tooling module](modules/tooling/README.md) (Chinese for now).
+- **Tooling**: Configure `AgentConfig.tooling`; see the [Tooling module](modules/tooling/overview.md) (Chinese for now).
 - **Thinking**: Enable staged reasoning via `AgentConfig.thinking` (e.g., chain-of-thought, reflection). Reference `entity/configs/node/thinking.py` for parameters.
 - **Memories**: Attach `MemoryAttachmentConfig` through `AgentConfig.memories`; details live in the [Memory module](modules/memory.md).
 

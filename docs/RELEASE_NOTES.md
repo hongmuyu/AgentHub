@@ -9,7 +9,7 @@
 - 用服务端 manifest 把逻辑 `runtime_ref` 映射到经过验证的薄 workflow，再复用 `WorkflowRunService`、WebSocket 执行、日志、附件与取消路径。原有 Manual YAML 入口保留。
 - 独立 SQLite（WAL）持久化 TaskRun、RoutingTrace、AgentRun。业务状态与原生 session 状态分开；只有正常 workflow 完成且目标 Agent 给出匹配的结构化 `succeeded` outcome 才能记为业务成功。提供运行查询、轻量指标 API、任务入口及 Registry 管理界面。
 
-架构与操作细节见 [AgentHub 技术与部署文档](agenthub.md)，评测来源见 [evaluation/README.md](../evaluation/README.md)。
+架构与操作细节见 [AgentHub 技术与部署文档](agenthub.md)，评测来源见 [evaluation/guide.md](../evaluation/guide.md)。
 
 ## 部署与兼容性
 
@@ -22,10 +22,10 @@ T46 在标准 backend/frontend 镜像及 Compose 配置下完成构建、启动�
 - 同一独立测试的全路由 p50/p95：`semantic` **368.009 / 643.426 ms**；`semantic_llm` **2199.482 / 10066.879 ms**。每种策略各 30 条延迟样本。LLM 策略的两个 no-match 请求因 DeepSeek 输出截断成为 `RERANK_TRUNCATED_RESPONSE` 基础设施错误，仍计入延迟；拒绝准确率为 `semantic` **3/6**、`semantic_llm` **3/4**，错误样本不进入后者质量分母。21 次实际 rerank 调用的 transport p50/p95 为 **2640.014 / 9703.747 ms**。见 [独立测试原始记录](../evaluation/t43_live_test_2026-10-08.json) 与 [校准记录](../evaluation/t43_live_calibration_2026-10-08.json)。
 - 独立的 10/50/100 Agent **合成目录** live-provider 延迟测试，每档每策略一轮预热及 12 次测量，使用 1024 维真实 embedding、真实 DeepSeek，`K=3`、threshold=-1。100 Agent 时全路由 p50/p95 为 `semantic` **439.294 / 589.729 ms**、`semantic_llm` **3202.536 / 10776.190 ms**。它只测该环境下顺序请求的延迟，不测路由准确率或并发吞吐。[live 规模报告](../evaluation/t43_live_catalog_size_2026-10-08.json) 与使用 fake 16 维 embedding/本地 identity rerank 的 [offline 工程报告](../evaluation/t43_offline_catalog_size_2026-10-08.json)须分开解读。
 
-以上是单次有限样本测量，不构成统计显著性、SLA 或任务执行成功率结论。完整方法、硬件和缓存条件见 [evaluation/README.md](../evaluation/README.md)。
+以上是单次有限样本测量，不构成统计显著性、SLA 或任务执行成功率结论。完整方法、硬件和缓存条件见 [evaluation/guide.md](../evaluation/guide.md)。
 
 ## Demo 与限制
 
-[四场景 Demo 视频](https://github.com/hongmuyu/AgentHub/blob/v1.0.0/demo/agenthub_t48_demo.mp4)、[复现脚本与说明](../demo/README.md)、[原始 Run 记录](../demo/t48_evidence_2026-10-09.json)展示清晰任务、跨能力 rerank、无匹配拒绝，以及禁用 Data Agent 前后同一任务由 Data 改选 Document。四个场景共产生 **5 条合成任务 Run：4 success、1 rejected**；这是 Demo 的业务状态记录，不是生产业务成功率。Task Quality 未经独立断言、rubric 或人工评测，指标为 `null`；Demo token usage 亦为 unknown。
+[四场景 Demo 视频](https://github.com/hongmuyu/AgentHub/blob/v1.0.0/demo/agenthub_t48_demo.mp4)、[复现脚本与说明](../demo/guide.md)、[原始 Run 记录](../demo/t48_evidence_2026-10-09.json)展示清晰任务、跨能力 rerank、无匹配拒绝，以及禁用 Data Agent 前后同一任务由 Data 改选 Document。四个场景共产生 **5 条合成任务 Run：4 success、1 rejected**；这是 Demo 的业务状态记录，不是生产业务成功率。Task Quality 未经独立断言、rubric 或人工评测，指标为 `null`；Demo token usage 亦为 unknown。
 
 P0 面向可信本地/内部环境，未提供公开多租户认证/RBAC。外部工具/MCP 结果、其他 provider 组合、并发负载上限、进行中 Run 的进程重启恢复和任务答案质量均 **NOT VERIFIED**。任务文本会持久化并送至配置的 embedding provider；启用 rerank 时，任务文本和公开候选元数据还会送至 rerank provider。请勿将私有 `.env`、SQLite 数据、附件或运行日志加入版本库。
