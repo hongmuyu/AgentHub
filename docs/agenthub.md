@@ -1,6 +1,6 @@
 # AgentHub: verified setup and evidence
 
-AgentHub extends ChatDev 2.0 for a **trusted local/internal environment**. It registers business Agent metadata, discovers eligible capabilities, routes one natural-language task to one Agent, and starts that Agent's allowlisted thin workflow through the existing Web execution chain. The [frozen design](../AGENTHUB_DESIGN.md) defines the contracts; this guide describes the implementation and evidence available on `agenthub-dev` as of 2026-10-09. The [ChatDev user guide](user_guide/en/index.md) remains applicable to manual workflows.
+AgentHub extends ChatDev 2.0 for a **trusted local/internal environment**. It registers business Agent metadata, discovers eligible capabilities, routes one natural-language task to one Agent, and starts that Agent's allowlisted thin workflow through the existing Web execution chain. This guide records the implemented P0 architecture, operation, and evidence. The [ChatDev user guide](user_guide/en/index.md) remains applicable to manual workflows.
 
 ## Architecture and boundaries
 
@@ -124,6 +124,16 @@ The first command freezes calibration before test evaluation. It requires DashSc
 
 T46 checked the repository's **standard** backend and frontend image builds, Compose startup, backend HTTP/WebSocket availability, original Workflow and Manual YAML Launch, AgentHub task entry/Registry UI/metrics, six live-embedding catalog registrations, and a **real provider-backed** task. That task selected the Data Agent, reached business `success` only after a structured target outcome and normal native completion, and its TaskRun/RoutingTrace/AgentRun links and Registry/metrics remained queryable after `docker compose restart backend` (2026-10-09). The manual `demo_loop_counter` workflow was a separate non-provider smoke; its fast-completion UI status race was fixed and rechecked in T46. It is not evidence of LLM quality.
 
-Targeted/backend/frontend checks passed in T46, including standard image builds and frontend build. The wider Python suite excluding `tests/test_websocket_send_message_sync.py` had **629 passed, 2 skipped**; frontend tests had **42 passed**. The **full Python suite remains NOT VERIFIED** because the inherited WebSocket test fixture enters a `MagicMock` reconnect/serialization loop, documented in [DEVELOPMENT_BASELINE.md](../DEVELOPMENT_BASELINE.md). The known fixture issue is separate from the live WebSocket handshake and the verified task path; it was not fixed by changing production WebSocket behavior. The Manual YAML smoke used a non-provider workflow; other chat/embedding/rerank endpoints and models were **NOT VERIFIED** by the single configured live-provider path. External tools/MCP, public untrusted deployment, simultaneous-load limits, process-restart continuation of active runs, and task-answer quality are also **NOT VERIFIED** by these checks.
+Targeted/backend/frontend checks passed in T46, including standard image builds and frontend build. The wider Python suite excluding `tests/test_websocket_send_message_sync.py` had **629 passed, 2 skipped**; frontend tests had **42 passed**. A later bounded host run on 2026-10-10 had **634 passed, 2 skipped** with the same exclusion; frontend tests again had **42 passed**, and `docker compose config --quiet` passed. The **full Python suite remains NOT VERIFIED** because an inherited WebSocket test fixture enters a `MagicMock` reconnect/serialization loop. The known fixture issue is separate from the live WebSocket handshake and the verified task path; it was not fixed by changing production WebSocket behavior. The Manual YAML smoke used a non-provider workflow; other chat/embedding/rerank endpoints and models were **NOT VERIFIED** by the single configured live-provider path. External tools/MCP, public untrusted deployment, simultaneous-load limits, process-restart continuation of active runs, and task-answer quality are also **NOT VERIFIED** by these checks.
+
+To reproduce the bounded automated checks with the host development dependencies installed, run from the repository root:
+
+```bash
+env -u AGENTHUB_EMBEDDING_LIVE -u AGENTHUB_RERANK_LIVE PYTHONDONTWRITEBYTECODE=1 \
+  timeout 120s .venv/bin/python -m pytest -q \
+  --ignore=tests/test_websocket_send_message_sync.py -p no:cacheprovider
+node --test frontend/tests/*.test.js
+docker compose config --quiet
+```
 
 This is not a public multi-tenant security boundary: no P0 auth, RBAC, or tenant isolation is provided. Task text is persisted in SQLite and sent to the embedding provider; `semantic_llm` also sends it to the reranker along with public candidate metadata. Attachment **contents** are not sent to routing/reranking by default, but uploaded attachment IDs and contents can flow through the selected workflow's existing execution mechanisms. Use only task data and providers permitted by your internal policy. Keep private `.env`, SQLite data, artifacts, logs, and any provider responses out of commits and public reports.

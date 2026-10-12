@@ -25,7 +25,7 @@ Adding an Agent requires approved metadata and a server-owned workflow mapping. 
 | WebSocket execution, logs, attachments and cancellation | Semantic routing, optional Top-K LLM rerank and no-match rejection |
 | FastAPI and Vue frontend | AgentHub task/Registry views, persistent business runs, traces, metrics and evaluation |
 
-The original Manual YAML workflow path remains available. [Design](AGENTHUB_DESIGN.md) and [implementation guide](docs/agenthub.md) explain the boundary between upstream Runtime and AgentHub's additions.
+The original Manual YAML workflow path remains available. The [implementation guide](docs/agenthub.md) explains the boundary between upstream Runtime and AgentHub's additions.
 
 ## How to Use
 
@@ -52,7 +52,7 @@ flowchart TD
     W --> O[TaskRun / Trace / Metrics]
 ```
 
-AgentHub selects one registered Agent per task. The diagram shows the main path; requests without a suitable Agent are rejected before execution. See the [frozen design](AGENTHUB_DESIGN.md), [implementation and deployment guide](docs/agenthub.md), and [evaluation methodology](evaluation/README.md) for the detailed contracts.
+AgentHub selects one registered Agent per task. The diagram shows the main path; requests without a suitable Agent are rejected before execution. See the [implementation and deployment guide](docs/agenthub.md) and [evaluation methodology](evaluation/README.md) for the detailed contracts.
 
 ## Docker Quick Start
 
@@ -86,9 +86,9 @@ The two rerank errors were truncated responses; latency includes those calls. Th
 
 ## Documentation and limits
 
-[Architecture and decisions](AGENTHUB_DESIGN.md) · [Setup and operation](docs/agenthub.md) · [Evaluation evidence](evaluation/README.md) · [Demo](demo/README.md) · [Release notes](docs/RELEASE_NOTES.md) · [Repository audit](docs/REPOSITORY_AUDIT.md) · [Portfolio](docs/PORTFOLIO.md) · [Interview guide](docs/INTERVIEW_GUIDE.md)
+[Architecture, setup and operation](docs/agenthub.md) · [Evaluation evidence](evaluation/README.md) · [Demo](demo/README.md) · [Release notes](docs/RELEASE_NOTES.md)
 
-P0 runs one Agent per task in a trusted local/internal setup. It does not provide public multi-tenancy or unreviewed Agent uploads. Completed business records remain queryable after restart; in-flight WebSocket/provider work does not resume. Task Quality has not been independently assessed, and unknown token usage remains unknown. The full Python suite is **NOT VERIFIED** because of an inherited WebSocket test fixture; the [audit](docs/REPOSITORY_AUDIT.md) records the bounded passing checks and other inherited issues.
+P0 runs one Agent per task in a trusted local/internal setup. It does not provide public multi-tenancy or unreviewed Agent uploads. Completed business records remain queryable after restart; in-flight WebSocket/provider work does not resume. Task Quality has not been independently assessed, and unknown token usage remains unknown. The full Python suite is **NOT VERIFIED** because of an inherited WebSocket test fixture; the [deployment and verification guide](docs/agenthub.md#verified-deployment-scope-and-limits) records bounded passing checks and other limits.
 
 ## Upstream and license
 

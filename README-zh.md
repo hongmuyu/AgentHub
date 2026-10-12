@@ -25,7 +25,7 @@
 | WebSocket 执行、日志、附件和取消 | 语义路由、可选 Top-K LLM 重排及无匹配拒绝 |
 | FastAPI 与 Vue 前端 | AgentHub 任务/Registry 页面、持久化业务 Run、Trace、Metrics 与评测 |
 
-原有 Manual YAML 工作流入口仍可使用。[冻结设计](AGENTHUB_DESIGN.md)与[实现指南](docs/agenthub.md)说明上游 Runtime 和 AgentHub 增量的边界。
+原有 Manual YAML 工作流入口仍可使用。[实现指南](docs/agenthub.md)说明上游 Runtime 和 AgentHub 增量的边界。
 
 ## How to Use · 使用方法
 
@@ -52,7 +52,7 @@ flowchart TD
     W --> O[TaskRun / Trace / Metrics]
 ```
 
-AgentHub 每个任务选择一个已登记的 Agent。图示为主路径；无合适 Agent 的任务会在执行前被拒绝。数据契约和实现细节见[冻结设计](AGENTHUB_DESIGN.md)、[实现与部署指南](docs/agenthub.md)、[评测方法](evaluation/README.md)。
+AgentHub 每个任务选择一个已登记的 Agent。图示为主路径；无合适 Agent 的任务会在执行前被拒绝。数据契约和实现细节见[实现与部署指南](docs/agenthub.md)及[评测方法](evaluation/README.md)。
 
 ## Docker Quick Start
 
@@ -86,9 +86,9 @@ docker compose exec -T backend python -m server.services.agenthub.demo_catalog
 
 ## 文档与限制
 
-[架构与决策](AGENTHUB_DESIGN.md) · [部署与操作](docs/agenthub.md) · [评测证据](evaluation/README.md) · [Demo](demo/README.md) · [发布说明](docs/RELEASE_NOTES.md) · [仓库审计](docs/REPOSITORY_AUDIT.md) · [简历材料](docs/PORTFOLIO.md) · [面试指南](docs/INTERVIEW_GUIDE.md)
+[架构、部署与操作](docs/agenthub.md) · [评测证据](evaluation/README.md) · [Demo](demo/README.md) · [发布说明](docs/RELEASE_NOTES.md)
 
-P0 在可信本地/内部环境中每个任务运行一个 Agent，不提供公开多租户或未审阅 Agent 上传。已完成的业务记录在重启后仍可查询；进行中的 WebSocket/Provider 工作不能续跑。Task Quality 未经独立评测，未知 Token 用量保持未知。完整 Python 套件因继承 WebSocket 测试夹具阻塞仍为 **NOT VERIFIED**；限定范围的通过结果及其他继承问题见[仓库审计](docs/REPOSITORY_AUDIT.md)。
+P0 在可信本地/内部环境中每个任务运行一个 Agent，不提供公开多租户或未审阅 Agent 上传。已完成的业务记录在重启后仍可查询；进行中的 WebSocket/Provider 工作不能续跑。Task Quality 未经独立评测，未知 Token 用量保持未知。完整 Python 套件因继承 WebSocket 测试夹具阻塞仍为 **NOT VERIFIED**；限定范围的通过结果及其他限制见[部署与验证指南](docs/agenthub.md#verified-deployment-scope-and-limits)。
 
 ## 上游致谢与许可
 

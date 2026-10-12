@@ -9,7 +9,7 @@
 - 用服务端 manifest 把逻辑 `runtime_ref` 映射到经过验证的薄 workflow，再复用 `WorkflowRunService`、WebSocket 执行、日志、附件与取消路径。原有 Manual YAML 入口保留。
 - 独立 SQLite（WAL）持久化 TaskRun、RoutingTrace、AgentRun。业务状态与原生 session 状态分开；只有正常 workflow 完成且目标 Agent 给出匹配的结构化 `succeeded` outcome 才能记为业务成功。提供运行查询、轻量指标 API、任务入口及 Registry 管理界面。
 
-架构与操作细节见 [AgentHub 文档](agenthub.md)、[冻结设计](../AGENTHUB_DESIGN.md) 和 [P0 任务清单](../TASKS.md)。
+架构与操作细节见 [AgentHub 技术与部署文档](agenthub.md)，评测来源见 [evaluation/README.md](../evaluation/README.md)。
 
 ## 部署与兼容性
 
@@ -17,7 +17,7 @@ T46 在标准 backend/frontend 镜像及 Compose 配置下完成构建、启动�
 
 ## 测试与 Benchmark
 
-- T46 记录的较宽 Python 测试集排除继承的 `tests/test_websocket_send_message_sync.py` 后为 **629 passed、2 skipped**；前端为 **42 passed**。完整 Python 套件仍为 **NOT VERIFIED**：继承 WebSocket `MagicMock` 测试夹具进入重连/序列化循环。[基线说明](../DEVELOPMENT_BASELINE.md)；这些结果不应表述为完整测试全绿。
+- T46 记录的较宽 Python 测试集排除继承的 `tests/test_websocket_send_message_sync.py` 后为 **629 passed、2 skipped**；前端为 **42 passed**。完整 Python 套件仍为 **NOT VERIFIED**：继承 WebSocket `MagicMock` 测试夹具进入重连/序列化循环。[验证范围与限制](agenthub.md#verified-deployment-scope-and-limits)；这些结果不应表述为完整测试全绿。
 - T43 的 60 条标注路由任务分为 36 clear、12 ambiguous、12 no-match；30 条 calibration 用于选择 `K=5` 和 cosine 阈值 `0.35727615782291194`，另外 30 条独立 test 在冻结配置后运行。真实 DashScope embedding / DeepSeek rerank 测试中，两策略各有 24 条适用匹配任务：`semantic` Top-1 **11/24**，`semantic_llm` **18/24**；共同的 semantic Top-K recall 均为 **24/24**。
 - 同一独立测试的全路由 p50/p95：`semantic` **368.009 / 643.426 ms**；`semantic_llm` **2199.482 / 10066.879 ms**。每种策略各 30 条延迟样本。LLM 策略的两个 no-match 请求因 DeepSeek 输出截断成为 `RERANK_TRUNCATED_RESPONSE` 基础设施错误，仍计入延迟；拒绝准确率为 `semantic` **3/6**、`semantic_llm` **3/4**，错误样本不进入后者质量分母。21 次实际 rerank 调用的 transport p50/p95 为 **2640.014 / 9703.747 ms**。见 [独立测试原始记录](../evaluation/t43_live_test_2026-10-08.json) 与 [校准记录](../evaluation/t43_live_calibration_2026-10-08.json)。
 - 独立的 10/50/100 Agent **合成目录** live-provider 延迟测试，每档每策略一轮预热及 12 次测量，使用 1024 维真实 embedding、真实 DeepSeek，`K=3`、threshold=-1。100 Agent 时全路由 p50/p95 为 `semantic` **439.294 / 589.729 ms**、`semantic_llm` **3202.536 / 10776.190 ms**。它只测该环境下顺序请求的延迟，不测路由准确率或并发吞吐。[live 规模报告](../evaluation/t43_live_catalog_size_2026-10-08.json) 与使用 fake 16 维 embedding/本地 identity rerank 的 [offline 工程报告](../evaluation/t43_offline_catalog_size_2026-10-08.json)须分开解读。
