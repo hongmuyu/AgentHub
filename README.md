@@ -21,6 +21,14 @@
 
 新增 Agent 需要经批准的元数据与服务端 Workflow 映射；平台不执行任意上传的 Workflow。
 
+## 🖼️ 界面预览
+
+| Agent Registry 管理页 | AgentHub 任务执行页 |
+| --- | --- |
+| ![Agent Registry 页面：已登记 Agent 的能力、版本、runtime_ref 与启停操作](docs/images/registry-ui.png) | ![AgentHub 任务页面：语义路由执行后的 Workflow 状态与业务 Run 状态](docs/images/launch-task-ui.png) |
+
+截图取自演示录屏。任务页同时展示原生 Workflow 状态与业务 Run 状态：前者完成不代表后者成功，两者不能互相替代。
+
 ## 🧩 基于 ChatDev 2.0 的二次开发
 
 | 复用 ChatDev | AgentHub 新增 |
@@ -128,7 +136,8 @@ curl -fsS 'http://localhost:6400/api/agenthub/agents?limit=100'
 
 中文任务可用于操作演示，但具体选择及结果以当前模型响应为准；仓库的历史路由准确率只对应其合成评测样例。
 
-### 后续启动、配置修改与停止
+<details>
+<summary><strong>后续启动、配置修改与停止</strong>（首次部署可跳过；含启动已有服务、重新加载 .env、停止服务三条命令）</summary>
 
 ```bash
 # 未修改配置：启动已有服务。
@@ -143,7 +152,44 @@ docker compose stop
 
 变更前先等待正在执行的任务结束。`docker compose restart` 不会重新加载 Compose 的 `.env`；后端重启也不会续跑进行中的模型调用。已完成记录保存在宿主机 `data/agenthub.db`，不要为了排错删除数据库。
 
+</details>
+
 完整说明：[部署、配置与排查](docs/agenthub.md) · [本地开发](docs/development.md) · [Demo 操作](demo/guide.md)。
+
+## ➕ 扩展：登记第七个 Agent
+
+平台按能力元数据路由，新增兼容 Agent **不需要修改 Router 源码**。以新增一个 Ops Agent 为例：
+
+1. 参照 [agenthub_data.yaml](yaml_instance/agenthub_data.yaml) 编写单 Agent 薄 Workflow `yaml_instance/agenthub_ops.yaml`，复用 `type: agent` 与 `${MODEL_NAME}` 等环境配置。
+2. 在服务端受控清单 [agenthub_manifest.json](yaml_instance/agenthub_manifest.json) 中登记逻辑引用与文件映射，客户端不能提交任意本地路径：
+
+   ```json
+   "workflow://ops-agent/1": "agenthub_ops.yaml"
+   ```
+
+3. 编写元数据 fixture `yaml_instance/agenthub_ops_metadata.json`：
+
+   ```json
+   {
+     "name": "Ops Agent",
+     "description": "Triage supplied incident notes and propose runbook-style troubleshooting steps. It does not access production systems or execute commands.",
+     "capabilities": [
+       "Classify supplied incident descriptions",
+       "Propose troubleshooting steps from provided symptoms"
+     ],
+     "tools": [],
+     "tags": ["ops", "knowledge-work"],
+     "runtime_ref": "workflow://ops-agent/1"
+   }
+   ```
+
+4. 重新执行部署第 5 步的目录登记命令。服务端校验 Workflow 并为其建立向量索引，此后即可被语义路由召回：
+
+   ```bash
+   docker compose exec -T backend python -m server.services.agenthub.demo_catalog
+   ```
+
+元数据更新的版本规则、UI/API 注册方式及更换 Embedding 的注意事项见[开发指南](docs/development.md#6-新增一个兼容的示例-agent)。
 
 <a id="readme-architecture"></a>
 ## 🧭 系统架构
@@ -155,6 +201,7 @@ flowchart TD
     D --> R[语义路由 / 可选 LLM 重排]
     R --> Q[路由轨迹与决策]
     R -->|选中 Agent| A[AgentRun]
+    R -->|置信度不足| X[rejected：不进入执行]
     A --> W[ChatDev Workflow Runtime]
     T --> M[Metrics]
     Q --> M
@@ -184,6 +231,15 @@ P0 在可信本地/内部环境中每个任务运行一个 Agent，不提供公�
 ## 🛠️ 开发与贡献
 
 欢迎提交附有复现步骤的 Issue 或范围清晰的 PR。修改前阅读[中文开发指南](docs/development.md)，了解环境安装、前后端启动和代码入口；历史验证范围见[验证说明](docs/agenthub.md#verified-deployment-scope-and-limits)。运行应用不要求先执行测试。请勿提交私有 `.env`、数据库、日志或构建产物。
+
+主要代码入口：
+
+- `server/services/agenthub/`：Registry、Discovery、语义路由、Rerank、Run/Trace/Metrics 与评测服务
+- `server/routes/agenthub*.py`：AgentHub REST API
+- `yaml_instance/agenthub_*`：示例薄 Workflow、元数据 fixture 与受控 runtime_ref 清单
+- `frontend/src/pages/AgentHubRegistryView.vue`、`frontend/src/pages/LaunchView.vue`、`frontend/src/components/AgentHubMetrics.vue`：Registry 管理页、任务页与指标组件
+- `evaluation/`：60 条合成路由基准用例与评测脚本
+- `demo/`：演示录屏、Run 证据与复现脚本
 
 ## 🙏 上游致谢与许可
 
