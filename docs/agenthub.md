@@ -1,57 +1,91 @@
-# AgentHub: verified setup and evidence
+# AgentHub 部署、运行与实现指南
 
-AgentHub extends ChatDev 2.0 for a **trusted local/internal environment**. It registers business Agent metadata, discovers eligible capabilities, routes one natural-language task to one Agent, and starts that Agent's allowlisted thin workflow through the existing Web execution chain. This guide records the implemented P0 architecture, operation, and evidence. The [ChatDev user guide](user_guide/en/index.md) remains applicable to manual workflows.
+AgentHub 基于 ChatDev 2.0，面向可信本地或内部环境，提供业务 Agent 注册、能力发现、单 Agent 路由、执行和持久化追踪。第一次使用请按 [README 部署步骤](../README.md#部署运行第一次请按顺序完成)操作；宿主机开发见[中文开发指南](development.md)，原生 Workflow 见[中文用户文档](user_guide/zh/index.md)。
 
-## Architecture and boundaries
+## 架构与执行边界
 
 ```mermaid
 flowchart TD
-    U[Task and existing WebSocket session] --> S[AgentHub task service]
-    S --> D[Registry and status-filtered discovery]
-    D --> R[Semantic Top-K and confidence threshold]
-    R -->|optional| L[LLM rerank of Top-K only]
-    R --> A[Selected Agent metadata]
+    U[任务与现有 WebSocket 会话] --> S[AgentHub 任务服务]
+    S --> D[Registry 与可用能力筛选]
+    D --> R[语义 Top-K 与阈值拒绝]
+    R -->|可选| L[仅重排 Top-K 的 LLM]
+    R --> A[选中一个 Agent]
     L --> A
-    A --> V[Server-owned runtime_ref manifest and thin workflow validation]
+    A --> V[runtime_ref 白名单与薄 Workflow 校验]
     V --> W[WorkflowRunService → WebSocketGraphExecutor]
-    W --> O[Structured target Agent outcome]
-    S --> B[(AgentHub SQLite: TaskRun, RoutingTrace, AgentRun)]
+    W --> O[目标 Agent 的结构化执行结果]
+    S --> B[(SQLite: TaskRun / RoutingTrace / AgentRun)]
     O --> B
-    B --> Q[Run query and business metrics]
-    W --> N[Native WebSocket logs, output, human input and artifacts]
+    B --> Q[运行查询与业务指标]
+    W --> N[原生日志、输出、人工输入与工件]
 ```
 
-The [Registry](../server/services/agenthub/registry.py) versions metadata and its embedding index in SQLite. [Discovery](../server/services/agenthub/discovery.py) filters status and validates the workflow target; [routing](../server/services/agenthub/router.py) uses capability metadata rather than six name-based branches. `semantic` selects from the semantic candidates; optional `semantic_llm` reranks **only** that Top-K. A low-confidence match becomes `NO_SUITABLE_AGENT`. The [manifest](../yaml_instance/agenthub_manifest.json) maps logical `workflow://.../1` references to six server-owned YAML files; clients cannot provide arbitrary paths for AgentHub execution. Adding a compatible Agent means registering metadata and an approved thin workflow/manifest entry, without changing Router branches.
+[Registry](../server/services/agenthub/registry.py) 在 SQLite 中保存元数据版本和向量索引；[Discovery](../server/services/agenthub/discovery.py) 筛选启用状态、有效 Workflow 和匹配的索引版本。[Router](../server/services/agenthub/router.py) 依据能力元数据选择，不按六个示例 Agent 的名字写分支。`semantic` 选择语义 Top-1；`semantic_llm` 只在召回的 Top-K 中重排。无候选或最高分低于校准阈值时返回 `NO_SUITABLE_AGENT`。
 
-The task service creates a pending `TaskRun` before routing and persists its `RoutingTrace` before dispatch. For a selected Agent it starts an `AgentRun`; the [adapter](../server/services/agenthub/workflow_dispatcher.py) then passes the selected workflow into the existing `WorkflowRunService` → WebSocket execution path. `run_id` identifies the persisted AgentHub business run; `session_id` belongs to the existing WebSocket session. Native logs/output, human input, attachments, download, and cancellation remain native ChatDev mechanisms. The manual YAML path still uses `/api/workflow/execute` and has no AgentHub routing requirement.
+[受控映射](../yaml_instance/agenthub_manifest.json) 将逻辑 `workflow://.../1` 引用映射到服务端薄 Workflow。新增兼容 Agent 需要注册元数据和经过审阅的 Workflow / 映射，不需要增加 Router 分支；用户不能通过 AgentHub 接口提交任意文件路径。当前每个任务只选择一个业务 Agent，不动态组建团队。
 
-## Standard Docker setup
+任务服务先创建 `pending` 状态的 TaskRun，再持久化路由轨迹，选中后创建 AgentRun。[执行适配器](../server/services/agenthub/workflow_dispatcher.py) 复用 `WorkflowRunService` 与原生 WebSocket 链路。`run_id` 是持久化业务运行 ID，`session_id` 是原生会话 ID；两者不能互换。附件、人工输入、下载和取消继续复用 ChatDev。
 
-From the repository root, use [Dockerfile](../Dockerfile), [frontend/Dockerfile](../frontend/Dockerfile), and [compose.yml](../compose.yml) without image overrides or a host `node_modules` mount. The Compose frontend has its own anonymous `/app/node_modules` volume. Backend and frontend are exposed on ports `6400` and `${FRONTEND_PORT:-5173}` respectively.
+<a id="standard-docker-setup"></a>
+## Docker 部署与配置
 
-Create a local, untracked `.env` from [.env.example](../.env.example) if needed, then set these **variable names** for the six live demo workflows and AgentHub. Never put real credentials in tracked files:
+### 前提与配置加载顺序
 
-| Purpose | Required configuration |
-| --- | --- |
-| Chat execution | `BASE_URL`, `API_KEY`, `MODEL_NAME` (a model actually supported by that chat endpoint) |
-| Embedding/index | `AGENTHUB_EMBEDDING_BASE_URL`, `AGENTHUB_EMBEDDING_MODEL`, `AGENTHUB_EMBEDDING_MODEL_KEY`, `AGENTHUB_EMBEDDING_DIMENSIONS`, `AGENTHUB_EMBEDDING_API_KEY_ENV`, and the named credential variable |
-| Optional LLM rerank | `AGENTHUB_RERANK_BASE_URL`, `AGENTHUB_RERANK_API_KEY_ENV`, the named credential variable, and optionally `AGENTHUB_RERANK_MODEL` (default `deepseek-flash`) |
+使用仓库的 [后端 Dockerfile](../Dockerfile)、[前端 Dockerfile](../frontend/Dockerfile) 和 [compose.yml](../compose.yml)。后端镜像包含 Python 3.12，前端镜像使用 Node.js 24；宿主机只需 Git、可用 Docker / Compose 和访问镜像、依赖及模型服务的网络。
 
-The verified T43 setup uses a DashScope embedding endpoint, model key `qwen-text-embedding-v4-1024`, 1024 dimensions, and selector `AGENTHUB_EMBEDDING_API_KEY_ENV=DASHSCOPE_API_KEY`; the reranker uses a DeepSeek HTTPS endpoint, `deepseek-flash`, and `AGENTHUB_RERANK_API_KEY_ENV=DEEPSEEK_API_KEY`. These selectors name environment variables; they are **not credential values**. Set the actual model and endpoint in the private `.env`. AgentHub startup checks the non-secret embedding/rerank configuration fingerprints against the [frozen T43 calibration](../evaluation/t43_live_calibration_2026-10-08.json); changing the endpoint, model/model key, or dimensions invalidates that calibration and can stop startup with `AGENTHUB_CALIBRATION_MISMATCH`. Credential rotation alone is not part of that fingerprint. If AgentHub embedding variables are all absent, ordinary ChatDev startup still works, while AgentHub task/Registry services are unavailable. Compose loads `.env` and then `.env.docker`; check for conflicting variable **names** there before startup. Avoid printing the effective Compose environment, which can contain secrets.
+默认后端端口 `6400`，前端端口 `5173`。Compose 将仓库挂载到后端 `/app`，将 `frontend/` 挂载到前端 `/app`，并为前端 `/app/node_modules` 使用匿名卷。无需把宿主机 `node_modules` 再挂载进容器。
+
+1. 根目录 `.env` 保存本地模型配置，按 [README 完整示例](../README.md#2-创建并填写根目录-env)填写。
+2. Compose 的服务环境依次加载 `.env`、`.env.docker`；后者同名变量覆盖前者。
+3. `.env.docker` 设置容器监听地址与 Vite 代理地址 `http://backend:6400`。浏览器访问的是 `http://localhost:5173`，不要在宿主机浏览器访问 `http://backend:6400`。
+4. 宿主机 shell 中单独 `export` 的密钥不会自动进入当前 Compose 服务；密钥应写入被 `env_file` 加载的根目录 `.env`。
+5. `.env` 使用 `变量名=值`，不要加 `export`，注释独占一行。不要把真实密钥放进 `VITE_*` 变量或公开文档。
+
+聊天执行需要 `BASE_URL`、`API_KEY`、`MODEL_NAME`。六个示例 Workflow 使用 OpenAI 兼容聊天协议，`MODEL_NAME` 必须由对应聊天端点支持。聊天模型设置与 Embedding / 重排配置独立；不要把聊天密钥误当成 DashScope 密钥。
+
+### 语义路由的必要配置
+
+完整 AgentHub 必须启用 Embedding，不能只配置聊天模型。下列公开值已按仓库校准文件的 SHA-256 指纹核对；这只证明配置对应关系，不证明你的账号权限或服务当前可用：
+
+```dotenv
+AGENTHUB_EMBEDDING_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+AGENTHUB_EMBEDDING_MODEL=text-embedding-v4
+AGENTHUB_EMBEDDING_MODEL_KEY=qwen-text-embedding-v4-1024
+AGENTHUB_EMBEDDING_DIMENSIONS=1024
+AGENTHUB_EMBEDDING_API_KEY_ENV=DASHSCOPE_API_KEY
+DASHSCOPE_API_KEY=替换为真实密钥
+```
+
+`AGENTHUB_EMBEDDING_API_KEY_ENV` 是密钥变量的名字；必须同时设置它指向的 `DASHSCOPE_API_KEY`。若五项 `AGENTHUB_EMBEDDING_*` 均未设置，应用只启动普通 ChatDev，AgentHub API 会报告服务未配置；只填一部分则可能在启动时报 `EMBEDDING_CONFIGURATION_MISSING`。
+
+[启动配置代码](../server/services/agenthub/app_setup.py) 固定读取 [T43 校准文件](../evaluation/t43_live_calibration_2026-10-08.json)，冻结 `K=5`、阈值 `0.35727615782291194`。端点原始字符串、模型名称、模型标识和维度必须匹配；尾部斜杠也会影响指纹。轮换真实密钥不会改变指纹。
+
+**换 Embedding 模型不是只改 `.env`。** 需要重新校准、重建对应索引并审阅应用的校准接入；当前没有可任意指定校准路径的启动配置。不要手改 JSON 哈希、冒用旧 model key 或删除校准校验。新的评测输出也不会自动被 Web 服务采用。
+
+<a id="optional-rerank"></a>
+### 可选：启用 semantic_llm 重排
+
+先完成 `semantic` 的登记和任务运行，再在同一个 `.env` 中加入：
+
+```dotenv
+AGENTHUB_RERANK_BASE_URL=https://api.deepseek.com
+AGENTHUB_RERANK_MODEL=deepseek-flash
+AGENTHUB_RERANK_API_KEY_ENV=DEEPSEEK_API_KEY
+DEEPSEEK_API_KEY=替换为可访问上述模型的真实密钥
+```
+
+此公开端点和模型与仓库冻结指纹匹配，不要随意追加 `/v1`。账号必须能访问该模型；若模型不可用，先取消全部 `AGENTHUB_RERANK_*` 配置并使用 `semantic`，不要随意换模型绕过校准。
 
 ```bash
-# Run from the repository root. Edit .env privately after copying it.
-cp -n .env.example .env
-docker compose config --quiet
-docker compose build backend frontend
-docker compose up -d
-docker compose ps
-curl -fsS http://localhost:6400/health
+docker compose up -d --force-recreate backend frontend
 ```
 
-`docker compose config --quiet` validates Compose without showing credentials. Visit `http://localhost:5173/launch` for tasks and `http://localhost:5173/agenthub/registry` for the Registry UI; use the configured `FRONTEND_PORT` instead of `5173` if changed. The backend is at `http://localhost:6400`.
+等待后端恢复后，在任务页选择 `semantic_llm`。重排只接收候选元数据和任务，不运行候选 Agent；调用失败会记录为 `failed`，不会自动回退。`RERANK_TRUNCATED_RESPONSE` 表示响应被截断，历史评测也出现过，不能当成无匹配或成功。
 
-After both services are healthy, register the six checked-in metadata/thin-workflow fixtures with the standard command. It validates all six workflow targets and uses the configured embedding endpoint to build the index. T46 used the live DashScope endpoint. Repeating the command with an identical catalog preserves UUID/version; a conflicting existing catalog requires an explicit reconciliation, not silent replacement.
+### 初始化目录、启动和日常操作
+
+完整命令及顺序见 [README](../README.md#3-构建镜像并准备可写目录)。首次构建后准备 `data/`、`logs/`、`WareHouse/`，让镜像内的 `appuser` 可写，再启动服务。`/health` 响应后执行：
 
 ```bash
 docker compose exec -T backend python -m server.services.agenthub.demo_catalog
@@ -59,81 +93,118 @@ curl -fsS 'http://localhost:6400/api/agenthub/agents?limit=100'
 curl -fsS http://localhost:6400/api/agenthub/metrics
 ```
 
-The Registry API at `/api/agenthub/agents` supports register, list/search (`q`, status, paging), get, update, enable, and disable. The UI at `/agenthub/registry` exposes the administrator's catalog view and actions. The catalog command reports six logical `runtime_ref` entries and their actual generated Agent UUID/version pairs; the list API should show six active Agents on a fresh catalog. These six are ordinary examples, not hardcoded supported Agent types.
-
-## Run a task or a manual workflow
-
-1. Open `/launch`, choose **AgentHub task**, choose `semantic` or `semantic_llm`, and submit a natural-language task. For example: “Given synthetic response times 10, 11, 12, 13, and 80 ms, compute the median and range and identify the value needing outlier review.” This is synthetic input, not a guarantee of the selected Agent or answer. The UI creates/reuses the native WebSocket session and uses its session ID.
-2. Inspect the semantic candidates, selected Agent, native output/logs, and separate AgentHub business status. The task submission response is acceptance/dispatch, **not** execution success. The UI retains `run_id`; `GET /api/agenthub/tasks/{run_id}` returns the persisted TaskRun, RoutingTrace, and AgentRun when an Agent was started, including after refresh/reconnect. `GET /api/agenthub/metrics` returns aggregate business metrics.
-3. To use the original ChatDev flow, choose **Manual YAML** on `/launch`, select a workflow YAML and provide its prompt. The original Workflow editor remains under `/workflows`. Manual execution uses the existing WebSocket session and `/api/workflow/execute`, without creating an AgentHub business run.
-
-The AgentHub submission API is `POST /api/agenthub/tasks` with `task`, a **real current WebSocket** `session_id`, optional uploaded attachment IDs, and `routing_strategy` (`semantic` by default; `semantic_llm` only when configured). It returns HTTP 202 with a `run_id`, routing decision, and initial business status. An arbitrary session ID is insufficient; use the UI or establish `/ws` first. The [task API](../server/routes/agenthub_tasks.py), [Registry API](../server/routes/agenthub.py), [metrics API](../server/routes/agenthub_metrics.py), and [run-query response](../server/services/agenthub/run_query.py) are the exact field contracts.
-
-### Business status and persistence
-
-| Status | Meaning |
-| --- | --- |
-| `pending` / `running` | Recorded/started; HTTP 202 and native output do not imply success. |
-| `success` | Normal workflow completion **and** the unique target Agent's structured `AgentExecutionOutcome=succeeded`, with no prior failure/cancellation. `workflow_completed` alone is insufficient. |
-| `failed` | Routing/dispatch/provider/outcome failure; a missing, invalid, wrong-node, or failed structured outcome cannot become success. |
-| `rejected` | No suitable eligible Agent above the calibrated threshold (`NO_SUITABLE_AGENT`); no Agent workflow is started. |
-| `cancelled` | The existing execution path has confirmed the cancellation boundary. A cancel request alone leaves the run nonterminal; WebSocket disconnect alone does not cancel it. |
-
-Business status is separate from native WebSocket/session status and is terminal once committed. [TaskRun](../server/services/agenthub/task_runs.py), [RoutingTrace](../server/services/agenthub/routing_traces.py), and [AgentRun](../server/services/agenthub/agent_runs.py) persist under `data/agenthub.db` (SQLite WAL). Trace records candidates/scores, routing strategy/latency, selection or safe error; AgentRun records selected Agent/version, native status, structured outcome-related status, latency, and result reference when available. [Metrics](../server/services/agenthub/metrics.py) expose counts, execution success/failure and rejection rates with explicit denominators, measured latency sample counts, known/unknown token usage, Agent usage, and routing distribution. Task-quality success remains `null` without an answer rubric or human assessment.
-
-The standard Compose backend mounts the repository at `/app`, so `data/agenthub.db` and related SQLite WAL files remain on the host across a backend container restart. Do **not** delete `data/`, databases, or Docker volumes to test persistence. After a run has reached a terminal state, the following commands query the same existing records before and after restart; substitute a `run_id` returned by your own task:
+登记会实际调用 Embedding。新目录应出现六个启用 Agent；相同元数据重复登记保持 UUID / 版本，禁用状态也会保留。已有条目与示例冲突时返回 `DEMO_CATALOG_CONFLICT`，应检查条目并显式处理差异，不要清空数据库来重复初始化。API 支持注册、查询/搜索、分页、更新、启用和禁用；管理入口是 `/agenthub/registry`。
 
 ```bash
+# 查看服务状态与最近日志；日志仅在本机排查，分享前去除敏感内容。
+docker compose ps
+docker compose logs --tail=80 backend
+docker compose logs --tail=80 frontend
+
+# 同一配置下停止与重新启动。
+docker compose stop
+docker compose up -d
+
+# 修改 .env 后重新加载环境。
+docker compose up -d --force-recreate backend frontend
+```
+
+仅 `restart` 不会更新容器创建时的环境变量。代码依赖发生变化才需要重新构建相应镜像。不要把 `docker compose down -v` 或删除 `data/` 当成常规排障步骤。
+
+<a id="manual-workflow"></a>
+## 页面使用与原生 Workflow
+
+打开 [任务页](http://localhost:5173/launch)，选择 **AgentHub 任务（AgentHub task）**，首次选 `semantic`。可输入 README 的中位数任务，它使用给定数字，不要求外部检索工具。页面建立 WebSocket 会话、提交任务并显示候选、所选 Agent、原生输出和独立业务状态。
+
+`POST /api/agenthub/tasks` 需要 `task`、真实且当前有效的 WebSocket `session_id`，以及可选附件 ID 和 `routing_strategy`。任意 UUID 不能充当有效会话；初次使用请通过 UI 提交。HTTP 202 只表示接受/调度，返回的 `run_id` 可用于查询：
+
+```bash
+# 将占位符替换为自己的运行 ID。
 curl -fsS 'http://localhost:6400/api/agenthub/tasks/REPLACE_WITH_RUN_ID'
-docker compose restart backend
-curl -fsS --retry 12 --retry-delay 1 --retry-connrefused http://localhost:6400/health
-curl -fsS 'http://localhost:6400/api/agenthub/tasks/REPLACE_WITH_RUN_ID'
-curl -fsS 'http://localhost:6400/api/agenthub/agents?limit=100'
-curl -fsS http://localhost:6400/api/agenthub/metrics
 ```
 
-A persisted `run_id` restores the **query view**; it does not resume an in-flight provider/tool call or the in-memory native WebSocket session after process restart. T46 verified restart query consistency for one completed live AgentHub run, its trace and AgentRun, six Registry entries, and metrics. That check did not establish in-flight execution recovery.
+具体字段见[任务 API](../server/routes/agenthub_tasks.py)、[Registry API](../server/routes/agenthub.py)、[指标 API](../server/routes/agenthub_metrics.py)和[运行查询模型](../server/services/agenthub/run_query.py)。Research 的联网工具需要额外服务和网络；首次任务不依赖这些工具，工具配置见[中文工具文档](user_guide/zh/modules/tooling/overview.md)。
 
-## Routing benchmark reproduction and measured results
+若尚无 Embedding 服务，可注释全部 `AGENTHUB_EMBEDDING_*` 和 `AGENTHUB_RERANK_*` 配置，重新创建容器，在任务页选择 **手动 YAML（Manual YAML）**，选择 `demo_loop_counter.yaml` 体验不依赖模型的原生 Workflow。原生编辑入口为 `/workflows`，执行接口仍为 `/api/workflow/execute`。这条路径没有 AgentHub 注册与路由，也不会创建 AgentHub 业务运行记录；它只能帮助先确认界面和原生执行链。
 
-The [evaluation guide](../evaluation/guide.md) explains the 60 reviewed synthetic labels, metric formulas, error exclusions, complete per-case results, and 10/50/100 catalog-size timings. The checked-in [calibration](../evaluation/t43_live_calibration_2026-10-08.json) and [independent test](../evaluation/t43_live_test_2026-10-08.json) are **live DashScope embeddings + live DeepSeek reranking**, measured 2026-10-08 on Python 3.12.13, Linux 6.8.0-138-generic, 16 logical CPUs (AMD Ryzen 7 8745H). Their artifacts contain source/config hashes, dataset/catalog snapshots, model keys, timing samples and safe error codes; they contain no credentials. Provider load and caches were uncontrolled.
+## 业务状态、数据位置与重启
 
-The 60 cases are 36 clear, 12 ambiguous, and 12 no-match, split 30 calibration/30 independent test (18/6/6 per split). **Only calibration** selected K=5 and cosine threshold `0.35727615782291194`; the calibration artifact was written with `frozen_before_test` before either test strategy ran. The selected calibration gate measured Top-1 15/24, Top-K 24/24, reject 4/6, false accept 2/6, with zero infrastructure errors. The independent test then used the same frozen gate:
+- `pending` / `running`：已记录或正在执行；有输出不等于成功。
+- `success`：Workflow 正常完成，且唯一目标 Agent 返回有效的结构化 `AgentExecutionOutcome=succeeded`，此前没有失败/取消信号。
+- `failed`：路由基础设施、调度、模型或结构化结果失败；缺失、无效、错误节点的结果不能记为成功。
+- `rejected`：没有合适 Agent（`NO_SUITABLE_AGENT`），不启动 Agent Workflow。
+- `cancelled`：执行链已确认取消。仅发送取消请求还不是终态；WebSocket 断开也不会自动取消任务。
 
-| Live test strategy | Top-1 | Semantic Top-K recall | Reject accuracy | False accept | Infra errors | Query-to-decision p50/p95 ms |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `semantic` | 11/24 | 24/24 | 3/6 | 3/6 | 0 | 368.009 / 643.426 |
-| `semantic_llm` | 18/24 | 24/24 | 3/4 | 1/4 | 2 | 2199.482 / 10066.879 |
+业务状态与原生会话状态分开，已提交的终态不能被覆盖。数据库 `data/agenthub.db` 使用 SQLite WAL，保存 TaskRun、RoutingTrace、AgentRun、目录和索引；`logs/` 为日志，`WareHouse/` 为原生执行工件。标准 Compose 将这些目录保留在宿主机。
 
-Each strategy has 30 measured routing-latency samples, including measured infrastructure-error calls. The two `semantic_llm` errors were truncated DeepSeek responses on no-match cases; they are **excluded** from quality-rate denominators, hence `3/4` and `1/4` rather than `/6`. Its 21 actual rerank calls had transport p50/p95 of 2640.014/9703.747 ms. This is a single 30-case held-out sample per strategy; it measures routing, **not workflow execution or answer quality**, and does not establish statistical significance or an SLA. The prior 512-token [attempt](../evaluation/t43_live_test_attempt1_2026-10-08.json) had seven truncated rerank outputs; the checked-in test used a 2048-token output limit and still had two. K/threshold were not retuned on test labels.
+Trace 记录候选/分数、策略、路由耗时、选择或安全错误码；AgentRun 记录 Agent/版本、原生状态、结构化结果状态、耗时及可用的结果引用。[指标](../server/services/agenthub/metrics.py)包含显式分母的成功/失败/拒绝率、耗时样本数、已知/未知 Token 用量、Agent 使用量与路由分布。未知 Token 不按零处理；没有评分规则或人工评估时 Task Quality 为 `null`。
 
-The separate [live catalog-size report](../evaluation/t43_live_catalog_size_2026-10-08.json) uses **synthetic** Agent metadata/queries with real 1024-dimensional embeddings and DeepSeek calls, K=3, threshold=-1, one warmup and 12 measured requests per strategy per size. It measures latency only; no workflow or routing accuracy is measured. Full-route p50/p95 ms were: 10 Agents `semantic` 318.952/617.735, `semantic_llm` 2178.088/3974.995; 50 Agents 439.839/484.852 and 3224.426/10302.801; 100 Agents 439.294/589.729 and 3202.536/10776.190. There were 0, 1, and 2 truncated rerank calls at those sizes respectively. The [deterministic offline report](../evaluation/t43_offline_catalog_size_2026-10-08.json) instead uses fake 16-dimensional embeddings, local identity reranking, two warmups and 36 samples per strategy per size; its latency is **not** live-provider latency. Neither scale report proves routing quality or concurrent-load behavior.
+已完成运行在后端重启后仍可按 `run_id` 查询，但不会恢复进行中的模型/工具调用和内存 WebSocket 会话。重启前请等待任务结束；不要删除数据库、WAL 文件或卷。历史 T46 验证了一个已完成真实运行的重启查询一致性，没有验证断点续跑。
 
-For a new run, supply valid private credentials/configuration and run from the repository root with the project's Python 3.12 environment. These are **explicit opt-in live-provider calls** that incur API use; write new artifacts outside the checked-in evidence to preserve its provenance:
+<a id="troubleshooting"></a>
+## 常见启动与运行问题
+
+### Docker 无法连接、端口占用或构建下载失败
+
+`docker info` 无法连接时先启动 Docker Desktop / Docker daemon，按系统管理方式配置当前用户的 Docker 权限。端口冲突时停止占用 `6400` / `5173` 的旧实例；不要同时运行同端口的宿主机开发服务和 Compose。
+
+如需改前端对外端口，在根目录 `.env` 设置 `FRONTEND_PORT=15173`，然后重新创建容器，访问 `http://localhost:15173`。容器内部仍监听 `5173`；只修改 `.env.docker` 的 `FRONTEND_PORT` 不会改变 Compose 的端口插值。后端端口固定写在 Compose 中，首次使用请保持 `6400`。
+
+镜像、apt、PyPI 或 npm 下载失败时，查看构建输出中具体失败阶段，检查宿主机及 Docker 的网络/代理配置后重新构建。不要因下载慢删除锁文件。容器中的 `localhost` 指向容器自身，本机模型服务不能简单照搬宿主机 `localhost` 地址；本机模型的网络接入需要单独配置。
+
+### 权限不足、数据库不可写、无法创建 logs 或 WareHouse
+
+后端使用 `appuser`，宿主机挂载目录可能归另一个 UID 所有。先执行 README 中的可写目录准备命令。若旧文件仍不可写，停止后端，仅修复运行数据目录归属，再启动：
 
 ```bash
-mkdir -p /tmp/agenthub-t43-reproduction
-.venv/bin/python -m evaluation.live_routing_benchmark --output-dir /tmp/agenthub-t43-reproduction
-.venv/bin/python -m evaluation.live_catalog_size_benchmark --output /tmp/agenthub-t43-reproduction/live_catalog_size.json
-.venv/bin/python -m evaluation.catalog_size_benchmark --output /tmp/agenthub-t43-reproduction/offline_catalog_size.json
+docker compose stop backend
+docker compose run --rm --no-deps --user root backend sh -c 'chown -R appuser:appuser /app/data /app/logs /app/WareHouse'
+docker compose up -d backend
 ```
 
-The first command freezes calibration before test evaluation. It requires DashScope/DeepSeek HTTPS endpoint selectors and the corresponding credentials; do not replace live calls with fake results. The second uses real providers on synthetic catalogs; the third is deterministic offline engineering evidence. New results will differ with provider/network load, hardware, and configuration. Review the `label`, sample counts, errors, model/config fingerprints, and environment fields in each output before comparing it with the checked-in reports.
+该命令改变这三个目录已有文件的归属，执行前确认它们确实是本项目运行目录。不要对整个仓库执行 `chmod -R 777`。宿主机开发与容器共用数据时也需留意 UID 差异。
 
-## Verified deployment scope and limits
+### /health 正常，但页面提示 AgentHub 服务未配置
 
-T46 checked the repository's **standard** backend and frontend image builds, Compose startup, backend HTTP/WebSocket availability, original Workflow and Manual YAML Launch, AgentHub task entry/Registry UI/metrics, six live-embedding catalog registrations, and a **real provider-backed** task. That task selected the Data Agent, reached business `success` only after a structured target outcome and normal native completion, and its TaskRun/RoutingTrace/AgentRun links and Registry/metrics remained queryable after `docker compose restart backend` (2026-10-09). The manual `demo_loop_counter` workflow was a separate non-provider smoke; its fast-completion UI status race was fixed and rechecked in T46. It is not evidence of LLM quality.
+`REGISTRY_NOT_CONFIGURED` / `TASK_SERVICE_NOT_CONFIGURED` 通常表示 AgentHub 未启用。确认 `.env` 的五个 `AGENTHUB_EMBEDDING_*` 行没有被注释，密钥变量名及对应密钥都已填写，然后 `docker compose up -d --force-recreate backend frontend`。`/health` 不验证 Registry 或模型是否可用。
 
-Targeted/backend/frontend checks passed in T46, including standard image builds and frontend build. The wider Python suite excluding `tests/test_websocket_send_message_sync.py` had **629 passed, 2 skipped**; frontend tests had **42 passed**. A later bounded host run on 2026-10-10 had **634 passed, 2 skipped** with the same exclusion; frontend tests again had **42 passed**, and `docker compose config --quiet` passed. The **full Python suite remains NOT VERIFIED** because an inherited WebSocket test fixture enters a `MagicMock` reconnect/serialization loop. The known fixture issue is separate from the live WebSocket handshake and the verified task path; it was not fixed by changing production WebSocket behavior. The Manual YAML smoke used a non-provider workflow; other chat/embedding/rerank endpoints and models were **NOT VERIFIED** by the single configured live-provider path. External tools/MCP, public untrusted deployment, simultaneous-load limits, process-restart continuation of active runs, and task-answer quality are also **NOT VERIFIED** by these checks.
+### 后端反复重启：缺少配置或校准不匹配
 
-To reproduce the bounded automated checks with the host development dependencies installed, run from the repository root:
+- `EMBEDDING_CONFIGURATION_MISSING`：五项 Embedding 配置没有填齐。
+- `AGENTHUB_CALIBRATION_MISMATCH`：检查端点（包括尾部斜杠）、模型、model key、维度；启用重排时也检查其端点和模型，逐项对照本文。
+- `AGENTHUB_CALIBRATION_INVALID`：检查仓库校准 JSON 是否缺失或损坏；恢复版本库中的原文件，不要编造配置指纹。
+- Workflow 校验不通过：检查 `MODEL_NAME`、`BASE_URL`、`API_KEY` 是否已填，示例 YAML / manifest 是否被改动。
 
-```bash
-env -u AGENTHUB_EMBEDDING_LIVE -u AGENTHUB_RERANK_LIVE PYTHONDONTWRITEBYTECODE=1 \
-  timeout 120s .venv/bin/python -m pytest -q \
-  --ignore=tests/test_websocket_send_message_sync.py -p no:cacheprovider
-node --test frontend/tests/*.test.js
-docker compose config --quiet
-```
+### 目录登记失败或目录为空
 
-This is not a public multi-tenant security boundary: no P0 auth, RBAC, or tenant isolation is provided. Task text is persisted in SQLite and sent to the embedding provider; `semantic_llm` also sends it to the reranker along with public candidate metadata. Attachment **contents** are not sent to routing/reranking by default, but uploaded attachment IDs and contents can flow through the selected workflow's existing execution mechanisms. Use only task data and providers permitted by your internal policy. Keep private `.env`, SQLite data, artifacts, logs, and any provider responses out of commits and public reports.
+`EMBEDDING_CREDENTIAL_MISSING` 表示被选择的密钥变量没有值；`EMBEDDING_AUTH_FAILED` 表示认证失败；`EMBEDDING_RATE_LIMITED` 表示限流；超时/服务不可用需检查网络及提供方。API 可能将这些错误统一为 `EMBEDDING_NOT_READY`；登记命令可提供更具体的安全错误码。确认密钥适用于本文 DashScope 端点及模型，不要公开原始密钥。
+
+目录为空时先完成登记命令；已有 Agent 被禁用时到管理页面恢复。`DEMO_CATALOG_CONFLICT` 需要核对已有元数据与示例差异。`NO_SUITABLE_AGENT` 是筛选/阈值拒绝，不应通过绕过阈值强行执行；同时检查目录是否为空或全部禁用。
+
+### 页面能打开，但任务失败或一直显示运行中
+
+先查询对应 `run_id`，区分路由、执行和结果失败。`ROUTING_STRATEGY_NOT_CONFIGURED` 表示选择了未配置的重排策略，应改用 `semantic` 或完成重排配置；`RERANK_TRUNCATED_RESPONSE` 是模型输出截断，不是成功。聊天端点/模型/密钥与 Embedding 独立，目录登记成功不证明聊天模型能执行。
+
+WebSocket 连接异常时检查浏览器是否通过前端端口访问、前端代理 `/api` 与 `/ws` 是否指向可达后端。不要伪造 `session_id`。后端重启前尚未完成的运行不会自动恢复；保留记录，并在新会话重新提交，不能将旧记录改成成功。
+
+<a id="routing-benchmark-reproduction-and-measured-results"></a>
+## 路由评测与历史结果
+
+详细样例、分母、逐条结果及 10/50/100 Agent 规模数据见[中文评测指南](../evaluation/guide.md)。这些是 2026-10-08 的历史结果，部署不需要重新执行评测。
+
+60 条合成标注任务按 36 clear / 12 ambiguous / 12 no-match 分布，均分为 30 条校准、30 条测试。只用校准集选择 `K=5` 和 cosine 阈值 `0.35727615782291194`，校准得分为 Top-1 15/24、Top-K 24/24、拒绝 4/6、误接受 2/6，无基础设施错误。
+
+测试集的 `semantic` Top-1 为 11/24，`semantic_llm` 为 18/24；共同语义 Top-K 为 24/24。拒绝率分别为 3/6 与 3/4，误接受分别为 3/6 与 1/4，后者两条 no-match 重排截断错误被排除出质量分母。每种策略均有 30 条实测路由耗时，p50/p95 分别为 368.009/643.426 ms 和 2199.482/10066.879 ms，包含已测量的失败调用。
+
+真实服务为 DashScope Embedding 与 DeepSeek 重排。重排输出上限从 512 调至 2048 后复用了测试集，截断从 7 次降为 2 次，K / 阈值未基于测试标签调整。这是小样本路由对照，不证明 Workflow 成功率、答案质量、统计显著性或 SLA；离线假向量规模数据也不能充当真实模型延迟。
+
+<a id="verified-deployment-scope-and-limits"></a>
+## 历史验证范围与限制
+
+以下记录限定于所列日期、配置与范围，不表示每一种机器和模型组合都已验证。
+
+T46（2026-10-09）验证过标准后端/前端镜像构建、Compose 启动、HTTP/WebSocket、原生 Workflow、手动 YAML、AgentHub 任务与管理页面、指标、六个真实 Embedding 登记和一条真实模型任务。该任务选择 Data Agent，在结构化目标结果和原生正常完成后记为业务成功，重启后记录、轨迹、目录及指标仍可查询。原生 `demo_loop_counter` 是独立的无模型冒烟路径，不代表 LLM 质量。
+
+T46 排除继承的 `tests/test_websocket_send_message_sync.py` 后，Python 为 629 passed / 2 skipped，前端为 42 passed；2026-10-10 同样排除该文件的宿主机检查为 634 passed / 2 skipped，前端仍为 42 passed，Compose 配置检查通过。完整 Python 套件仍为 **未验证（NOT VERIFIED）**：该上游夹具存在 `MagicMock` 重连/序列化循环。该测试阻塞不能直接等同于生产 WebSocket 故障，也不能据此声称全套通过。
+
+其他模型组合、外部工具/MCP、并发负载上限、公开不可信部署、进程重启后的执行续跑及答案质量，均未由上述单路径验证覆盖。P0 没有身份认证、RBAC 和租户隔离，不宜直接向公网开放。任务文本会持久化并发送给 Embedding；启用重排时还会把任务及公开候选元数据发送给重排模型。附件正文默认不用于路由，但可通过原生执行链进入选中的 Workflow。私有配置、数据库、日志、附件和工件不应提交到版本库。
