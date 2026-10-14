@@ -1,319 +1,138 @@
-# T39 clear routing cases
+# AgentHub 路由评测指南
 
-`clear_cases_v1.json` contains 36 synthetic, source-reviewable task labels: six
-per demo capability, each with three `calibration` and three held-out `test`
-cases. It contains logical `runtime_ref` targets rather than invented UUIDs.
-`build_clear_dataset()` binds those targets to the UUID/version/status returned
-by `register_demo_catalog()` and validates the result with T38's
-`RoutingDataset`. Its snapshot ID hashes the registered public metadata and
-status. Re-registering the unchanged catalog against the same database retains
-the mapping; a fresh database creates a different snapshot ID.
+本目录包含路由数据集、评测入口和历史结果。**fork 后运行项目不需要先执行评测**：先完成 [部署](../README.md#部署运行第一次请按顺序完成)或[本地开发](../docs/development.md)。本文用于理解指标、比较路由策略及后续修改路由时复现实验。已归档 JSON 对应各自标注的测量日期与配置。
 
-## Manual semantic review — 2026-10-08
+## 1. 数据集与标签
 
-- **Research (01–06):** Public documentation, specifications, release notes and
-  technology comparisons all explicitly require external source lookup and
-  citations. They do not request local implementation or inaccessible sources;
-  successful lookup still depends on configured public web tools.
-- **Code (01–06):** Supplied Python, JavaScript, SQL and TypeScript snippets ask
-  for behavior analysis or minimal code corrections. No case assumes unseen
-  repository access, test execution or verified changes.
-- **Data (01–06):** Distinct supplied numeric/table tasks cover descriptive
-  statistics, changes, missing/duplicate rows, outlier inspection and rates.
-  No task requires loading an external dataset or audited figures.
-- **Document (01–06):** Supplied runbook, specification, policy, note, checklist
-  and API-guide excerpts ask for summary, extraction or factual comparison.
-  None asks to fetch private documents or judge unsupported external claims.
-- **Planning (01–06):** Future work is decomposed, ordered or prioritized using
-  stated constraints. No case promises dates, allocates people or executes work.
-- **Review (01–06):** Supplied designs, test plans, generated summaries and
-  drafts are assessed for omissions, unsupported claims and quality risks, with
-  actionable feedback. The aim is critique of an existing artifact.
+数据集共 60 条合成标注任务：36 条清晰任务（clear）、12 条跨能力任务（ambiguous）、12 条无匹配任务（no-match）。校准集与测试集各 30 条，每份均为 18/6/6。校准用于选择 K 和拒绝阈值，测试用于比较已冻结配置下的两种策略。
 
-Within each group, the six requests differ in artifact, operation or reasoning
-required; none is a sentence-level rewrite of another. All task text and source
-excerpts are synthetic. This T39 review records labels rather than measured
-routing or task-quality results; live routing evidence appears in T43 below.
+`clear_cases_v1.json` 中每类示例能力有六条任务，三条校准、三条测试，标签使用逻辑 `runtime_ref`。`build_clear_dataset()` 将标签绑定到 `register_demo_catalog()` 返回的 UUID / 版本 / 状态；目录快照 ID 对公开元数据与状态取哈希。同一数据库重复登记不改变映射，新的数据库会生成新的身份和快照。
 
-# T40 complete routing labels
+`ambiguous_no_match_cases_v1.json` 增加跨能力可接受引用集合及 `should_reject` 标签；`build_full_dataset()` 合并并校验完整数据。重复 ID / 文本会被拒绝。标签文件本身不是路由结果，也不代表任务答案质量。
 
-`ambiguous_no_match_cases_v1.json` adds 12 overlapping-capability cases with
-explicit acceptable `runtime_ref` sets and 12 out-of-catalog cases marked
-`should_reject`. `build_full_dataset()` combines them with the 36 clear cases,
-binds all accepted references to the same registered UUID/version snapshot, and
-validates the 60-case `RoutingDataset`. Each category has an even
-`calibration`/`test` split (18/18 clear, 6/6 ambiguous, 6/6 no-match). The T40
-label artifact itself contains no routing decisions, timing or quality scores.
+### 清晰任务的人工语义审阅（2026-10-08，原 T39）
 
-## Manual semantic review — 2026-10-08
+- Research：公共文档、规范、发布说明及技术对比，明确要求外部来源与引用，不假设访问私有资料；执行时仍依赖可用的联网工具。
+- Code：提供 Python、JavaScript、SQL、TypeScript 片段，要求解释或修正，不假设能访问未提供的仓库或实际执行测试。
+- Data：提供数值/表格，覆盖描述统计、变化、缺失/重复、异常点和比率，不依赖外部数据。
+- Document：提供运维手册、规范、政策、笔记、清单或 API 说明，要求总结、提取或比较，不假设能获取私有文件。
+- Planning：拆分未来工作、排序和设定里程碑，不承诺实际执行、人员安排或日期。
+- Review：审阅已有设计、测试计划、摘要和草稿中的缺漏、无证据断言与质量风险。
 
-- **Research + Document (2):** Supplied technical abstracts or public API notes
-  permit synthesis of findings and factual comparison of supplied text. Neither
-  case requires unavailable private retrieval or live web lookup.
-- **Code + Review (2):** Each supplied snippet has a concrete unhandled input.
-  Both implementation debugging and quality critique can answer the request.
-- **Data + Document (2):** Supplied report or note figures can be compared as
-  structured counts or extracted and compared as document claims. The text
-  requests no statistical inference beyond the stated values.
-- **Planning + Review (2):** Existing rollout steps have unsafe ordering.
-  Dependency-based resequencing and critique of the current plan are both valid.
-- **Document + Review (2):** Supplied drafts contain explicit conflicts;
-  comparison and consistency review both identify the same contradiction.
-- **Data + Review (2):** Supplied numeric counts contradict generated summaries.
-  Recalculation and output-quality review both expose the incorrect claim.
-- **No-match (12):** Calendar, email, SSO, deployment, finance, HR, CRM,
-  procurement, building controls, image creation, audio transcription and active
-  network scanning require an action, modality or system access absent from all
-  six registered Agents. Their labels describe catalog mismatch, not provider,
-  embedding or other infrastructure failure. Planning how to perform an action
-  would not fulfill these direct execution requests.
+每组任务在材料、操作或推理要求上有区别，不是同一句话的简单改写；任务文本及材料均为合成内容。
 
-Each overlap pair has one `calibration` and one held-out `test` case. The 24
-added tasks differ in artifact and requested operation, and duplicate IDs/text
-are rejected across the full dataset. This review establishes label intent,
-not Router accuracy; the subsequent T43 measurements appear below.
+### 跨能力与无匹配任务的人工审阅（2026-10-08，原 T40）
 
-# T41 routing benchmark runner
+六组跨能力各两条，一条校准、一条测试：Research + Document 比较给定摘要/API 说明；Code + Review 分析给定代码中的未处理输入；Data + Document 处理报告中的数值；Planning + Review 检查安排不合理的执行计划；Document + Review 比较互相冲突的草稿；Data + Review 核对数值与生成摘要的矛盾。
 
-`run_routing_benchmark()` accepts a validated `RoutingDataset`, the matching
-Registry, one split, a fixed Top-K and `CalibratedThreshold`, and either the
-existing semantic Router or its candidate-only rerank path. It verifies the
-current catalog UUID/version/status references before and after each case.
-The returned `BenchmarkRun` is JSON-serializable: its config records the
-catalog/dataset snapshot, split, embedding model key, K, threshold value and
-source, strategy, optional rerank model key, and local environment. A stable
-`config_id` connects each case row to that configuration.
+无匹配任务要求执行日历、邮件、SSO、部署、金融、HR、CRM、采购、楼宇控制、图像生成、音频转写或主动网络扫描等当前六个 Agent 不具备的操作。只给出行动计划不能视为完成这些请求。标签表示能力缺失，不表示模型/Embedding 故障。
 
-Each row records the final `selected`, `rejected`, or `infra_error` status,
-ordered semantic candidates and cosine scores, selected Agent or safe error
-code, and successful rerank order/reason when applicable. The measured
-`routing_latency_ms` starts immediately before query embedding and ends when
-the Router returns, including reranking. If routing returns before query
-embedding (for example, a pre-query failure or no eligible Agent), latency is
-null with `timing_scope=query_not_started`; no duration is invented. Attachment
-fixture cases are rejected until their contents can be
-supplied explicitly. This runner does not start workflows or compute metrics.
+## 2. 评测器与指标口径（原 T41 / T42）
 
-The small offline fake fixture exercises these individual results:
-`selected-case → selected`, `reject-case → rejected`, and
-`error-case → infra_error`; a separate fake reranker can select the second
-semantic candidate or retain `RERANK_TIMEOUT` as an infrastructure error.
-These are deterministic test decisions, not measured catalog accuracy or
-live-provider results. Latencies are measured afresh on every run and are not
-published as a fixed fixture value.
+`run_routing_benchmark()` 接收已校验的数据集、匹配的 Registry、指定 split、固定 Top-K、`CalibratedThreshold` 和策略。每条任务前后检查目录 UUID / 版本 / 状态，输出配置 ID、目录/数据快照、模型标识、阈值来源、策略、环境及逐条决策。
 
-# T42 routing metrics
+逐条结果包括 `selected`、`rejected` 或 `infra_error`，语义候选及原始 cosine 得分、选中 Agent、安全错误码和可选重排信息。耗时从 query Embedding 开始至路由决策返回，包含重排；如果在 query Embedding 开始前就返回，耗时为 `null`、`timing_scope=query_not_started`，不补造时长。当前评测器不执行 Workflow，不接受没有显式提供正文的附件任务，也不评价答案质量。
 
-`calculate_routing_metrics(dataset, run)` checks the catalog snapshot,
-dataset version, selected split, config IDs, and exact case coverage before
-counting. For clear and ambiguous cases, Top-1 uses the final selected Agent;
-a valid rejection is incorrect. Top-K uses the **semantic candidate list**,
-including under `semantic_llm`, and asks whether any acceptable Agent appears.
-For no-match cases, a valid rejection is correct and selecting any Agent is a
-false accept. Infrastructure-error cases appear in `infra_error_case_ids` and
-are excluded from every quality-rate denominator. Each rate reports its
-numerator, valid denominator, and value; an empty denominator produces null.
+`calculate_routing_metrics()` 先校验快照、数据版本、split、配置 ID 及完整 case 覆盖，再统计：
 
-Latency uses every case with an actual query-to-decision measurement, including
-an infrastructure error if its query embedding started. The summary lists
-included error IDs and unmeasured IDs separately. Mean is the arithmetic
-average; p50 and p95 use the nearest-rank rule on sorted values
-(`ceil(percentile × sample_count)`). Each `BenchmarkRun` yields its own
-strategy-labelled report. These routing rates do not measure execution success
-or answer quality.
+- **Top-1 Accuracy**：在 clear / ambiguous 中，最终选中 Agent 是否属于可接受集合；应该路由却被拒绝计为错误。
+- **Top-K Recall**：语义召回列表中是否出现任一可接受 Agent；即使使用 LLM 重排，也不改用重排顺序算召回。
+- **Reject Accuracy / False Accept Rate**：对有效完成路由的 no-match，分别统计正确拒绝与错误选中。
+- **基础设施错误**：单独列出 `infra_error_case_ids`，从所有质量比率分母中排除，不能当作正确拒绝或成功。每项输出分子、分母和值，空分母为 `null`。
+- **延迟**：使用所有实际完成计时的调用，包括已计时的失败调用；列出错误样本和未计时样本。平均值为算术平均，p50/p95 使用排序后的最近秩 `ceil(percentile × sample_count)`。
 
-## Hand-counted test fixture
+离线小 fixture 的 selected / rejected / infra_error 和 fake reranker 只验证工程行为，不是实测目录质量。八条手算 fixture 中，五条应路由样例含一条基础设施错误，三条 no-match 含一条基础设施错误：有效 Top-1 为 2/4、Top-K 为 3/4、拒绝与误接受均为 1/2。七个有效计时为 10/20/30/40/50/60/70 ms，平均与 p50 为 40 ms、p95 为 70 ms；50 ms 的失败调用仅计延迟，另一条未开始计时的失败不虚构耗时。这些数字只用于说明公式。
 
-The eight synthetic cases contain five route-required cases (four valid, one
-infrastructure error) and three no-match cases (two valid, one infrastructure
-error). Among the four valid route-required cases, two final selections are
-acceptable and three semantic Top-K lists contain an acceptable Agent:
-Top-1 = 2/4, Top-K = 3/4. Among the two valid no-match cases, one is rejected
-and one is falsely accepted: Reject Accuracy = 1/2 and False Accept Rate = 1/2.
-Seven measured latencies are 10, 20, 30, 40, 50, 60, and 70 ms; their mean and
-p50 are 40 ms, p95 is 70 ms. The 50 ms infrastructure-error sample is included
-in latency only; the other error has no measured query and no invented duration.
-These numbers verify formulas in a fixture, not a benchmark result for the demo
-catalog or a live provider.
+## 3. 校准与冻结规则（原 T43）
 
-# T43 calibration and catalog-size evidence — 2026-10-08
+`select_calibration_config()` 只接收同一目录、数据、模型和环境的 `semantic` 校准结果；拒绝空的应路由/no-match 分母、基础设施错误和重复候选配置。排序依次为：
 
-## Provenance correction — 2026-10-09
+1. 最大化 **Top-1 Accuracy + Reject Accuracy**。
+2. 再比较 Top-K Recall。
+3. 再优先较小 K、较高阈值。
 
-The final M4 audit found an inaccurate `gate_selection_rule` label in the live
-generator and both saved calibration artifacts (the final run and `attempt1`).
-The label said to maximize Top-K Recall + Reject Accuracy, then Top-1. The
-executed `select_calibration_config()` algorithm instead maximizes **Top-1
-Accuracy + Reject Accuracy**, then Top-K Recall, then smaller K, then higher
-threshold. This correction changes that label only; the selection algorithm
-is unchanged.
+Top-K Recall 不随拒绝阈值变化，不能单独用于选阈值。`FrozenRoutingConfig` 保存胜出配置 ID，`run_frozen_test()` 将同一 K / 阈值用于测试集两种策略。小型 fake fixture 验证这一边界，不代表 60 条任务的真实质量。
 
-Re-ranking each artifact's 183 saved **calibration** grid entries confirms
-K=5 and threshold `0.35727615782291194`. The final calibration configuration ID
-remains `eaf560784ee8eb9eb4d00f51bc200bc514479caab129e56bf8f481cbf1cd1b4b`;
-the attempt1 ID remains
-`0111662eee1972a8e0c223e53e3d1a5530dfac84a9b463ac918d6df4a1e3957a`.
-No test split was used for selection, and no historical provider call was
-repeated. Original case results, reranker responses, metrics, timings, splits,
-configuration IDs and frozen gates are preserved.
+### 来源描述修正记录（2026-10-09）
 
-The artifacts' original `provenance.source_sha256` values are also preserved:
-they identify the generator used for the 2026-10-08 measurements, available
-at commit `166d7d8`, rather than the corrected generator. Git history records
-the original label and this correction. Regression tests exercise the real
-generator with offline providers up to calibration freeze, reselect from the
-saved grids, and verify the algorithm's objective and tie-break order.
+M4 审阅发现生成器与两份历史校准文件的 `gate_selection_rule` 文案错误地写成先最大化 Top-K Recall + Reject Accuracy。实际执行算法一直是上面的 Top-1 + Reject 顺序；修正只改描述，没有改算法、原始测量或重新调用模型。
 
-`select_calibration_config()` accepts only `semantic` runs on the calibration
-split, with one catalog/dataset/model/environment provenance. It refuses an
-empty route or no-match denominator, any infrastructure error, and repeated
-candidate gates. The declared selection rule maximizes **Top-1 Accuracy + Reject
-Accuracy**, then Top-K Recall, then prefers smaller K and higher threshold.
-Top-K Recall is independent of the threshold and therefore cannot select the
-gate by itself.
-The selected `FrozenRoutingConfig` stores the winning calibration `config_id`;
-`run_frozen_test()` applies that K and threshold to both strategies on the
-independent test split. A small fake fixture verifies the boundary. Its labels
-and timing are engineering checks, not 60-case quality measurements.
+重新排序最终和 attempt1 各自保存的 183 项校准候选，均得到 `K=5`、阈值 `0.35727615782291194`。最终配置 ID 保持 `eaf560784ee8eb9eb4d00f51bc200bc514479caab129e56bf8f481cbf1cd1b4b`，attempt1 保持 `0111662eee1972a8e0c223e53e3d1a5530dfac84a9b463ac918d6df4a1e3957a`。选择过程没有使用测试标签。
 
-The checked-in [measured offline catalog-size report](t43_offline_catalog_size_2026-10-08.json)
-was produced by the offline runner. For a new run, write outside the archived evidence:
+历史 `provenance.source_sha256` 仍指向 2026-10-08 实际运行的生成器（提交 `166d7d8`），没有改成修正后的代码哈希。逐条结果、重排输出、耗时、split、配置 ID 和冻结门槛均保留；历史回归验证过校准冻结前的离线生成、保存网格的重新选择及排序规则。
+
+## 4. 如何复现：先准备环境，再主动运行
+
+使用[本地开发指南](../docs/development.md)中的 Python 3.12 环境，从仓库根目录运行。真实评测需要私有 `.env` 中的 DashScope / DeepSeek HTTPS 端点、模型配置及对应密钥；脚本校验提供方主机和密钥选择器。Workflow 只使用校验占位配置，不真正执行。
+
+以下命令是可选评测，会产生新的结果，不能作为启动项目的前置步骤。真实评测会消耗模型 API，输出到 `/tmp`，避免覆盖仓库证据；需要长期保留时另行归档脱敏结果。
 
 ```bash
 mkdir -p /tmp/agenthub-t43-reproduction
+
+# 真实模型：先校准并冻结，再比较测试集两种策略。
+.venv/bin/python -m evaluation.live_routing_benchmark --output-dir /tmp/agenthub-t43-reproduction
+
+# 真实模型：10 / 50 / 100 个合成 Agent 的延迟。
+.venv/bin/python -m evaluation.live_catalog_size_benchmark --output /tmp/agenthub-t43-reproduction/live_catalog_size.json
+
+# 离线：假向量与本地重排，衡量本地工程开销。
 .venv/bin/python -m evaluation.catalog_size_benchmark --output /tmp/agenthub-t43-reproduction/offline_catalog_size.json
 ```
 
-It uses a fixed SHA-256 seed, 16-dimensional fake vectors, one active indexed
-metadata version per Agent, and allowlisted `runtime_ref` entries mapped to a
-statically validated thin workflow. It performs no workflow or provider call.
-The threshold is `-1.0` solely to keep the scan path open; K is 3. Each size
-has two warmup requests and 36 measured requests per strategy (12 fixed
-queries × three repeats). SQLite and OS caches remain warm. The report records
-the script hash, hardware, Python/OS, build time, sample counts, errors, and
-all segment p50/p95 values. The reranker is a local identity transport, so its
-timing is **not** LLM latency. All values below are measured milliseconds on
-this machine; no target or production estimate is implied.
+前两条模型评测入口会加载根目录 `.env`，要求 `AGENTHUB_EMBEDDING_API_KEY_ENV=DASHSCOPE_API_KEY`、`AGENTHUB_RERANK_API_KEY_ENV=DEEPSEEK_API_KEY` 及各自真实密钥。真实与离线结果不能互相替代。新结果随模型、网络、缓存、硬件变化；先检查 `label`、样本数、错误、模型/配置指纹及环境，再做比较。新校准结果**不会自动更新 Web 应用使用的冻结文件**，模型迁移需单独审阅。
 
-| Agents | Strategy | Full route p50/p95 | Query-to-decision p50/p95 | Discovery excluding embedding p50/p95 | Query embedding p50/p95 | Local rerank p50/p95 |
-| ---: | --- | ---: | ---: | ---: | ---: | ---: |
-| 10 | semantic | 9.301 / 9.495 | 0.068 / 0.077 | 9.281 / 9.473 | 0.013 / 0.019 | not applicable |
-| 10 | semantic_llm | 9.456 / 9.834 | 0.106 / 0.120 | 9.400 / 9.773 | 0.013 / 0.014 | 0.025 / 0.028 |
-| 50 | semantic | 44.964 / 46.811 | 0.211 / 0.239 | 44.942 / 46.790 | 0.013 / 0.025 | not applicable |
-| 50 | semantic_llm | 44.953 / 46.042 | 0.248 / 0.273 | 44.894 / 45.979 | 0.013 / 0.014 | 0.027 / 0.043 |
-| 100 | semantic | 90.257 / 111.712 | 0.398 / 0.429 | 90.235 / 111.689 | 0.013 / 0.014 | not applicable |
-| 100 | semantic_llm | 90.437 / 96.474 | 0.437 / 0.549 | 90.376 / 96.414 | 0.013 / 0.020 | 0.028 / 0.037 |
+## 5. 历史真实路由结果（2026-10-08）
 
-Each row has 36 measured samples and zero routing errors. Catalog/index build
-times for 10/50/100 are 36.343/181.746/361.029 ms, measured separately.
-`query-to-decision` starts at query embedding, matching the T41 runner; it
-excludes the status check, static workflow validation and index loading that
-precede embedding. `full route` includes that work. `discovery excluding
-embedding` contains those pre-query steps, exact cosine and sorting, so it is
-**not** an isolated cosine scan figure. The sub-millisecond query-to-decision
-figures show small local vector math cost under this fixture, while full route
-cost rises materially with catalog size. These measurements alone do not prove
-an exact scan meets a live latency objective or that a vector database would
-help: the dominant measured work includes repeated validation and SQLite
-loading. P0 can retain the current simple exact scan pending live workload
-evidence; any architecture change needs separate review.
+真实 DashScope Embedding 与 DeepSeek JSON 重排的可选冒烟检查在历史评测前通过。Embedding 标识为 `qwen-text-embedding-v4-1024`、维度 1024，重排模型为 `deepseek-flash`；报告只保存公开配置指纹，不包含密钥。
 
-## T43 live provider verification — 2026-10-08
+[校准文件](t43_live_calibration_2026-10-08.json)包含 30 条校准决策、183 组 K / 阈值候选、基线耗时、数据/目录/模型来源和最终配置。在测试前写入 `frozen_before_test`，只用校准标签与得分确定 `K=5`、阈值 `0.35727615782291194`。选中配置的校准得分：Top-1 15/24、Top-K 24/24、拒绝 4/6、误接受 2/6、基础设施错误 0。推导出的各配置没有虚构独立耗时，计时对应 30 条基线调用。
 
-The opt-in DashScope embedding and DeepSeek JSON chat rerank smoke tests passed
-before the measured run. The local ignored `.env` maps
-`AGENTHUB_EMBEDDING_API_KEY_ENV` to `DASHSCOPE_API_KEY` and
-`AGENTHUB_RERANK_API_KEY_ENV` to `DEEPSEEK_API_KEY`. No credential values appear
-in these artifacts. The live embedding model key is
-`qwen-text-embedding-v4-1024` (1024 dimensions); the rerank model is
-`deepseek-flash`. The scripts require the configured HTTPS provider hosts and
-the 60-case script records hashes of non-secret endpoint/model configuration.
-The thin workflows
-use validation-only placeholders; no workflow is executed.
+[测试文件](t43_live_test_2026-10-08.json)保留同一门槛下的每条选择、候选/得分、重排、错误及耗时：
 
-Run the 60-case quality evaluation explicitly:
-
-```bash
-mkdir -p /tmp/agenthub-t43-reproduction
-.venv/bin/python -m evaluation.live_routing_benchmark --output-dir /tmp/agenthub-t43-reproduction
-```
-
-The [calibration artifact](t43_live_calibration_2026-10-08.json) contains all
-30 calibration decisions, 183 K/threshold candidate gates, measured baseline
-latency, dataset/catalog/model provenance, and the selected configuration. The
-gate was written **before** the independent test run. Only calibration labels
-and scores selected K=5 and cosine threshold=0.35727615782291194. Its selected
-calibration scores were Top-1 15/24, Top-K 24/24, Reject 4/6, False Accept
-2/6, with zero infrastructure errors. Derived gate decisions have no invented
-per-gate latency; the 30-case baseline is the measured calibration timing.
-The 60-case dataset is 36 clear, 12 ambiguous and 12 no-match, split equally
-between calibration and test (18/6/6 each).
-
-The [independent test artifact](t43_live_test_2026-10-08.json) records every
-decision, Top-K candidate/score, rerank result, error code and query-to-decision
-latency under the same frozen gate:
-
-| Strategy | Test cases | Top-1 | Top-K | Reject | False Accept | Infra errors | Route p50/p95 ms |
+| 策略 | 测试任务数 | Top-1 | 语义 Top-K | 拒绝准确率 | 误接受率 | 基础设施错误 | 路由 p50/p95（ms） |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | semantic | 30 | 11/24 | 24/24 | 3/6 | 3/6 | 0 | 368.009 / 643.426 |
 | semantic_llm | 30 | 18/24 | 24/24 | 3/4 | 1/4 | 2 | 2199.482 / 10066.879 |
 
-Both strategy latency distributions contain 30 measured calls, including
-measured infrastructure-error calls. The two `semantic_llm` errors were
-`RERANK_TRUNCATED_RESPONSE` on no-match cases, so its Reject/False Accept
-denominator is four; those rates are **not** directly comparable to semantic's
-six-case denominator. Both Top-1 denominators are the same 24 applicable
-cases. All 21 actual DeepSeek calls are included in rerank transport latency:
-p50/p95 2640.014/9703.747 ms. The 60 test query embedding calls across both
-strategies have p50/p95 334.196/642.572 ms. The earlier
-[512-token attempt](t43_live_test_attempt1_2026-10-08.json) and its
-[calibration artifact](t43_live_calibration_attempt1_2026-10-08.json) are
-retained: seven DeepSeek outputs were truncated. Raising only the JSON output
-limit to 2048 tokens reduced this to two; no test labels were used to retune
-K/threshold. This is one 30-case test sample, not a statistical significance
-claim or task-answer quality evaluation.
+两种策略均有 30 条实际耗时，包含计时的基础设施错误。重排两次错误为 no-match 上的 `RERANK_TRUNCATED_RESPONSE`，所以其拒绝/误接受分母是 4，不能直接与另一策略的 6 条分母混比；Top-1 的分母均为相同 24 条可匹配任务。
 
-The six-Agent live catalog/index build took 2324.269 ms, separately from per
-request routing. The index embedded six metadata entries. Calibration query
-embedding p50/p95 was 356.833/1251.049 ms over 30 calls. The artifacts store
-the full script/config fingerprints and platform details. The measured host
-used Python 3.12.13, Linux 6.8.0-138-generic, 16 logical CPUs and an AMD
-Ryzen 7 8745H; caches and remote provider load were uncontrolled.
+21 次实际 DeepSeek 调用的传输 p50/p95 为 2640.014/9703.747 ms；两策略共 60 次测试 query Embedding 的 p50/p95 为 334.196/642.572 ms。此前 [512-token 尝试](t43_live_test_attempt1_2026-10-08.json)及其[校准文件](t43_live_calibration_attempt1_2026-10-08.json)保留了 7 次截断；只将输出上限改为 2048 后复用测试集，截断降至 2 次，K / 阈值没有根据测试标签重新调整。不能称为严格一次性盲测，也不声称统计显著性或答案质量提升。
 
-Run the separate synthetic catalog-size live latency benchmark explicitly:
+六 Agent 目录/索引构建为 2324.269 ms，与请求路由分开；校准 query Embedding 的 30 次调用 p50/p95 为 356.833/1251.049 ms。环境为 Python 3.12.13、Linux 6.8.0-138-generic、16 逻辑 CPU、AMD Ryzen 7 8745H；模型负载和远端缓存未受控。
 
-```bash
-mkdir -p /tmp/agenthub-t43-reproduction
-.venv/bin/python -m evaluation.live_catalog_size_benchmark --output /tmp/agenthub-t43-reproduction/live_catalog_size.json
-```
+## 6. 离线目录规模结果
 
-The [live scale artifact](t43_live_catalog_size_2026-10-08.json) uses real
-1024-dimensional embeddings and DeepSeek reranking, but synthetic Agent
-metadata and queries. Each size has one warmup and 12 measured requests per
-strategy; SQLite/OS/provider caches are not flushed. K=3 and threshold=-1
-keep the scan/rerank path open. Build time is separate from routing. Values
-below are measured milliseconds; the rerank segment includes the live API
-request.
+[离线报告](t43_offline_catalog_size_2026-10-08.json)使用固定 SHA-256 种子、16 维假向量，每 Agent 一个启用且已索引的元数据版本，以及映射到静态校验薄 Workflow 的受控引用。没有 Workflow 或模型调用；阈值 -1.0 仅用于保持扫描路径开放，K=3。每个规模/策略预热 2 次，测量 36 次（12 条固定 query × 3），SQLite / OS 缓存保持热状态。
 
-| Agents | Strategy | Full route p50/p95 | Discovery excluding embedding p50/p95 | Query embedding p50/p95 | Rerank p50/p95 | Errors |
+报告保存脚本哈希、硬件、Python/OS、建索引时间、样本数、错误及各段 p50/p95。本地重排保持原顺序，其耗时不是 LLM 延迟。下表单位均为 ms，是该机器的测量，不是生产目标。
+
+| Agent 数 | 策略 | 全路由 p50/p95 | Query 到决策 p50/p95 | Discovery 不含 Embedding p50/p95 | Query Embedding p50/p95 | 本地重排 p50/p95 |
 | ---: | --- | ---: | ---: | ---: | ---: | ---: |
-| 10 | semantic | 318.952 / 617.735 | 16.241 / 18.297 | 303.130 / 601.340 | n/a | 0 |
-| 10 | semantic_llm | 2178.088 / 3974.995 | 15.811 / 17.816 | 243.991 / 474.662 | 1917.320 / 3514.593 | 0 |
-| 50 | semantic | 439.839 / 484.852 | 67.503 / 69.178 | 372.245 / 417.335 | n/a | 0 |
-| 50 | semantic_llm | 3224.426 / 10302.801 | 68.963 / 73.226 | 377.345 / 826.630 | 2446.415 / 9883.576 | 1 truncated |
-| 100 | semantic | 439.294 / 589.729 | 131.137 / 135.468 | 306.658 / 461.633 | n/a | 0 |
-| 100 | semantic_llm | 3202.536 / 10776.190 | 135.814 / 209.487 | 330.643 / 1593.711 | 2824.551 / 10334.756 | 2 truncated |
+| 10 | semantic | 9.301 / 9.495 | 0.068 / 0.077 | 9.281 / 9.473 | 0.013 / 0.019 | 不适用 |
+| 10 | semantic_llm | 9.456 / 9.834 | 0.106 / 0.120 | 9.400 / 9.773 | 0.013 / 0.014 | 0.025 / 0.028 |
+| 50 | semantic | 44.964 / 46.811 | 0.211 / 0.239 | 44.942 / 46.790 | 0.013 / 0.025 | 不适用 |
+| 50 | semantic_llm | 44.953 / 46.042 | 0.248 / 0.273 | 44.894 / 45.979 | 0.013 / 0.014 | 0.027 / 0.043 |
+| 100 | semantic | 90.257 / 111.712 | 0.398 / 0.429 | 90.235 / 111.689 | 0.013 / 0.014 | 不适用 |
+| 100 | semantic_llm | 90.437 / 96.474 | 0.437 / 0.549 | 90.376 / 96.414 | 0.013 / 0.020 | 0.028 / 0.037 |
 
-All non-rerank segments have 12 samples per row; rerank has 12 actual calls
-for each `semantic_llm` row, including failed calls. Catalog/index build
-times for 10/50/100 were 3902.657/18904.271/36551.787 ms. The live report
-also contains query-to-decision p50/p95, per-sample error indexes/codes,
-hardware (16 logical CPUs, 32,146,840 KiB RAM) and source hashes. Its
-`discovery excluding embedding` segment includes status/allowlist validation,
-SQLite index loading, exact cosine and sorting; isolated cosine time was not
-measured. The larger catalogs increased that local segment on this host, while
-embedding and especially rerank calls dominated observed live latency. For
-this P0-sized catalog, retaining exact scan avoids extra infrastructure, but
-these small sequential samples establish neither an SLA nor concurrent-load
-performance. The deterministic offline figures above remain separate from
-live provider and semantic quality results.
+每行 36 个样本，无路由错误；10/50/100 的目录构建时间分别为 36.343/181.746/361.029 ms，单独测量。`query-to-decision` 从 query Embedding 开始，不含前面的状态检查、Workflow 静态校验和索引加载；`full route` 包含这些步骤。Discovery 不含 Embedding 的耗时还包括精确 cosine 和排序，因此不能叫纯 cosine 扫描耗时。
+
+亚毫秒 query-to-decision 只说明该 fixture 的向量计算开销较小，全路由成本仍随目录规模增长。结果不能单独证明精确扫描满足真实延迟目标，或向量数据库必然有收益；主要开销还包括重复校验和 SQLite 加载。P0 暂保留简单精确扫描，架构调整需要新的工作负载证据。
+
+## 7. 真实模型目录规模结果
+
+[真实规模报告](t43_live_catalog_size_2026-10-08.json)使用合成 Agent 元数据和查询、真实 1024 维 Embedding 与 DeepSeek 重排。每个规模/策略预热 1 次，测量 12 次；SQLite / OS / 模型端缓存未清空，K=3、阈值 -1 保持扫描和重排路径开放。只评延迟，不测 Workflow 或路由质量。单位均为 ms，重排耗时包含真实 API 请求。
+
+| Agent 数 | 策略 | 全路由 p50/p95 | Discovery 不含 Embedding p50/p95 | Query Embedding p50/p95 | 重排 p50/p95 | 错误 |
+| ---: | --- | ---: | ---: | ---: | ---: | ---: |
+| 10 | semantic | 318.952 / 617.735 | 16.241 / 18.297 | 303.130 / 601.340 | 不适用 | 0 |
+| 10 | semantic_llm | 2178.088 / 3974.995 | 15.811 / 17.816 | 243.991 / 474.662 | 1917.320 / 3514.593 | 0 |
+| 50 | semantic | 439.839 / 484.852 | 67.503 / 69.178 | 372.245 / 417.335 | 不适用 | 0 |
+| 50 | semantic_llm | 3224.426 / 10302.801 | 68.963 / 73.226 | 377.345 / 826.630 | 2446.415 / 9883.576 | 1 次截断 |
+| 100 | semantic | 439.294 / 589.729 | 131.137 / 135.468 | 306.658 / 461.633 | 不适用 | 0 |
+| 100 | semantic_llm | 3202.536 / 10776.190 | 135.814 / 209.487 | 330.643 / 1593.711 | 2824.551 / 10334.756 | 2 次截断 |
+
+非重排各段每行均为 12 个样本；`semantic_llm` 重排也包含全部 12 次实际调用（包括失败）。10/50/100 的目录构建时间分别为 3902.657/18904.271/36551.787 ms。报告另含 query-to-decision、每条错误下标/错误码、16 逻辑 CPU / 32,146,840 KiB 内存及源码哈希。
+
+Discovery 不含 Embedding 的部分包含状态/白名单校验、SQLite 加载、cosine 和排序，没有单独测纯 cosine 时间。该机器上的本地部分随目录增长，而实际总延迟主要受 Embedding、尤其重排 API 影响。这些少量顺序调用既不是 SLA，也不证明并发性能；离线假向量数据必须与真实模型延迟和语义质量分开报告。
