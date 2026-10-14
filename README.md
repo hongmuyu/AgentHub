@@ -1,21 +1,27 @@
 # AgentHub
 
-**AgentHub 根据自然语言任务发现并运行合适的 Agent。** 项目基于 [OpenBMB/ChatDev 2.0](https://github.com/OpenBMB/ChatDev)，新增 Agent 登记、能力发现、动态路由和可观测的业务运行记录；复用 ChatDev 的 Workflow Runtime、WebSocket 执行链、工具和前端。当前版本面向可信本地/内部环境。首次使用按下方部署步骤操作；希望修改代码可直接阅读[中文开发指南](docs/development.md)。
+> 🧭 让自然语言任务找到合适的 Agent，并看清每一次路由与执行。
 
-[观看 225 秒演示](demo/agenthub_t48_demo.mp4) · [Demo 说明](demo/guide.md) · [五条 Run 原始记录](demo/t48_evidence_2026-10-09.json)
+**AgentHub** 基于 [OpenBMB/ChatDev 2.0](https://github.com/OpenBMB/ChatDev)，新增 Agent 登记、能力发现、动态路由和可观测的业务运行记录；复用 ChatDev 的 Workflow Runtime、WebSocket 执行链、工具和前端。当前版本面向可信本地/内部环境。首次使用按下方部署步骤操作；希望修改代码可直接阅读[中文开发指南](docs/development.md)。
+
+**快速导航**　🚀 [部署运行](#部署运行第一次请按顺序完成) · 🛠️ [本地开发](docs/development.md) · 🧭 [系统架构](#readme-architecture) · 📊 [评测结果](#readme-benchmarks)
+
+🎬 [观看 225 秒演示](demo/agenthub_t48_demo.mp4) · [Demo 说明](demo/guide.md) · [五条 Run 原始记录](demo/t48_evidence_2026-10-09.json)
 
 录屏包含一次新的 UI 提交、已完成真实 Provider Run 的回放、Registry 操作和证据看板。五条合成演示任务 Run 为 **4 success、1 rejected**；它们不是生产流量或答案质量得分。
 
-## 核心特性
+---
 
-- **Agent Registry 与 Discovery**：管理已审阅的 Agent 元数据，从目录中检索可用能力。
-- **Semantic Routing**：根据 Embedding 候选选择一个 Agent，无合适匹配时拒绝任务。
-- **可选 LLM Rerank**：完成配置后，让 LLM 仅从已召回的候选中选择。
-- **执行与可观测性**：通过 ChatDev 运行服务端批准的薄 Workflow，查看业务结果、路由 Trace 和 Metrics。
+## ✨ 核心特性
+
+- 🗂️ **Agent Registry 与 Discovery**：管理已审阅的 Agent 元数据，从目录中检索可用能力。
+- 🧭 **Semantic Routing**：根据 Embedding 候选选择一个 Agent，无合适匹配时拒绝任务。
+- 🔀 **可选 LLM Rerank**：完成配置后，让 LLM 仅从已召回的候选中选择。
+- 📈 **执行与可观测性**：通过 ChatDev 运行服务端批准的薄 Workflow，查看业务结果、路由 Trace 和 Metrics。
 
 新增 Agent 需要经批准的元数据与服务端 Workflow 映射；平台不执行任意上传的 Workflow。
 
-## 基于 ChatDev 2.0 的二次开发
+## 🧩 基于 ChatDev 2.0 的二次开发
 
 | 复用 ChatDev | AgentHub 新增 |
 | --- | --- |
@@ -25,7 +31,11 @@
 
 原有 Manual YAML 工作流入口仍可使用。[实现指南](docs/agenthub.md)说明上游 Runtime 和 AgentHub 增量的边界。
 
+---
+
 ## 部署运行：第一次请按顺序完成
+
+> 🚀 **第一次部署从这里开始。** 按 1～6 步完成环境准备、配置、启动和首次任务。
 
 以下命令适用于 Linux / macOS 终端或 Windows 的 WSL2，全部从仓库根目录执行。首次启动推荐 Docker Compose；不需要先安装宿主机 Python / Node.js，也不需要先跑测试。
 
@@ -54,7 +64,9 @@ cd AgentHub
 [ -f .env ] || cp .env.example .env
 ```
 
-用编辑器打开根目录 `.env`，按下面的完整示例填写。**仅复制 `.env.example` 不能运行完整 AgentHub**：模板中的 Embedding 配置和 `MODEL_NAME` 默认被注释。已有同名配置时修改原行，不要重复追加。
+> 🔑 **先填真实配置，再启动。** 仅复制 `.env.example` 不能运行完整 AgentHub：模板中的 Embedding 配置和 `MODEL_NAME` 默认被注释。
+
+用编辑器打开根目录 `.env`，按下面的完整示例填写。已有同名配置时修改原行，不要重复追加。
 
 ```dotenv
 # 聊天模型：由选中的 Agent 执行任务，三个值必须来自同一个可用的 OpenAI 兼容服务。
@@ -133,7 +145,8 @@ docker compose stop
 
 完整说明：[部署、配置与排查](docs/agenthub.md) · [本地开发](docs/development.md) · [Demo 操作](demo/guide.md)。
 
-## 系统架构
+<a id="readme-architecture"></a>
+## 🧭 系统架构
 
 ```mermaid
 flowchart TD
@@ -150,7 +163,8 @@ flowchart TD
 
 AgentHub 每个任务选择一个已登记的 Agent。图示为主路径；无合适 Agent 的任务会在执行前被拒绝。数据契约和实现细节见[实现与部署指南](docs/agenthub.md)及[评测方法](evaluation/guide.md)。
 
-## 基准测试与核心结果
+<a id="readme-benchmarks"></a>
+## 📊 基准测试与核心结果
 
 [T43 真实路由测试](evaluation/t43_live_test_2026-10-08.json)使用 DashScope Embedding 与 DeepSeek Rerank。60 条合成标注样例分为 30 条 calibration 和 30 条 independent test；测试集中 24 条任务有可匹配 Agent。
 
@@ -161,16 +175,16 @@ AgentHub 每个任务选择一个已登记的 Agent。图示为主路径；无�
 
 两次重排错误为响应截断，延迟仍包含这些调用。调整 Rerank 输出上限后复用了测试集，但 K 和置信度阈值保持冻结。这组小样本路由比较**不**衡量 Workflow 成功率、Task Quality、生产负载或 SLA。精确数值、分母、前次尝试及独立的 live/offline 目录规模结果见[原始记录与方法](evaluation/guide.md)。
 
-## 技术文档与限制
+## 📚 技术文档与限制
 
 [架构、部署与操作](docs/agenthub.md) · [本地开发](docs/development.md) · [上游 Workflow 使用文档](docs/user_guide/zh/index.md) · [评测证据](evaluation/guide.md) · [Demo](demo/guide.md) · [发布说明](docs/RELEASE_NOTES.md)
 
 P0 在可信本地/内部环境中每个任务运行一个 Agent，不提供公开多租户或未审阅 Agent 上传。已完成的业务记录在重启后仍可查询；进行中的 WebSocket/Provider 工作不能续跑。Task Quality 未经独立评测，未知 Token 用量保持未知。完整 Python 套件因继承 WebSocket 测试夹具阻塞仍为 **NOT VERIFIED**；限定范围的通过结果及其他限制见[部署与验证指南](docs/agenthub.md#verified-deployment-scope-and-limits)。
 
-## 开发与贡献
+## 🛠️ 开发与贡献
 
 欢迎提交附有复现步骤的 Issue 或范围清晰的 PR。修改前阅读[中文开发指南](docs/development.md)，了解环境安装、前后端启动和代码入口；历史验证范围见[验证说明](docs/agenthub.md#verified-deployment-scope-and-limits)。运行应用不要求先执行测试。请勿提交私有 `.env`、数据库、日志或构建产物。
 
-## 上游致谢与许可
+## 🙏 上游致谢与许可
 
 基于 **OpenBMB/ChatDev 2.0（DevAll）**。原版 Runtime、Workflow 系统、前端、工具及资源归功于其作者和贡献者；上游历史与引用见 [ChatDev 官方仓库](https://github.com/OpenBMB/ChatDev)。**Copyright 2025 OpenBMB.** 保留上游 [Apache-2.0 许可证](LICENSE)及源码/资源许可声明。仓库内的 Inter 字体另保留其 [SIL Open Font License](frontend/src/assets/styles/fonts/Inter/OFL.txt)。
